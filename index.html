@@ -759,14 +759,14 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
   const attacked=!!b.lastHit&&b.lastHit.alive&&m.t-b.lastHitT<3,ds=Math.hypot(b.x-s.x,b.y-s.y),sdps=ph.dps*(b.perks.has('p_storm')?.5:1),
     /* im Sturm bleiben ist erlaubt, solange das Leben für den Rückweg und eine Reserve reicht */
     stay=b.hp-sdps*(Math.max(0,ds-s.r+40)/110+4)>45&&sdps<8&&s.r>200,outside=ds>Math.max(0,s.r-35),dn=Math.hypot(b.x-s.nx,b.y-s.ny);
-  const outN=dn>s.nr-45,needZone=outN&&(s.shr||ph.wait-s.t<(dn-s.nr)/(m.ig?50:90)+(b.early?28:16)),hpF=(b.hp+b.sh)/b.max,equipped=b.wp[0].id!=='pistol'||b.wp.length>1,endgame=m.alive<=4;
+  const outN=dn>s.nr-45,needZone=outN&&(s.shr||ph.wait-s.t<(dn-s.nr)/(m.ig?50:90)+(b.early?14:4)),hpF=(b.hp+b.sh)/b.max,equipped=b.wp[0].id!=='pistol'||b.wp.length>1,endgame=m.alive<=4;
   /* was er braucht und worüber er läuft, hebt er sofort auf */
   if(b.act!=='heal'){let pk=null;gNear(m.lg,b.x,b.y,28,l=>{if(!pk&&!b.ban.has(l)&&d2(b,l)<26&&want(b,l))pk=l});if(pk)take(m,b,pk)}
   const wasOpen=b.act==='open';b.priority='Erkunden';b.fire=null;b.act='';b.go=false;b.sprint=false;b.urgent=false;b.pose=0;b.inCov=false;
   let maxR=0;for(let i=0;i<b.wp.length;i++)maxR=Math.max(maxR,b.W[b.wp[i].id].range);const outR=!!foe&&fd>maxR;
   const go=(x,y)=>{const p=validGoal(m,x,y);if(p){b.gx=p.x;b.gy=p.y;b.go=true}else{b.go=false;b.path=null;b.cover=b.spot=b.wpt=null}};
   let dg=null;for(const q of m.gren)if(q.from!==b&&Math.hypot(q.x-b.x,q.y-b.y)<140&&(!dg||q.t<dg.t))dg=q;
-  const zoneDistance=Math.max(0,dn-s.nr+60),zoneETA=zoneDistance/(85*b.sk.spd),zoneDeadline=s.shr?Math.max(0,ph.shrink-s.t+ph.wait):Math.max(0,ph.wait-s.t),zoneCritical=outside||(outN&&zoneETA+18>zoneDeadline);
+  const zoneDistance=Math.max(0,dn-s.nr+60),zoneETA=zoneDistance/(85*b.sk.spd),zoneDeadline=s.shr?Math.max(0,ph.shrink-s.t+ph.wait):Math.max(0,ph.wait-s.t),zoneCritical=outside&&!stay;
   const safeHeal=!dg&&!zoneCritical&&!foe&&m.t-b.lastHitT>=5&&m.t-b.lastShotT>=5;
   /* Fähigkeit: der Bot zündet sie selbst, wenn es eng wird */
   if(b.ab&&m.t>=b.abT&&m.t-b.lastHitT<1.5){let used='';
@@ -801,7 +801,6 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
   if(foe&&!ret){const conf=b.style==='surv'&&m.alive<=m.N*.05?1:P.conf;
     let init=fd<Math.max(P.chase,w.range*.85)&&ratio>conf*(busy?.65:1)*(hurtNoMed?1.6:1)*(weakFoe?.5:1)&&(equipped||(!b.prep&&ratio>1.3))&&(nSee<=2||b.style==='rusher');
     if(b.style==='ambush'&&fd>w.range)init=false;
-    if(needZone&&!attacked&&fd>120)init=false;
     if(wasOpen&&!attacked&&fd>220)init=false;
     engage=fd<=w.range||endgame||(fd<110&&!(foe.run&&P.conf>.9))||m.t<b.engT||init||attacked;
     if(engage&&m.t<b.calmT&&fd>w.range&&!attacked&&!endgame&&!weakFoe)engage=false;
@@ -813,7 +812,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     b.fire=foe;b.sprint=false;b.urgent=true;}
   else if(engage){b.priority='Kampf';b.fire=foe;b.state='Kämpft';
     /* Granate: gegen Gegner, die stillstehen, hocken oder in Deckung sitzen */
-    if(b.gren>0&&m.t>b.grenT&&fd>110&&fd<340&&!foe.run&&(foe.inCov||!foe.mv||foe.pose===1)){b.gren--;b.grenT=m.t+7;m.gren.push({id:m.grenN++,x0:b.x,y0:b.y,x:foe.x+rr(-25,25),y:foe.y+rr(-25,25),t:.9,T:.9,from:b});b.state='Wirft Granate'}
+    if(b.gren>0&&m.t>b.grenT&&fd>110&&fd<340&&!foe.run&&(foe.inCov||!foe.mv||foe.pose===1)){b.gren--;b.grenT=m.t+7;m.gren.push({id:m.grenN++,x0:b.x,y0:b.y,x:foe.x+rr(-25,25),y:foe.y+rr(-25,25),t:.9,T:.9,from:b});ev(m,'throw',b.x,b.y,900);b.state='Wirft Granate'}
     const ux=(foe.x-b.x)/fd,uy=(foe.y-b.y)/fd;let cov=null;
     if(b.stance&&fd>100&&b.style!=='rusher'){const cp=o=>{const q=coverPoint(o,foe.x,foe.y);return{...q,o,fo:Math.hypot(o.x-foe.x,o.y-foe.y)}};
       if(b.covO&&d2(b,b.covO)<120){const q=cp(b.covO);if(freeSpot(m,q.x,q.y))cov=q;}
@@ -840,7 +839,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     /* unsichtbarer Schütze: nur wer fit ist und hinreichen kann, geht auf ihn zu, alle anderen suchen Deckung */
     if(equipped&&P.conf<=1&&hpF>.6&&d<maxR+150){go(b.x+(h.x-b.x)/d*200,b.y+(h.y-b.y)/d*200);b.sprint=true;b.state='Sucht den Schützen'}
     else{b.rfx=h.x;b.rfy=h.y;b.retT=m.t+3;b.cover=null;b.due=true;b.state='Geht in Deckung'}}
-  else if(needZone){b.tg=null;zone();b.sprint=s.shr;b.state='Läuft zur Zone'}
+  else if(false){zone();b.sprint=s.shr;b.state='Läuft zur Zone'}
   else{const real=b.wp.filter(q=>q.id!=='pistol').length,kit=b.loot==='min'?real>=2:real>=3&&b.med>=2&&b.pot>=1,sr=Math.max(0,s.r-55);
     /* einmal gewähltes Ziel wird behalten, bis es erledigt, weg oder nach 10 s unerreichbar ist */
     let tg=b.tg;
@@ -861,7 +860,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     if(!tg&&b.stance&&!outN&&m.t<b.retT+3&&hpF<.5){b.state='Wartet in Deckung'}
     else if(tg&&tg===it){if(bd<16){take(m,b,it);b.due=true;b.state='Sammelt Beute'}else{go(it.x,it.y);b.state='Sammelt Beute'}}
     else if(tg){if(cd<26){b.ta=Math.atan2(ch.y-b.y,ch.x-b.x);b.act='open';b.chest=ch;b.state='Öffnet '+CH[ch.q].n}else{go(ch.x,ch.y);b.state='Läuft zur '+CH[ch.q].n}}
-    else if(outN&&b.early){zone();b.state='Läuft zur Zone'}
+    else if(outN||outside){zone();b.sprint=s.shr;b.state='Läuft zur Zone'}
     else if(nz){go(nz.x,nz.y);b.state='Folgt Schüssen'}
     else{
       const safe=p=>p&&Math.hypot(p.x-s.x,p.y-s.y)<Math.max(4,s.r-55)&&(!s.shr||Math.hypot(p.x-s.nx,p.y-s.ny)<Math.max(4,s.nr-45));
@@ -884,7 +883,7 @@ function think(m,b,dt,bi){if(m.t<DROP)return;
   const s=m.storm;if((b.stT+=dt)>=.13){if(Math.hypot(b.x-s.x,b.y-s.y)>s.r){hurt(m,b,m.ph[s.ph].dps*b.stT*(b.perks.has('p_storm')?.5:1),null);if(!b.alive)return}b.stT=0}
   if(b.due||(b.bT-=dt)<=0){b.due=false;b.bT=bi;const p0=b.pose;brain(m,b);if(p0===2&&b.pose!==2)b.up=.4}
   b.mv=false;b.run=false;if(!b.go||b.act!==''){b.vx*=.6;b.vy*=.6}
-  if(b.act==='heal'){b.moveSpeed=0;b.motionX=b.x;b.motionY=b.y;b.sta=Math.min(b.staMax,b.sta+15*dt);if((b.healT-=dt)<=0){if(b.useK==='s'){b.sh=Math.min(100,b.sh+(b.perks.has('p_shield')?75:50));b.pot--}else{b.hp=Math.min(b.max,b.hp+b.healAmt);b.med--;b.meds++}ev(m,'heal',b.x,b.y,200);b.act='';b.due=true}return}
+  if(b.act==='heal'){b.moveSpeed=0;b.motionX=b.x;b.motionY=b.y;b.sta=Math.min(b.staMax,b.sta+15*dt);if((b.healT-=dt)<=0){if(b.useK==='s'){b.sh=Math.min(100,b.sh+(b.perks.has('p_shield')?75:50));b.pot--}else{b.hp=Math.min(b.max,b.hp+b.healAmt);b.med--;b.meds++}ev(m,b.useK==='s'?'shield':'heal',b.x,b.y,200);b.act='';b.due=true}return}
   if(b.act==='open'){const c=b.chest;if(c.open){b.act='';b.due=true}else if((c.prog+=dt)>=(b.perks.has('p_scav')?.4:.8)*b.lootK){openChest(m,c,b);b.act='';b.due=true}}
   else if(b.go&&b.up<=0){const dx=b.gx-b.x,dy=b.gy-b.y,l=Math.hypot(dx,dy);
     if(l>2){let sp=108*b.sk.spd*(m.t<b.adrT?1.3:1);if(b.pose===1)sp*=.55;else if(b.pose===2)sp*=.25;else if(b.sprint&&!b.exh&&b.sta>0){sp*=1.5;b.run=true}if(b.jump>0)sp*=1.15;
@@ -1503,16 +1502,28 @@ function auTone(vol,f0,f1,dur,pan,delay,type){const c=AU.ctx,t=c.currentTime+(de
   g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0006,t+dur);o.connect(g);auOut(g,pan);o.start(t);o.stop(t+dur+.03)}
 /* je Waffe: Helligkeit des Knalls, Dauer, Grundton des Drucks, Lautstärke */
 const SHOT={pistol:[2600,.09,180,.7],rifle:[3200,.11,150,.9],burst:[3000,.1,160,.85],smg:[3800,.06,220,.55],shotgun:[1400,.24,105,1.3],autosg:[1500,.18,115,1.1],dmr:[2400,.18,120,1.05],sniper:[1700,.36,85,1.4],lmg:[2200,.1,130,.9],revolver:[2000,.16,125,1.05]};
+function auShotExtra(id,v,d,pan){const near=d<500;
+  if(id==='shotgun'){auNoise(v*.5,.35,600,0,pan,.02);if(near){auNoise(v*.25,.05,2600,900,pan,.42);auNoise(v*.25,.05,2200,700,pan,.55)}}
+  else if(id==='autosg'){auNoise(v*.45,.22,700,0,pan,.015)}
+  else if(id==='sniper'){auNoise(v*.4,.9,420,0,pan,.06);if(near){auNoise(v*.22,.04,3600,1500,pan,.9);auNoise(v*.22,.05,3000,1200,pan,1.05)}}
+  else if(id==='dmr'){auNoise(v*.3,.5,600,0,pan,.05)}
+  else if(id==='lmg'){auTone(v*.4,95,60,.08,pan,0,'square')}
+  else if(id==='smg'){auNoise(v*.3,.03,6000,2500,pan)}
+  else if(id==='revolver'){auTone(v*.6,80,35,.25,pan);auNoise(v*.3,.4,500,0,pan,.04)}
+  else if(id==='rifle'||id==='burst'){auNoise(v*.2,.05,5000,2000,pan,.01)}
+  else if(id==='pistol'){auNoise(v*.2,.025,7000,3000,pan)}}
 function auShot(id,d,pan){const q=SHOT[id]||SHOT.pistol,v=Math.pow(1-d/1100,2)*q[3]*.5;if(v<.004)return;
-  auNoise(v,q[1]*(1+d/900),q[0]*(1-.75*d/1100),0,pan);if(d<700)auTone(v*.9,q[2],q[2]*.33,q[1]*.8,pan);if(d>350)auNoise(v*.35,.3,500,0,pan,.05+d/3000)}
+  auNoise(v,q[1]*(1+d/900),q[0]*(1-.75*d/1100),0,pan);if(d<700)auTone(v*.9,q[2],q[2]*.33,q[1]*.8,pan);if(d>350)auNoise(v*.35,.3,500,0,pan,.05+d/3000);auShotExtra(id,v,d,pan)}
 function auEvent(e){const pan=panOf(e.x,e.y),d=Math.hypot(e.x-cam.x,e.y-cam.y),k=Math.pow(Math.max(0,1-d/800),2);
   if(e.k==='chest'){auNoise(.2*k,.1,1100,300,pan);auTone(.14*k,120,260,.18,pan,.02,'triangle')}
   else if(e.k==='pick')auNoise(.1,.035,5200,1700);
   else if(e.k==='hurt'){auTone(.32,170,55,.12);auNoise(.16,.06,800)}
   else if(e.k==='kill'){auNoise(.22,.05,3200,900);auTone(.34,95,42,.22)}
   else if(e.k==='dead'){auTone(.4,210,34,.7);auNoise(.2,.5,500)}
-  else if(e.k==='heal')auNoise(.09*k,.3,2200,900,pan);
-  else if(e.k==='boom'){const q=Math.pow(Math.max(0,1-d/1400),2);auNoise(.7*q,.55,700,0,pan);auTone(.7*q,72,26,.55,pan);auNoise(.3*q,.9,300,0,pan,.08)}
+  else if(e.k==='heal'){auNoise(.12*k,.18,2800,900,pan);auNoise(.1*k,.12,1800,600,pan,.2);auTone(.08*k,180,320,.4,pan,.1,'triangle')}
+  else if(e.k==='shield'){auNoise(.1*k,.5,7000,3000,pan);auTone(.09*k,220,620,.45,pan,.05,'triangle')}
+  else if(e.k==='throw'){auNoise(.12*k,.03,5000,2500,pan);auNoise(.1*k,.25,1500,400,pan,.08);auNoise(.08*k,.04,2500,800,pan,.75)}
+  else if(e.k==='boom'){const q=Math.pow(Math.max(0,1-d/1400),2);auNoise(.7*q,.55,700,0,pan);auTone(.7*q,72,26,.55,pan);auNoise(.3*q,.9,300,0,pan,.08);for(let i=0;i<4;i++)auNoise(.06*q,.05,3000,1000,pan,.25+i*.13+rnd()*.08)}
   else if(e.k==='drop'){auNoise(.2,.8,900,200);auTone(.2,300,90,.6)}
   else if(e.k==='wumms'){auTone(.18*k,90,40,.12,pan);auNoise(.12*k,.08,900,0,pan)}
   else if(e.k==='break')auNoise(.16*k,.07,4200,1500,pan)}
@@ -1520,7 +1531,14 @@ function sounds(m,ts){if(!AU.on||!AU.ctx){heardT=m.t;m.ev.length=0;return}
   let n=0;for(let i=m.noise.length-1;i>=0&&n<5;i--){const q=m.noise[i];if(q.t<=heardT)break;const d=Math.hypot(q.x-cam.x,q.y-cam.y);if(d<1100){n++;auShot(q.w,d,panOf(q.x,q.y))}}
   heardT=m.t;for(const e of m.ev)auEvent(e);m.ev.length=0;
   const s=m.storm,dd=Math.hypot(cam.x-s.x,cam.y-s.y)-s.r;AU.storm.gain.setTargetAtTime(clamp(.05+(dd+500)/500*.32,.04,.42),AU.ctx.currentTime,.4);
-  if(spec&&spec.alive&&spec.mv&&ts-stepT>(spec.run?230:330)/Math.min(speed,2)){stepT=ts;auNoise(.045,.05,spec.run?650:430)}
+  if(spec&&spec.alive&&spec.mv&&ts-stepT>(spec.run?230:330)/Math.min(speed,2)){stepT=ts;const B=m.B,r=spec.run;
+    if(B.snow){auNoise(.07,.09,2600,900);auNoise(.03,.06,900)}
+    else if(B.ind||B.city){auNoise(.06,.03,3200,700);auTone(.03,140,90,.04)}
+    else if(m.biome==='wueste'){auNoise(.06,.08,3500,1500)}
+    else if(m.biome==='wald'){auNoise(.05,.06,r?900:650);if(rnd()<.25)auNoise(.05,.02,4000,2000,0,.03)}
+    else auNoise(.05,.06,r?700:480,150)}
+  if(spec&&spec.alive){const busy=spec.act==='heal';if(busy&&ts-(AU.healT||0)>420){AU.healT=ts;auNoise(spec.useK==='s'?.05:.06,.12,spec.useK==='s'?5000:2400,700)}
+    const rl=spec.rel>0;if(rl&&!AU.rl){auNoise(.09,.04,3000,1200);auNoise(.08,.05,2200,900,0,.35)}if(!rl&&AU.rl&&spec.mags[spec.cur]>0)auNoise(.1,.04,3600,1500);AU.rl=rl}
   /* Schritte anderer Bots in Hörweite, mit Richtung */
   if(ts-stepO>260){stepO=ts;let k=0;gNear(m.bg,cam.x,cam.y,260,o=>{if(k>=3||o===spec||!o.alive||!o.mv||o.pose)return;const d=Math.hypot(o.x-cam.x,o.y-cam.y),hr=o.run?260:150;if(d<hr){k++;auNoise(.05*Math.pow(1-d/hr,1.5)+.006,.05,o.run?600:400,0,clamp((o.x-cam.x)/200,-1,1),rnd()*.12)}})}}
 function auStop(){if(AU.ctx)AU.storm.gain.setTargetAtTime(0,AU.ctx.currentTime,.2)}
