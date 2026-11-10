@@ -554,8 +554,12 @@ function mkBot(m,i,name,isP,cfg,pts,tier){const W=m.W,C=W/2;
   if(b.perks.has('p_loot')){const id=pick(['smg','shotgun','rifle']);b.wp=[{id,rar:0}];b.mags=[magOf(b,id)]}
   return b}
 function randCfg(){let q=rnd()*100,tier=0;for(let i=0;i<TIERS.length;i++){if((q-=TIERS[i].w)<=0){tier=i;break}}
-  const pts={vital:0,aim:0,spd:0,rel:0,sight:0,armor:0,sta:0,crit:0,tough:0,turn:0,heal:0,quiet:0,loot:0},ks=Object.keys(pts);let n=TIERS[tier].p;
-  while(n>0){const k=pick(ks);if(pts[k]<8){pts[k]++;n--}}
+  const pts={vital:0,aim:0,spd:0,rel:0,sight:0,armor:0,sta:0,crit:0,tough:0,turn:0,heal:0,quiet:0,loot:0},ks=Object.keys(pts);
+  /* Punkte stufenlos innerhalb der Stufe, dazu ein eigener Schwerpunkt pro Bot (Panzer, Schütze, Läufer, Allrounder ...) */
+  const lo=TIERS[tier].p,hi=tier<TIERS.length-1?TIERS[tier+1].p-1:96;let n=Math.round(lo+Math.pow(rnd(),1.3)*(hi-lo));
+  const BUILDS=[['vital','armor','tough','heal'],['aim','crit','turn','sight'],['spd','sta','quiet','loot'],['rel','aim','turn','vital'],['sight','aim','quiet','crit'],ks];
+  const fav=pick(BUILDS),wt=ks.map(k=>fav.includes(k)?4+rnd()*3:.4+rnd()),ws=wt.reduce((a,b)=>a+b,0);
+  for(let g=0;n>0&&g<4000;g++){let q=rnd()*ws,i=0;while((q-=wt[i])>0)i++;const k=ks[i];if(pts[k]<8){pts[k]++;n--}}
   const perks=[];if(tier>=3&&rnd()<.4)perks.push(pick(['p_blood','p_medic','p_storm','p_clutch','p_ammo','p_sprint']));if(tier===5)perks.push('p_first');
   return{tier,pts,cfg:{skin:pick(SKINK),style:pick(['balanced','balanced','balanced','rusher','careful','careful','ambush','hunter','scharf','surv']),land:'any',retreat:rr(.3,.6),healAt:rr(.5,.85),early:rnd()<.6,loot:rnd()<.6?'all':'min',high:rnd()<.5,prep:rnd()<.4,stance:rnd()<.7,perks}}}
 const SKINK=Object.keys(SKINS);
