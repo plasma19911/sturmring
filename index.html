@@ -1073,7 +1073,7 @@ function makeView(cv){
   try{ren=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'})}catch(e){return null}
   const T=THREE;ren.setPixelRatio(Math.min(S.cfg.gfx==='low'?1.5:3,window.devicePixelRatio||1));
   ren.outputEncoding=T.sRGBEncoding;ren.toneMapping=T.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;
-  const touchDev=matchMedia('(pointer:coarse)').matches,mobileGraphics=S.cfg.gfx==='low',grassCount=mobileGraphics?760:touchDev?1200:1700;
+  const touchDev=matchMedia('(pointer:coarse)').matches,mobileGraphics=S.cfg.gfx==='low',grassCount=mobileGraphics?760:touchDev?2000:2600;
   ren.shadowMap.enabled=!mobileGraphics;ren.shadowMap.type=T.PCFSoftShadowMap;ren.shadowMap.autoUpdate=false;let shadowStamp=-1;
   const TS=2000;let tiles=new Map(),buildTile=null;
   const tU={value:0},skyC=document.createElement('canvas'),skyT=new T.CanvasTexture(skyC),stU={value:new T.Vector3(0,0,1e9)},focU={value:new T.Vector4(0,0,1,0)},pv=new T.Vector3(),bufV=new T.Vector2();let chunks=[];
@@ -1153,6 +1153,10 @@ function makeView(cv){
   const glowT=(ring=>{const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d'),gr=g.createRadialGradient(64,64,ring?40:0,64,64,62);if(ring){gr.addColorStop(0,'rgba(255,220,120,0)');gr.addColorStop(.6,'rgba(255,225,130,1)');gr.addColorStop(1,'rgba(255,200,80,0)')}else{gr.addColorStop(0,'rgba(255,245,200,1)');gr.addColorStop(.35,'rgba(255,170,60,.7)');gr.addColorStop(1,'rgba(255,90,20,0)')}g.fillStyle=gr;g.fillRect(0,0,128,128);return new T.CanvasTexture(c)});
   const mkGlow=tex=>{const sp=new T.Sprite(new T.SpriteMaterial({map:tex,transparent:true,depthWrite:false,blending:T.AdditiveBlending}));sp.visible=false;scene.add(sp);return sp};
   const boomT=glowT(false),ringT=glowT(true),boomP=[mkGlow(boomT),mkGlow(boomT),mkGlow(boomT)],critP=[0,1,2].map(()=>({sp:mkGlow(ringT),t:1,x:0,y:0}));let critI=0;
+  /* Wolken und Sonnenschein am Himmel */
+  const cloudT=(()=>{const c=document.createElement('canvas');c.width=256;c.height=128;const g=c.getContext('2d');for(let i=0;i<14;i++){const x=40+Math.random()*176,y=50+Math.random()*30,r=22+Math.random()*30,gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,'rgba(255,255,255,.9)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,256,128)}return new T.CanvasTexture(c)})();
+  const clouds=[];for(let i=0;i<(mobileGraphics?10:22);i++){const sp=new T.Sprite(new T.SpriteMaterial({map:cloudT,transparent:true,depthWrite:false,opacity:.75,fog:false}));sp.userData={ox:(Math.random()-.5)*7000,oz:(Math.random()-.5)*7000,h:900+Math.random()*500,s:700+Math.random()*700};sp.scale.set(sp.userData.s,sp.userData.s/2,1);sp.renderOrder=-1;scene.add(sp);clouds.push(sp)}
+  const sunGlow=new T.Sprite(new T.SpriteMaterial({map:glowT(false),transparent:true,depthWrite:false,blending:T.AdditiveBlending,fog:false,opacity:.55}));sunGlow.scale.set(1600,1600,1);scene.add(sunGlow);
   /* Schadenszahlen über den Köpfen */
   const dnP=[];for(let i=0;i<12;i++){const c=document.createElement('canvas');c.width=192;c.height=64;const tex=new T.CanvasTexture(c),sp=new T.Sprite(new T.SpriteMaterial({map:tex,transparent:true,depthTest:false,depthWrite:false}));sp.visible=false;sp.renderOrder=6;scene.add(sp);dnP.push({c,tex,sp,t:1,x:0,y:0,hs:false})}let dnI=0;
   const smkM=new T.MeshLambertMaterial({color:0xc9d0d6,transparent:true,opacity:.78,depthWrite:false}),smkP=[];for(let i=0;i<5;i++){const g=new T.Group();for(let k=0;k<6;k++){const s=new T.Mesh(new T.IcosahedronGeometry(1,1),smkM);s.userData={a:k*1.05+i,r:20+(k%3)*18,s:34+(k*7)%22};g.add(s)}g.visible=false;scene.add(g);smkP.push(g)}
@@ -1393,6 +1397,8 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
     {const i0=Math.floor((cx-(rot?3900:3300))/TS),i1=Math.floor((cx+(rot?3900:3300))/TS),j0=Math.floor((cy-3900)/TS),j1=Math.floor((cy+(rot?3900:1900))/TS);let budget=tiles.size?1:99;for(const t of tiles.values())t.vis=false;
       for(let tj=j0;tj<=j1;tj++)for(let ti=i0;ti<=i1;ti++){if(ti<0||tj<0||ti*TS>=W||tj*TS>=W)continue;const k=ti+'_'+tj;let t=tiles.get(k);if(!t){if(budget<=0)continue;budget--;t=buildTile(ti,tj);tiles.set(k,t)}t.vis=true}
       for(const[k,t]of tiles){t.g.visible=t.vis;if(!t.vis&&tiles.size>40&&(Math.abs(t.x-cx)>8000||Math.abs(t.y-cy)>8000)){world.remove(t.g);t.own.forEach(o=>o.dispose());tiles.delete(k)}}}
+    {const dk=!!m.B.dark||m.tod==='nacht';for(const c of clouds){const u=c.userData;let x=((u.ox+ts*.012)%7000+7000)%7000-3500;c.position.set(cx+x,vy+u.h,cy+u.oz);c.material.opacity=dk?.18:m.tod==='abend'?.6:.75;c.material.color.setHex(m.tod==='abend'?0xffc8a0:dk?0x8090b0:0xffffff)}
+      sunGlow.visible=!dk;sunGlow.position.set(cx+1800,vy+1500,cy-3200);sunGlow.material.color.setHex(m.tod==='abend'?0xff9a50:0xfff2c8)}
     if(water)water.material.opacity=.8+Math.sin(ts/900)*.04;
     if(decor){const ci=Math.floor(cx/46),cj=Math.floor(cy/46),key=ci+'_'+cj;if(key!==decK){decK=key;let dn=0;const peb=decor.userData.peb;
         for(let j=cj-24;j<=cj+20&&dn<grassCount;j++)for(let i=ci-19;i<=ci+19&&dn<grassCount;i++){if(hsh(i,j,0)>(mobileGraphics?.34:.72))continue;const x=(i+hsh(i,j,1))*46,y=(j+hsh(i,j,2))*46;if(x<5||y<5||x>W-5||y>W-5)continue;const gh=height(m,x,y);if(m.ig&&gh<9)continue;
