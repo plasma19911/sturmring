@@ -1,5 +1,5 @@
 <!doctype html><html lang="de"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Sturmring</title>
+<title>Sturmring</title><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="icon-192.png"><meta name="theme-color" content="#080f17"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Sturmring">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Chakra+Petch:wght@600;700&display=swap">
 <style>
@@ -291,6 +291,29 @@ button{touch-action:manipulation}button:focus-visible,input:focus-visible{outlin
  #app{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}.hero{height:150px}.hud-top{right:auto;max-width:35vw}.mapn,#feed{display:none}.hud-r{width:144px;grid-template-columns:repeat(3,44px);gap:6px}#mini{width:64px;height:64px}.hud-r button{min-height:44px;width:44px}.hud-r #fsBtn{min-height:44px;width:100%}
  .hud-bot{display:grid;grid-template-columns:minmax(220px,350px) 100px;justify-content:space-between;max-width:none;gap:8px;bottom:calc(6px + env(safe-area-inset-bottom))}.status{width:auto;max-width:350px;padding:6px 9px}.status .who b{font-size:12px}#sVals{font-size:11px}.speed{width:100px}.speed button{min-height:44px;width:100%;font-size:14px}#hudDetails{min-height:44px}
  #match.details-open .status{max-height:calc(100dvh - 100px);overflow:auto;overscroll-behavior:contain}#result{gap:10px}#result .stats{grid-template-columns:repeat(2,minmax(0,1fr))}#result .card{padding:12px;font-size:13px}#result .stats dt{font-size:11px}#result .stats dd{font-size:20px}#result .res-top .hint{font-size:12px}#result .startbar .go{min-height:48px}
+}
+</style>
+<style>
+/* Ausrüstung immer sichtbar, kompaktes HUD */
+#hudDetails{display:none!important}
+#sInv{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:3px!important}
+#sArm{display:flex!important;flex-wrap:wrap}
+@media(max-width:1000px){
+ .status{padding:6px 8px!important;gap:3px!important;border-radius:10px!important}
+ .status .who b{font-size:11.5px!important}.status .who span{font-size:10px!important}
+ #sVals,#sArm{font-size:9.5px!important;gap:2px 7px!important}
+ .hb{height:5px!important}.hb.s,.hb.st{height:3px!important}
+ .inv div{padding:2px 2px!important;font-size:8px!important;line-height:1.15!important;border-top-width:2px!important;white-space:nowrap!important}
+ .inv svg{height:12px!important}
+ .hud-bot{grid-template-columns:minmax(0,1fr) 64px!important;gap:5px!important}
+ .speed{width:64px!important;gap:4px!important}.speed button{min-height:36px!important;font-size:12px!important;padding:4px!important}
+ .big{min-width:40px!important;padding:3px 7px!important}.big b{font-size:17px!important}.big span{font-size:8.5px!important}
+ .zone{max-width:180px!important;font-size:10px!important;padding:4px 7px!important}
+ .hud-r{width:120px!important;grid-template-columns:repeat(3,38px)!important;gap:4px!important}
+ #mini{width:78px!important;height:78px!important}
+ .hud-r button{width:38px!important;min-width:38px!important;min-height:34px!important;font-size:9px!important}
+ .hud-r #fsBtn,.hud-r #oriBtn{width:100%!important;min-height:30px!important;font-size:10px!important}
+ .hud-top{right:132px!important}
 }
 </style>
 <div id="app">
@@ -1635,4 +1658,4 @@ requestAnimationFrame(frame);
 }
 </script>
 
-</body></html>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{})</script></body></html>
