@@ -1021,7 +1021,12 @@ function lbLoad(){if(!LB_URL)return;fetch(LB_URL+'/top').then(r=>r.json()).then(
 function loadSave(){const d=defSave();try{const s=JSON.parse(localStorage.getItem(KEY));if(s){const c=Object.assign(d.cfg,s.cfg||{});c.skills=Object.assign(defSave().cfg.skills,(s.cfg||{}).skills||{});Object.assign(d,s);d.cfg=c;if(!s.maps){d.maps={};d.best=0}}}catch(e){}
   const budget=3+2*(Math.max(1,d.level)-1);if(Object.values(d.cfg.skills).reduce((a,b)=>a+b,0)>budget){d.cfg.skills=defSave().cfg.skills;}
   delete d.cfg.prio;if(!d.camV2){d.cfg.camRot=true;d.camV2=1}if(!SKINS[d.cfg.skin])d.cfg.skin='rekrut';if(!STYLES[d.cfg.style])d.cfg.style='balanced';return d}
-function store(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function store(){const j=JSON.stringify(S);try{localStorage.setItem(KEY,j)}catch(e){}idbPut(j)}
+/* Zweite Kopie des Spielstands in IndexedDB, falls der Browser localStorage leert */
+function idb(){return new Promise((ok,no)=>{try{const r=indexedDB.open('sturmring',1);r.onupgradeneeded=()=>r.result.createObjectStore('s');r.onsuccess=()=>ok(r.result);r.onerror=no}catch(e){no(e)}})}
+function idbPut(j){if(typeof indexedDB==='undefined')return;idb().then(d=>{d.transaction('s','readwrite').objectStore('s').put(j,'save')}).catch(()=>{})}
+function idbGet(){return idb().then(d=>new Promise(ok=>{const q=d.transaction('s').objectStore('s').get('save');q.onsuccess=()=>ok(q.result||null);q.onerror=()=>ok(null)})).catch(()=>null)}
+const xpOf=o=>o?(o.games||0)*1e6+(o.level||0)*1e3:-1;
 /* Erfolge: gestaffelt, bringen EP und etwas Gold */
 const ACH=[],RN=['I','II','III','IV','V'],fmt=n=>n.toLocaleString('de-DE');
 function tiers(key,label,unit,f,goals,xp,gold){goals.forEach((g,i)=>ACH.push({id:key+g,fam:key,name:label+' '+RN[i],desc:fmt(g)+' '+unit,f,goal:g,xp:xp[i],gold:Math.round(gold[i]/10)*5}))}
@@ -1458,7 +1463,7 @@ function renderLobby(){const c=S.cfg,need=xpNeed(S.level),free=ptsTotal()-ptsSpe
     h+=`<section class="card" data-t="shop"><h2>Grabsteine</h2><div class="opts">`+Object.entries(GRV).map(([k,v])=>item('g_',k,v[0],v[1],(c.grave||'std')===k,`<i class="sw" style="background:${v[2]}"></i>`,v[3])).join('')+`</div><p class="hint">Steht dort, wo dein Bot jemanden besiegt hat, und auf seinem eigenen Grab.</p></section>`;
     h+=`<section class="card" data-t="shop"><h2>Schuss-Animationen</h2><div class="opts">`+Object.entries(SFX).map(([k,v])=>item('f_',k,v[0],v[1],c.shotfx===k,`<i class="sw" style="background:${v[2]}"></i>`,v[4],v[3])).join('')+`</div></section>`;
     h+=`<section class="card" data-t="shop"><h2>Fallschirme</h2><div class="opts">`+Object.entries(CHU).map(([k,v])=>item('c_',k,v[0],v[1],c.chute===k,`<i class="sw" style="background:${hex(v[2])};border-radius:${v[3]==='cone'?'4px 4px 50% 50%':v[3]==='ball'?'50%':'50% 50% 6px 6px'}"></i>`,v[4])).join('')+`</div><p class="hint">Damit schwebt dein Bot zu Rundenbeginn ein.</p></section>`;
-    h+=`<section class="card" data-t="shop"><h2>Anzeige <small>kostenlos</small></h2>`+pair('gfx',c.gfx!=='low',['Grafik hoch','Echte Schatten, dichtes Gras, feineres Gelände'],['Grafik sparsam','Für schwächere Handys, läuft flüssiger'])+pair('dmgNum',c.dmgNum!==false,['Schadenszahlen an','Zahlen steigen über getroffenen Gegnern auf'],['Schadenszahlen aus','Keine Zahlen im Bild'])+pair('critFx',c.critFx!==false,['Kopfschuss-Effekt an','Große goldene Zahl mit Lichtring'],['Kopfschuss-Effekt aus','Kopfschüsse sehen aus wie normale Treffer'])+`</section>`}
+    h+=`<section class="card" data-t="shop"><h2>Anzeige <small>kostenlos</small></h2>`+pair('gfx',c.gfx!=='low',['Grafik hoch','Echte Schatten, dichtes Gras, feineres Gelände'],['Grafik sparsam','Für schwächere Handys, läuft flüssiger'])+pair('dmgNum',c.dmgNum!==false,['Schadenszahlen an','Zahlen steigen über getroffenen Gegnern auf'],['Schadenszahlen aus','Keine Zahlen im Bild'])+`<div class="opts"><button class="opt" data-act="exp"><b>Spielstand sichern</b><span>Kopiert einen Code, mit dem du alles auf ein anderes Gerät mitnimmst</span></button><button class="opt" data-act="imp"><b>Spielstand laden</b><span>Code einfügen und Fortschritt übernehmen</span></button></div>`+pair('critFx',c.critFx!==false,['Kopfschuss-Effekt an','Große goldene Zahl mit Lichtring'],['Kopfschuss-Effekt aus','Kopfschüsse sehen aus wie normale Treffer'])+`</section>`}
   h+=`<section class="card" data-t="bot"><h2>Spielweise</h2><div class="opts">`+Object.entries(STYLES).map(([k,v])=>{const lk=v.lock&&!has(v.lock);
     return `<button class="opt${lk?' locked':''}" data-act="style" data-v="${k}" aria-pressed="${c.style===k}" ${lk?'aria-disabled="true"':''}><b>${v.n}</b><span>${lk?cond(v.lock):v.d}</span></button>`}).join('')+`</div></section>`;
   h+=`<section class="card" data-t="skills"><h2>Skillpunkte <small>${free} frei</small></h2>`+Object.entries(SK).map(([k,v])=>{const n=c.skills[k];
@@ -1473,6 +1478,8 @@ function renderLobby(){const c=S.cfg,need=xpNeed(S.level),free=ptsTotal()-ptsSpe
 
 $('lobbyBody').addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||t.disabled||t.getAttribute('aria-disabled'))return;
   const c=S.cfg,a=t.dataset.act,v=t.dataset.v;
+  if(a==='exp'){const code=btoa(unescape(encodeURIComponent(JSON.stringify(S))));(navigator.clipboard?navigator.clipboard.writeText(code):Promise.reject()).then(()=>alert('Code kopiert. Irgendwo speichern, z. B. in einer Notiz.'),()=>prompt('Diesen Code kopieren und speichern:',code));return}
+  if(a==='imp'){const code=prompt('Spielstand-Code einfügen:');if(!code)return;try{const o=JSON.parse(decodeURIComponent(escape(atob(code.trim()))));if(!o||!o.cfg)throw 0;localStorage.setItem(KEY,JSON.stringify(o));S=loadSave();store();renderLobby();alert('Spielstand geladen.')}catch(e){alert('Code ungültig.')}return}
   if(a==='tab'){tab=v;try{localStorage.setItem('sturmring-tab',v)}catch(e){}renderLobby();return}
   if(a==='style')c.style=v;else if(a==='land')c.land=v;else if(a==='early')c.early=v==='1';else if(a==='high')c.high=v==='1';else if(a==='prep')c.prep=v==='1';else if(a==='gfx'){const g=v==='1'?'high':'low';if(c.gfx===g||(!c.gfx&&g==='high'))return;c.gfx=g;store();location.reload();return}else if(a==='dmgNum')c.dmgNum=v==='1';else if(a==='critFx')c.critFx=v==='1';
   else if(a==='attw'){attW=v;renderLobby();return}
@@ -1658,6 +1665,8 @@ function frame(ts){requestAnimationFrame(frame);const dt=Math.min(.05,(ts-last)/
     if(!demoSpec||!demoSpec.alive)demoSpec=(demoSpec&&demoSpec.killer&&demoSpec.killer.alive)?demoSpec.killer:demo.bots.find(b=>b.alive);
     if(demoSpec&&demoView){dcam.x+=(demoSpec.x-dcam.x)*.08;dcam.y+=(demoSpec.y-dcam.y)*.08;demoView.render(demo,dcam.x,dcam.y,DCAM,ts,dt,1,demoSpec)}}}
 
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+idbGet().then(j=>{if(!j)return store();try{const o=JSON.parse(j);if(xpOf(o)>xpOf(S)){localStorage.setItem(KEY,j);S=loadSave();renderLobby()}else store()}catch(e){}});
 renderLobby();
 if(still)staticDemo();
 requestAnimationFrame(frame);
