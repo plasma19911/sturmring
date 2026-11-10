@@ -77,7 +77,7 @@ input[type=range]{width:100%;accent-color:var(--amber);height:28px}
 .pips i{width:12px;height:5px;border-radius:2px;background:var(--line)}
 .pips i.on{background:var(--me)}
 
-.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:8px 0;margin-block:-6px}
+.tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:8px 0;margin-block:-6px}
 .tabs button{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:10px 0;font:600 13px var(--disp);white-space:nowrap;min-width:0}
 .tabs button[aria-pressed="true"]{background:var(--amber);color:#1b1404;border-color:var(--amber)}
 .startbar{position:sticky;bottom:0;padding:16px 0 calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--bg) 38%);margin-top:4px}
@@ -596,7 +596,7 @@ function newMatch(cfg,o){o=o||{};const W=o.W||32000,N=o.n||1000,id=BIOMES[o.biom
   m.storm={x:W/2,y:W/2,r:W*.75,ph:0,t:0,shr:false};
   gen(m);m.bg=mkGrid(W,450);m.sgD=W/Math.sqrt(N)*(B.hm==='isl'?.42:.55);m.sg=mkGrid(W,m.sgD);
   const ord=[];for(let i=0;i<1000;i++)ord.push(i);ord.sort(()=>rnd()-.5);
-  if(cfg)m.bots.push(mkBot(m,0,'Dein Bot',true,cfg,cfg.skills,-1));
+  if(cfg)m.bots.push(mkBot(m,0,cfg.name||'Dein Bot',true,cfg,cfg.skills,-1));
   while(m.bots.length<N){const e=randCfg(),k=ord[m.bots.length%1000];m.bots.push(mkBot(m,m.bots.length,PRE[k%25]+' '+SUF[(k/25)|0],false,e.cfg,e.pts,e.tier))}
   nextZone(m);return m}
 
@@ -988,6 +988,13 @@ const UNLOCKS=[
 const KEY='sturmring-save-v1';
 const defSave=()=>({camV2:1,level:1,xp:0,games:0,wins:0,best:0,kills:0,gold:0,bought:[],hsTotal:0,grenTotal:0,chestTotal:0,goldTotal:0,wk:{},achDone:[],maps:{},unlocked:[],cfg:{skin:'rekrut',style:'balanced',land:'any',retreat:.35,healAt:.6,early:true,loot:'all',high:true,prep:true,stance:true,wskin:'std',tracer:'std',chute:'std',shotfx:'std',att:{},abil:'none',grave:'std',dmgNum:true,critFx:true,camRot:true,skills:{vital:0,aim:0,spd:0,rel:0,sight:0,armor:0,sta:0,crit:0,tough:0,turn:0,heal:0,quiet:0,loot:0},perks:[]}});
 let attW='rifle';
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* Gemeinsame Bestenliste: Adresse des Cloudflare-Workers hier eintragen */
+const LB_URL='';
+function lbId(){if(!S.pid){S.pid=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');store()}return S.pid}
+function lbSend(r){if(!LB_URL)return;try{fetch(LB_URL+'/score',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:lbId(),name:S.cfg.name||'Dein Bot',place:r.place,kills:r.kills,win:r.win?1:0,level:S.level})}).catch(()=>{})}catch(e){}}
+function lbLoad(){if(!LB_URL)return;fetch(LB_URL+'/top').then(r=>r.json()).then(a=>{const box=document.getElementById('lbBox');if(!box)return;const me=S.pid;
+  box.innerHTML=a.length?`<ol class="kf" style="max-height:none">${a.map((p,i)=>`<li style="grid-template-columns:30px 1fr auto auto;${p.id===me?'outline:1px solid var(--me)':''}"><b>${i+1}.</b><span class="kn"><b>${esc(p.name)}</b><small>Lvl ${p.level} · ${p.games} Runden · beste Platzierung ${p.best}.</small></span><i>${p.wins} 🏆</i><i>${p.kills} Kills</i></li>`).join('')}</ol>`:'Noch keine Einträge.'}).catch(()=>{const box=document.getElementById('lbBox');if(box)box.textContent='Bestenliste gerade nicht erreichbar.'})}
 function loadSave(){const d=defSave();try{const s=JSON.parse(localStorage.getItem(KEY));if(s){const c=Object.assign(d.cfg,s.cfg||{});c.skills=Object.assign(defSave().cfg.skills,(s.cfg||{}).skills||{});Object.assign(d,s);d.cfg=c;if(!s.maps){d.maps={};d.best=0}}}catch(e){}
   const budget=3+2*(Math.max(1,d.level)-1);if(Object.values(d.cfg.skills).reduce((a,b)=>a+b,0)>budget){d.cfg.skills=defSave().cfg.skills;}
   delete d.cfg.prio;if(!d.camV2){d.cfg.camRot=true;d.camV2=1}if(!SKINS[d.cfg.skin])d.cfg.skin='rekrut';if(!STYLES[d.cfg.style])d.cfg.style='balanced';return d}
@@ -1384,7 +1391,7 @@ const panOf=(x,y)=>clamp(((x-cam.x)*Math.cos(camYaw)-(y-cam.y)*Math.sin(camYaw))
 const CAMS=[{h:180,b:380,n:'Vorschau'},{h:330,b:230,n:'mittel'},{h:520,b:300,n:'weit'},{h:210,b:190,n:'nah'}],DCAM={h:180,b:380};
 const cam={x:0,y:0},dcam={x:0,y:0};
 const has=id=>S.unlocked.includes(id),ptsTotal=()=>3+2*(S.level-1),ptsSpent=()=>Object.values(S.cfg.skills).reduce((a,b)=>a+b,0),slotN=()=>1+has('slot2')+has('slot3');
-let tab='bot';try{tab=localStorage.getItem('sturmring-tab')||'bot'}catch(e){}if(!['bot','skills','shop','erfolge','karten'].includes(tab))tab='bot';
+let tab='bot';try{tab=localStorage.getItem('sturmring-tab')||'bot'}catch(e){}if(!['bot','skills','shop','erfolge','karten','liste'].includes(tab))tab='bot';
 const still=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 const cond=id=>UNLOCKS.find(u=>u.id===id).cond;
 const WSK={std:['Standard',0,'#3a4048'],tarn:['Tarnmuster',200,'linear-gradient(135deg,#2f3a24 50%,#6b7a4a 50%)'],eis:['Eisblau',250,'linear-gradient(135deg,#2a3a55 50%,#9cc4de 50%)'],neon:['Neon',300,'linear-gradient(135deg,#ff3fa4 50%,#35e0c8 50%)'],gold:['Vergoldet',400,'linear-gradient(135deg,#8a6a10 30%,#ffd34d 70%)']},TRK={std:['Standard',0,'#fff0a8'],rot:['Rot',150,'#ff4a3c'],blau:['Blau',150,'#4ab8ff'],gruen:['Grün',150,'#6aff7a'],lila:['Lila',200,'#c86bff']};
@@ -1403,8 +1410,9 @@ function renderLobby(){const c=S.cfg,need=xpNeed(S.level),free=ptsTotal()-ptsSpe
   const nSk=Object.keys(SKINS).filter(k=>!lockedSkin(k)).length,nUn=S.unlocked.length;
   let h=`<section class="card prof"><div class="lvl"><span>Stufe</span>${S.level}<em>${RANKS[Math.min(RANKS.length-1,((S.level-1)/2)|0)]}</em></div><div class="prof-r"><div class="bar"><i style="width:${Math.min(100,S.xp/need*100)}%"></i></div>
     <div class="meta"><span><b>${S.xp}</b> / ${need} EP</span><span>Runden <b>${S.games}</b></span><span>Siege <b>${S.wins}</b></span><span>Kills <b>${S.kills}</b></span><span>Gold <b>${S.gold}</b></span><span>Beste Platzierung <b>${S.best?S.best+'.':'–'}</b></span><span>Freigeschaltet <b>${nUn} von ${UNLOCKS.length}</b></span></div></div></section>`;
-  h+=`<nav class="tabs">${[['bot','Bot'],['skills',free>0?`Skills (${free})`:'Skills'],['shop','Shop'],['erfolge','Erfolge'],['karten','Karten']].map(q=>`<button data-act="tab" data-v="${q[0]}" aria-pressed="${tab===q[0]}">${q[1]}</button>`).join('')}</nav>`;
+  h+=`<nav class="tabs">${[['bot','Bot'],['skills',free>0?`Skills (${free})`:'Skills'],['shop','Shop'],['erfolge','Erfolge'],['liste','Bestenliste'],['karten','Karten']].map(q=>`<button data-act="tab" data-v="${q[0]}" aria-pressed="${tab===q[0]}">${q[1]}</button>`).join('')}</nav>`;
   h+=`<section class="card" data-t="karten"><h2>Karten <small>jede Runde zufällig</small></h2><div class="opts">`+Object.entries(BIOMES).map(([k,v])=>`<div class="opt"><b><i class="dot" style="background:${v.mini}"></i>${v.n}</b><span>${v.d}</span><em>${S.maps[k]?'Beste Platzierung: '+S.maps[k]+'.':'Noch nicht gespielt'}</em></div>`).join('')+`</div></section>`;
+  h+=`<section class="card" data-t="bot"><h2>Name</h2><div class="field"><input id="botName" maxlength="16" autocomplete="off" value="${esc(c.name||'Dein Bot')}" style="font:600 16px var(--body);padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--fg)"></div><p class="hint">So heißt dein Bot im Spiel und in der Bestenliste.</p></section>`;
   h+=`<section class="card" data-t="bot"><h2>Skin <small>${nSk} von ${Object.keys(SKINS).length}</small></h2><div class="opts">`+Object.entries(SKINS).filter(q=>!q[1].cost||S.bought.includes(q[0])).map(([k,v])=>{const lk=lockedSkin(k),buy=false;
     return `<button class="opt skin${lk&&!buy?' locked':''}" data-act="${buy?'buy':'skin'}" data-v="${k}" aria-pressed="${c.skin===k}" ${lk&&!buy?'aria-disabled="true"':''}><i class="sw" style="background:linear-gradient(${hex(v.head)} 0 38%,${hex(v.body)} 38%);box-shadow:inset 0 5px 0 ${hex(v.hc||v.head)}"></i><span class="tx"><b>${v.n}</b>${lk?`<span>${v.cost?(buy?'Kaufen für ':'')+v.cost+' Gold':cond(v.lock)}</span>`:''}</span></button>`}).join('')+`</div><p class="hint">Weitere Skins gibt es im Shop gegen Gold.</p></section>`;
   {const item=(type,k,name,cost,sel,sw,req,desc)=>{const own=!cost||S.bought.includes(type+k),rl=!own&&req&&!S.achDone.includes(req),can=!rl&&S.gold>=cost,ok=own||can;return `<button class="opt skin${ok?'':' locked'}" data-act="shop" data-v="${type}:${k}" aria-pressed="${sel}" ${ok?'':'aria-disabled="true"'}>${sw}<span class="tx"><b>${name}</b>${desc?`<span>${desc}</span>`:''}${own?'':`<span>${rl?'Erfolg „'+achName(req)+'“ nötig · ':can?'Kaufen für ':''}${cost} Gold</span>`}</span></button>`};
@@ -1430,7 +1438,8 @@ function renderLobby(){const c=S.cfg,need=xpNeed(S.level),free=ptsTotal()-ptsSpe
     return `<button class="opt${lk?' locked':''}" data-act="perk" data-v="${u.id}" aria-pressed="${c.perks.includes(u.id)}" ${lk?'aria-disabled="true"':''}><b>${u.name}</b><span>${lk?u.cond:u.desc}</span></button>`}).join('')+`</div>${slots<3?`<p class="hint">${slots<2?'Zweiter Perk-Platz: '+cond('slot2')+'.':'Dritter Perk-Platz: '+cond('slot3')+'.'}</p>`:''}</section>`;
   {const done=S.achDone.length;h+=`<section class="card" data-t="erfolge"><h2>Erfolge <small>${done} von ${ACH.length}</small></h2>`+ACH.map(a=>{const v=a.f(S)||0,ok=S.achDone.includes(a.id);
       return `<div class="sk"><div class="t"><b>${ok?'✓ ':''}${a.name}</b><span>${a.desc} · +${fmt(a.xp)} EP${a.gold?' · +'+a.gold+' Gold':''}</span><div class="bar" style="margin-top:5px"><i style="width:${Math.min(100,v/a.goal*100)}%;${ok?'':'background:var(--line)'}"></i></div><span>${fmt(Math.min(v,a.goal))} / ${fmt(a.goal)}</span></div></div>`}).join('')+`</section>`}
-  $('lobbyBody').innerHTML=h;for(const el of $('lobbyBody').querySelectorAll('[data-t]'))el.hidden=el.dataset.t!==tab}
+  h+=`<section class="card" data-t="liste"><h2>Bestenliste <small>alle Spieler</small></h2><div id="lbBox" class="hint">${LB_URL?'Lädt …':'Die gemeinsame Bestenliste ist noch nicht verbunden.'}</div></section>`;
+  $('lobbyBody').innerHTML=h;if(tab==='liste')lbLoad();for(const el of $('lobbyBody').querySelectorAll('[data-t]'))el.hidden=el.dataset.t!==tab}
 
 $('lobbyBody').addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||t.disabled||t.getAttribute('aria-disabled'))return;
   const c=S.cfg,a=t.dataset.act,v=t.dataset.v;
@@ -1444,6 +1453,7 @@ $('lobbyBody').addEventListener('click',e=>{const t=e.target.closest('[data-act]
   else if(a==='perk'){const i=c.perks.indexOf(v);if(i>=0)c.perks.splice(i,1);else{c.perks.push(v);while(c.perks.length>slotN())c.perks.shift()}}
   store();renderLobby();if(a==='skin'&&still)staticDemo()});
 $('lobbyBody').addEventListener('input',e=>{const t=e.target;
+  if(t.id==='botName'){const v=t.value.replace(/[<>]/g,'').trim().slice(0,16);S.cfg.name=v||'Dein Bot';store();return}
   if(t.id==='retreat'){S.cfg.retreat=t.value/100;$('retreatV').textContent=+t.value?t.value+' % Leben':'nie';store()}
   if(t.id==='healAt'){S.cfg.healAt=t.value/100;$('healAtV').textContent=t.value+' % Leben';store()}});
 
@@ -1517,7 +1527,7 @@ function finish(){if(mode!=='match')return;auStop();const win=P.place===1,m=cur,
   const xp=[['Platzierung',Math.round((N-r.place)/N*250)],['Eliminierungen',r.kills*15],['Schaden',Math.round(r.dmg/4)],['Kisten',r.chests*3]];if(win)xp.push(['Sieg',600]);
   const sum=xp.reduce((a,b)=>a+b[1],0),lv0=S.level;
   const share=0,bonus=win?100:r.place<=25?50:r.place<=100?25:0,kept=Math.min(100,bonus+r.gold);
-  S.chestTotal=(S.chestTotal||0)+r.chests;S.goldTotal=(S.goldTotal||0)+kept;S.wk=S.wk||{};for(const k in P.wk)S.wk[k]=(S.wk[k]||0)+P.wk[k];S.grenTotal=(S.grenTotal||0);S.hsTotal=(S.hsTotal||0)+r.hs;S.grenTotal=(S.grenTotal||0)+r.grenKills;S.games++;S.kills+=r.kills;S.gold+=kept;if(win)S.wins++;if(!S.best||r.place<S.best)S.best=r.place;if(!S.maps[m.biome]||r.place<S.maps[m.biome])S.maps[m.biome]=r.place;S.xp+=sum;
+  S.chestTotal=(S.chestTotal||0)+r.chests;S.goldTotal=(S.goldTotal||0)+kept;S.wk=S.wk||{};for(const k in P.wk)S.wk[k]=(S.wk[k]||0)+P.wk[k];S.grenTotal=(S.grenTotal||0);S.hsTotal=(S.hsTotal||0)+r.hs;S.grenTotal=(S.grenTotal||0)+r.grenKills;S.games++;lbSend(r);S.kills+=r.kills;S.gold+=kept;if(win)S.wins++;if(!S.best||r.place<S.best)S.best=r.place;if(!S.maps[m.biome]||r.place<S.maps[m.biome])S.maps[m.biome]=r.place;S.xp+=sum;
   const achNew=ACH.filter(a=>!S.achDone.includes(a.id)&&(a.f(S)||0)>=a.goal);for(const a of achNew){S.achDone.push(a.id);S.xp+=a.xp;S.gold+=a.gold}
   while(S.xp>=xpNeed(S.level)){S.xp-=xpNeed(S.level);S.level++}
   const fresh=UNLOCKS.filter(u=>!has(u.id)&&u.test(r,S));fresh.forEach(u=>S.unlocked.push(u.id));store();
@@ -1564,7 +1574,7 @@ function hud(m){const s=m.storm,p=m.ph[s.ph],f=spec||P;
   if(P.kills>lastK){lastK=P.kills;const e=m.feed.slice().reverse().find(q=>q.ap);if(e){$('toast').innerHTML=`Eliminiert<small>${e.b} · ${e.w}</small>`;$('toast').hidden=false;toastT=performance.now()+2600}}
   if(toastT&&performance.now()>toastT){toastT=0;$('toast').hidden=true}
   $('feed').innerHTML=m.feed.filter(e=>e.t>m.t-7&&(e.me||(Math.abs(e.x-cam.x)<900&&Math.abs(e.y-cam.y)<900))).slice(-4).map(e=>e.sys?`<li class="me"><b>${e.sys}</b></li>`:`<li class="${e.me?'me':''}">${e.a?`<b class="${e.ap?'p':''}">${e.a}</b> › `:''}<b class="${e.bp?'p':''}">${e.b}</b> · ${e.w}</li>`).join('');
-  $('sName').textContent=f.isP?`Dein Bot · Lvl ${f.lvl}`:`Zuschauen: ${f.name} (Lvl ${f.lvl})`;$('sState').textContent=f.alive?f.state+(f.jump>0?' · springt':f.run?' · sprintet':f.exh?' · außer Atem':'')+(Math.hypot(f.x-s.x,f.y-s.y)>s.r?' · im Sturm':''):'Eliminiert';$('sSt').style.width=f.sta/f.staMax*100+'%';
+  $('sName').textContent=f.isP?`${f.name} · Lvl ${f.lvl}`:`Zuschauen: ${f.name} (Lvl ${f.lvl})`;$('sState').textContent=f.alive?f.state+(f.jump>0?' · springt':f.run?' · sprintet':f.exh?' · außer Atem':'')+(Math.hypot(f.x-s.x,f.y-s.y)>s.r?' · im Sturm':''):'Eliminiert';$('sSt').style.width=f.sta/f.staMax*100+'%';
   $('sHp').style.width=f.hp/f.max*100+'%';$('sSh').style.width=Math.min(100,f.sh)+'%';
   const cell=(col,icon,name,sub,on)=>`<div class="${on?'on':''}" style="border-top-color:${col};background:linear-gradient(${col}33,#1b2530 70%)">${icon}<b>${name}</b>${sub}</div>`;
   const cells=f.wp.map((w,i)=>cell(RAR[w.rar].c,ICON[w.id],SHORT[w.id],f.rel>0&&i===f.cur?'lädt':f.mags[i]+' Schuss',i===f.cur));
