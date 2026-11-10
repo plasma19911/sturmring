@@ -551,7 +551,7 @@ function gen(m){const W=m.W,B=m.B,A=W*W/1e6*.5,houses=[];
     for(const v of vc){const k=(rr(7,13))|0;for(let i=0,tr=0;i<k&&tr<160;tr++){const a=rr(0,TAU),d=rr(0,430),o=house(v.x+Math.cos(a)*d,v.y+Math.sin(a)*d,.9);if(add(o)){houses.push(o);i++}}}}
   m.rooms=[];const room=(x,y,force)=>{const hw=rr(120,170),hh=rr(120,170),o={k:'b',x,y,hw,hh,r:Math.hypot(hw,hh)};
     if(x<o.r+40||y<o.r+40||x>W-o.r-40||y>W-o.r-40||!ok(o)||(!force&&!fits(o)))return false;gAdd(tg,o);
-    const roof=rnd()<.5,col=roof?B.hc[(rnd()*B.hc.length)|0]:(B.dark?0x5a4a8a:0x8f8a80),g=30,d=23,lx=(hw-g-d)/2,ly=(hh-g-d)/2;m.rooms.push({x,y,hw,hh,roof,ht:58});
+    const roof=rnd()<.5,col=roof?B.hc[(rnd()*B.hc.length)|0]:(B.dark?0x5a4a8a:0x8f8a80),g=30,d=45,lx=(hw-g-d)/2,ly=(hh-g-d)/2;m.rooms.push({x,y,hw,hh,roof,ht:58});
     const pc=(px,py,phw,phh)=>m.obs.push({k:'b',kind:'rw',x:px,y:py,hw:phw,hh:phh,r:Math.hypot(phw,phh),ht:roof?58:rr(30,62),col});
     for(const sa of[-1,1])for(const sb of[-1,1]){pc(x+sb*(d+lx),y+sa*hh,lx,5);pc(x+sa*hw,y+sb*(d+ly),5,ly)}
     return true};
@@ -759,14 +759,14 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
   const attacked=!!b.lastHit&&b.lastHit.alive&&m.t-b.lastHitT<3,ds=Math.hypot(b.x-s.x,b.y-s.y),sdps=ph.dps*(b.perks.has('p_storm')?.5:1),
     /* im Sturm bleiben ist erlaubt, solange das Leben für den Rückweg und eine Reserve reicht */
     stay=b.hp-sdps*(Math.max(0,ds-s.r+40)/110+4)>45&&sdps<8&&s.r>200,outside=ds>Math.max(0,s.r-35),dn=Math.hypot(b.x-s.nx,b.y-s.ny);
-  const outN=dn>s.nr-45,needZone=outN&&(s.shr||ph.wait-s.t<(dn-s.nr)/(m.ig?50:90)+(b.early?14:4)),hpF=(b.hp+b.sh)/b.max,equipped=b.wp[0].id!=='pistol'||b.wp.length>1,endgame=m.alive<=4;
+  const outN=dn>s.nr-45,needZone=outN&&(s.shr||ph.wait-s.t<(dn-s.nr)/(m.ig?50:90)+(b.early?28:16)),hpF=(b.hp+b.sh)/b.max,equipped=b.wp[0].id!=='pistol'||b.wp.length>1,endgame=m.alive<=4;
   /* was er braucht und worüber er läuft, hebt er sofort auf */
   if(b.act!=='heal'){let pk=null;gNear(m.lg,b.x,b.y,28,l=>{if(!pk&&!b.ban.has(l)&&d2(b,l)<26&&want(b,l))pk=l});if(pk)take(m,b,pk)}
   const wasOpen=b.act==='open';b.priority='Erkunden';b.fire=null;b.act='';b.go=false;b.sprint=false;b.urgent=false;b.pose=0;b.inCov=false;
   let maxR=0;for(let i=0;i<b.wp.length;i++)maxR=Math.max(maxR,b.W[b.wp[i].id].range);const outR=!!foe&&fd>maxR;
   const go=(x,y)=>{const p=validGoal(m,x,y);if(p){b.gx=p.x;b.gy=p.y;b.go=true}else{b.go=false;b.path=null;b.cover=b.spot=b.wpt=null}};
   let dg=null;for(const q of m.gren)if(q.from!==b&&Math.hypot(q.x-b.x,q.y-b.y)<140&&(!dg||q.t<dg.t))dg=q;
-  const zoneDistance=Math.max(0,dn-s.nr+60),zoneETA=zoneDistance/(85*b.sk.spd),zoneDeadline=s.shr?Math.max(0,ph.shrink-s.t+ph.wait):Math.max(0,ph.wait-s.t),zoneCritical=outside||(outN&&zoneETA+5>zoneDeadline&&needZone);
+  const zoneDistance=Math.max(0,dn-s.nr+60),zoneETA=zoneDistance/(85*b.sk.spd),zoneDeadline=s.shr?Math.max(0,ph.shrink-s.t+ph.wait):Math.max(0,ph.wait-s.t),zoneCritical=outside||(outN&&zoneETA+18>zoneDeadline);
   const safeHeal=!dg&&!zoneCritical&&!foe&&m.t-b.lastHitT>=5&&m.t-b.lastShotT>=5;
   /* Fähigkeit: der Bot zündet sie selbst, wenn es eng wird */
   if(b.ab&&m.t>=b.abT&&m.t-b.lastHitT<1.5){let used='';
@@ -801,6 +801,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
   if(foe&&!ret){const conf=b.style==='surv'&&m.alive<=m.N*.05?1:P.conf;
     let init=fd<Math.max(P.chase,w.range*.85)&&ratio>conf*(busy?.65:1)*(hurtNoMed?1.6:1)*(weakFoe?.5:1)&&(equipped||(!b.prep&&ratio>1.3))&&(nSee<=2||b.style==='rusher');
     if(b.style==='ambush'&&fd>w.range)init=false;
+    if(needZone&&!attacked&&fd>120)init=false;
     if(wasOpen&&!attacked&&fd>220)init=false;
     engage=fd<=w.range||endgame||(fd<110&&!(foe.run&&P.conf>.9))||m.t<b.engT||init||attacked;
     if(engage&&m.t<b.calmT&&fd>w.range&&!attacked&&!endgame&&!weakFoe)engage=false;
@@ -839,7 +840,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     /* unsichtbarer Schütze: nur wer fit ist und hinreichen kann, geht auf ihn zu, alle anderen suchen Deckung */
     if(equipped&&P.conf<=1&&hpF>.6&&d<maxR+150){go(b.x+(h.x-b.x)/d*200,b.y+(h.y-b.y)/d*200);b.sprint=true;b.state='Sucht den Schützen'}
     else{b.rfx=h.x;b.rfy=h.y;b.retT=m.t+3;b.cover=null;b.due=true;b.state='Geht in Deckung'}}
-  else if(needZone&&!(stay&&b.tg&&(b.tg.k||!b.tg.open)&&!b.ban.has(b.tg)&&d2(b,b.tg)<220)){zone();b.sprint=s.shr;b.state='Läuft zur Zone'}
+  else if(needZone){b.tg=null;zone();b.sprint=s.shr;b.state='Läuft zur Zone'}
   else{const real=b.wp.filter(q=>q.id!=='pistol').length,kit=b.loot==='min'?real>=2:real>=3&&b.med>=2&&b.pot>=1,sr=Math.max(0,s.r-55);
     /* einmal gewähltes Ziel wird behalten, bis es erledigt, weg oder nach 10 s unerreichbar ist */
     let tg=b.tg;
