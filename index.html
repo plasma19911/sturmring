@@ -77,7 +77,7 @@ input[type=range]{width:100%;accent-color:var(--amber);height:28px}
 .pips i{width:12px;height:5px;border-radius:2px;background:var(--line)}
 .pips i.on{background:var(--me)}
 
-.tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:8px 0;margin-block:-6px}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:8px 0;margin-block:-6px}
 .tabs button{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:10px 0;font:600 13px var(--disp);white-space:nowrap;min-width:0}
 .tabs button[aria-pressed="true"]{background:var(--amber);color:#1b1404;border-color:var(--amber)}
 .startbar{position:sticky;bottom:0;padding:16px 0 calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--bg) 38%);margin-top:4px}
@@ -1391,7 +1391,7 @@ const panOf=(x,y)=>clamp(((x-cam.x)*Math.cos(camYaw)-(y-cam.y)*Math.sin(camYaw))
 const CAMS=[{h:180,b:380,n:'Vorschau'},{h:330,b:230,n:'mittel'},{h:520,b:300,n:'weit'},{h:210,b:190,n:'nah'}],DCAM={h:180,b:380};
 const cam={x:0,y:0},dcam={x:0,y:0};
 const has=id=>S.unlocked.includes(id),ptsTotal=()=>3+2*(S.level-1),ptsSpent=()=>Object.values(S.cfg.skills).reduce((a,b)=>a+b,0),slotN=()=>1+has('slot2')+has('slot3');
-let tab='bot';try{tab=localStorage.getItem('sturmring-tab')||'bot'}catch(e){}if(!['bot','skills','shop','erfolge','karten','liste'].includes(tab))tab='bot';
+let tab='bot';if(!['bot','skills','shop','erfolge','karten','liste'].includes(tab))tab='bot';
 const still=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 const cond=id=>UNLOCKS.find(u=>u.id===id).cond;
 const WSK={std:['Standard',0,'#3a4048'],tarn:['Tarnmuster',200,'linear-gradient(135deg,#2f3a24 50%,#6b7a4a 50%)'],eis:['Eisblau',250,'linear-gradient(135deg,#2a3a55 50%,#9cc4de 50%)'],neon:['Neon',300,'linear-gradient(135deg,#ff3fa4 50%,#35e0c8 50%)'],gold:['Vergoldet',400,'linear-gradient(135deg,#8a6a10 30%,#ffd34d 70%)']},TRK={std:['Standard',0,'#fff0a8'],rot:['Rot',150,'#ff4a3c'],blau:['Blau',150,'#4ab8ff'],gruen:['Grün',150,'#6aff7a'],lila:['Lila',200,'#c86bff']};
@@ -1410,7 +1410,7 @@ function renderLobby(){const c=S.cfg,need=xpNeed(S.level),free=ptsTotal()-ptsSpe
   const nSk=Object.keys(SKINS).filter(k=>!lockedSkin(k)).length,nUn=S.unlocked.length;
   let h=`<section class="card prof"><div class="lvl"><span>Stufe</span>${S.level}<em>${RANKS[Math.min(RANKS.length-1,((S.level-1)/2)|0)]}</em></div><div class="prof-r"><div class="bar"><i style="width:${Math.min(100,S.xp/need*100)}%"></i></div>
     <div class="meta"><span><b>${S.xp}</b> / ${need} EP</span><span>Runden <b>${S.games}</b></span><span>Siege <b>${S.wins}</b></span><span>Kills <b>${S.kills}</b></span><span>Gold <b>${S.gold}</b></span><span>Beste Platzierung <b>${S.best?S.best+'.':'–'}</b></span><span>Freigeschaltet <b>${nUn} von ${UNLOCKS.length}</b></span></div></div></section>`;
-  h+=`<nav class="tabs">${[['bot','Bot'],['skills',free>0?`Skills (${free})`:'Skills'],['shop','Shop'],['erfolge','Erfolge'],['liste','Bestenliste'],['karten','Karten']].map(q=>`<button data-act="tab" data-v="${q[0]}" aria-pressed="${tab===q[0]}">${q[1]}</button>`).join('')}</nav>`;
+  h+=`<nav class="tabs">${[['bot','Bot'],['skills',free>0?`Skills (${free})`:'Skills'],['shop','Shop'],['erfolge','Erfolge']].map(q=>`<button data-act="tab" data-v="${q[0]}" aria-pressed="${tab===q[0]}">${q[1]}</button>`).join('')}</nav>`;
   h+=`<section class="card" data-t="karten"><h2>Karten <small>jede Runde zufällig</small></h2><div class="opts">`+Object.entries(BIOMES).map(([k,v])=>`<div class="opt"><b><i class="dot" style="background:${v.mini}"></i>${v.n}</b><span>${v.d}</span><em>${S.maps[k]?'Beste Platzierung: '+S.maps[k]+'.':'Noch nicht gespielt'}</em></div>`).join('')+`</div></section>`;
   h+=`<section class="card" data-t="bot"><h2>Name</h2><div class="field"><input id="botName" maxlength="16" autocomplete="off" value="${esc(c.name||'Dein Bot')}" style="font:600 16px var(--body);padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--fg)"></div><p class="hint">So heißt dein Bot im Spiel und in der Bestenliste.</p></section>`;
   h+=`<section class="card" data-t="bot"><h2>Skin <small>${nSk} von ${Object.keys(SKINS).length}</small></h2><div class="opts">`+Object.entries(SKINS).filter(q=>!q[1].cost||S.bought.includes(q[0])).map(([k,v])=>{const lk=lockedSkin(k),buy=false;
