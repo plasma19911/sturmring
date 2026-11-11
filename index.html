@@ -3607,21 +3607,21 @@ function makeView(cv){
   const silMe=new T.MeshBasicMaterial({color:0x35e0c8,depthFunc:T.GreaterDepth,depthWrite:false,fog:false}),silFoe=new T.MeshBasicMaterial({color:0xff5a3c,depthFunc:T.GreaterDepth,depthWrite:false,fog:false});
   const olM=new T.ShaderMaterial({side:T.BackSide,uniforms:{c:{value:new T.Color(0x0a0e12)}},vertexShader:'void main(){vec4 p=vec4(position,1.0);vec3 n=normal;\n#ifdef USE_INSTANCING\np=instanceMatrix*p;n=mat3(instanceMatrix)*n;\n#endif\nvec4 mv=modelViewMatrix*p;mv.xyz+=normalize(normalMatrix*n)*clamp(-mv.z*.00045,.18,.65);gl_Position=projectionMatrix*mv;}',fragmentShader:'uniform vec3 c;void main(){gl_FragColor=vec4(c,1.0);}'}),olMe=olM.clone();olMe.uniforms={c:{value:new T.Color(0x0a0e12)}};
   const olLeg=new T.Mesh(legGeo,olM);
-  const botP=mkPool(40,()=>{const g=new T.Group(),model=new T.Group();g.add(model);model.scale.set(.88,1.04,.86);const mat=mobileGraphics?new T.MeshLambertMaterial({vertexColors:true}):new T.MeshStandardMaterial({vertexColors:true,roughness:.94,metalness:0});
+  const LEGUP=6;const botP=mkPool(40,()=>{const g=new T.Group(),model=new T.Group();g.add(model);model.scale.set(.88,1.04,.86);const mat=mobileGraphics?new T.MeshLambertMaterial({vertexColors:true}):new T.MeshStandardMaterial({vertexColors:true,roughness:.94,metalness:0});
     /* Tarnmuster auf Rumpf und Armen: unregelmäßige Flecken in drei Helligkeiten, Kopf bleibt frei */
     mat.onBeforeCompile=sh=>{sh.vertexShader='varying vec3 vLoc;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvLoc=position;');
       sh.fragmentShader='varying vec3 vLoc;\n'+sh.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
       if(vLoc.y<35.0){float n=sin(vLoc.x*.42+vLoc.y*.23)*sin(vLoc.z*.47-vLoc.y*.19)+sin(vLoc.x*.17+vLoc.z*.21+vLoc.y*.09)*.7;
         diffuseColor.rgb*=n>.45?.66:n>.05?.86:n<-.6?1.1:.97;}`)};
     const body=new T.Mesh(G.leg,mat),sil=new T.Mesh(G.leg,silFoe),ol=new T.Mesh(G.leg,olM);model.add(body,sil,ol);
-    const legs=[4.6,-4.6].map(z=>{const lg=new T.Group();lg.position.set(0,12,z);const l=new T.Mesh(legGeo,VM);l.position.y=-6;lg.add(l);const kp=new T.Mesh(G.knee,gearM);kp.position.set(2.6,-4,0);lg.add(kp);const bt=new T.Mesh(G.boot,gearM);bt.position.set(1.2,-11.4,0);lg.add(bt);const lo=new T.Mesh(legGeo,olM);lo.position.y=-6;lg.add(lo);model.add(lg);return lg});
+    const legs=[4.6,-4.6].map(z=>{const lg=new T.Group();lg.position.set(0,12,z);lg.scale.y=1.5;const l=new T.Mesh(legGeo,VM);l.position.y=-6;lg.add(l);const kp=new T.Mesh(G.knee,gearM);kp.position.set(2.6,-4,0);lg.add(kp);const bt=new T.Mesh(G.boot,gearM);bt.position.set(1.2,-11.4,0);lg.add(bt);const lo=new T.Mesh(legGeo,olM);lo.position.y=-6;lg.add(lo);model.add(lg);return lg});
     const hand=new T.Group();hand.position.set(9,24,8);model.add(hand);const glove=new T.Mesh(G.glove,gearM);hand.add(glove);const gun=new T.Mesh(guns.pistol.geo,gunMaterial);hand.add(gun);const flash=new T.Mesh(G.flash,MM.flash);flash.visible=false;hand.add(flash);
-    const glider=new T.Mesh(G.glider,MM.glider);glider.position.y=74;g.add(glider);const sh=new T.Mesh(G.disc,MM.shadow);sh.position.y=1;g.add(sh);
-    const heal=new T.Mesh(G.heal,MM.heal);heal.position.y=1.4;g.add(heal);
+    const glider=new T.Mesh(G.glider,MM.glider);glider.position.y=74;g.add(glider);const sh=new T.Mesh(G.disc,MM.shadow);sh.position.y=1-LEGUP;g.add(sh);
+    const heal=new T.Mesh(G.heal,MM.heal);heal.position.y=1.4-LEGUP;g.add(heal);
     const bar=new T.Group();bar.position.y=64;g.add(bar);const bg=new T.Mesh(G.bar,MM.barBg);bg.scale.set(36,7.5,1);bg.position.set(-18,1,-.2);bar.add(bg);
     const hp=new T.Mesh(G.bar,MM.hp);hp.scale.set(34,3.6,1);hp.position.set(-17,0,0);bar.add(hp);const shb=new T.Mesh(G.bar,MM.shb);shb.scale.set(34,2,1);shb.position.set(-17,3.2,0);bar.add(shb);
     const vest=new T.Mesh(G.vest,tierM[1]);vest.position.y=22.5;model.add(vest);const prop=new T.Mesh(PROPG.mag,VM);prop.visible=false;model.add(prop);const dz=new T.Group();dz.position.y=58;dz.visible=false;g.add(dz);for(let i=0;i<3;i++){const st=new T.Mesh(G.spark,MM.flash);st.scale.setScalar(2.2);st.position.set(Math.cos(i*2.09)*9,0,Math.sin(i*2.09)*9);dz.add(st)}const bn=[grenGeo,grenGeo,smkGeo,smkGeo,flsGeo,flsGeo].map((ge,i)=>{const o=new T.Mesh(ge,VM);const a=-2.3+i*.55+(i>1?.25:0)+(i>3?.25:0);o.scale.setScalar(.42);o.position.set(Math.cos(a)*9.6,11.6,Math.sin(a)*9.6);o.visible=false;model.add(o);return o});const belt=new T.Mesh(G.belt,beltM);belt.position.y=14;model.add(belt);const helm=new T.Mesh(G.helm,tierM[1]);helm.position.y=40;model.add(helm);
-    const ring=new T.Mesh(G.ring,MM.me);ring.position.y=1.2;g.add(ring);const mark=new T.Mesh(G.mark,MM.me);g.add(mark);
+    const ring=new T.Mesh(G.ring,MM.me);ring.position.y=1.2-LEGUP;g.add(ring);const mark=new T.Mesh(G.mark,MM.me);g.add(mark);
     const lc=document.createElement('canvas');lc.width=256;lc.height=64;const tex=new T.CanvasTexture(lc),label=new T.Sprite(new T.SpriteMaterial({map:tex,transparent:true,depthWrite:false,toneMapped:false,fog:false}));label.scale.set(68,17,1);label.position.y=88;g.add(label);
     g.traverse(o=>{o.renderOrder=2;if(o.isMesh&&o.material&&!o.material.transparent){o.castShadow=false;o.receiveShadow=!mobileGraphics}});sil.renderOrder=1;g.visible=false;scene.add(g);return{g,model,body,sil,ol,vest,helm,prop,bn,dz,mat,legs,hand,gun,flash,glider,sh,heal,bar,hp,shb,ring,mark,lc,tex,label,it:null,dead:-1,gid:'',ph:rr(0,9)}});
   function bindBot(v,b){{const h=(b.i*2654435761>>>0)/4294967296,h2=((b.i+7)*40503>>>0)%1000/1000,k=b.isP?1:.82+h*.3;v.mat.color.setRGB(k*(.94+h2*.12),k,k*(.94+(1-h2)*.12))}{const cq=b.isP?CHU[S.cfg.chute]||CHU.std:CHU.std;v.glider.geometry=chG[cq[3]];v.glider.material=chM(cq)}const sk=SKINS[b.skin]||SKINS.rekrut;v.body.geometry=v.sil.geometry=v.ol.geometry=skinGeo(b.skin);v.ol.material=b.isP?olMe:olM;v.ol.visible=true;v.sil.material=b.isP?silMe:silFoe;v.sil.visible=false;v.mat.transparent=!!sk.ghost;v.mat.opacity=sk.ghost?.62:1;v.mat.needsUpdate=true;v.dead=-1;v.gid='';v.k1=v.k2=0;v.pcid=v.pvest=v.phelm=undefined;v.prel=b.rel;v.swS=v.eqS=-9;v.rlS=undefined;v.gait=v.ph;v.animSpeed=0;v.face=b.a;v.lastAnimT=null;
@@ -3879,15 +3879,15 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
           if(v.dead>=.42&&!v.thud){v.thud=1;burst(X,Y,gh+2,'death',.5)}if(v.dead<.1)v.thud=0}v.g.position.set(X,v.dead>1.6?gh-(v.dead-1.6)*12:gh,Y);if(v.dead>1.2)v.sh.visible=false;continue}
       const animNow=m.t-(1-al)*DT,adt=v.lastAnimT===null?0:clamp(animNow-v.lastAnimT,0,.15);v.lastAnimT=animNow;
       const blend=1-Math.exp(-adt*12);v.animSpeed+=((b.moveSpeed||0)-v.animSpeed)*blend;
-      v.gait+=v.animSpeed*adt*.105;const walk=v.animSpeed>3&&drop<=0,ph=v.gait;
-      let y=gh;v.glider.visible=drop>0;
+      v.gait+=v.animSpeed*adt*.074;const walk=v.animSpeed>3&&drop<=0,ph=v.gait;
+      let y=gh+LEGUP;v.glider.visible=drop>0;
       if(drop>0)y+=drop*drop*70;else if(walk)y+=(1-Math.cos(ph*2))*.65*clamp(v.animSpeed/110,0,1.4)*(b.pose?.4:1);
       if(m.over&&b===m.winner)y+=Math.abs(Math.sin(ts/140))*12;
       if(b.jump>0)y+=Math.sin(Math.PI*clamp(1-b.jump/b.jumpD,0,1))*26;
       v.k1=0;v.k2+=((b.pose===2?1:0)-v.k2)*blend;const turn=Math.atan2(Math.sin(b.a-v.face),Math.cos(b.a-v.face));v.face=b.fire?b.a:v.face+turn*blend;
-      v.g.position.set(X,y,Y);v.model.scale.y=1.04*(1-.32*v.k1);v.model.position.y=7*v.k2;v.model.rotation.set(clamp(turn,-.12,.12)*clamp(v.animSpeed/110,0,1),-v.face,(walk?-.07*clamp(v.animSpeed/110,0,1.5):0)-1.42*v.k2+(b.jump>0?.25:0));v.bar.quaternion.copy(q);
+      v.g.position.set(X,y,Y);v.model.scale.y=1.04*(1-.32*v.k1);v.model.position.y=(7-LEGUP)*v.k2;v.model.rotation.set(clamp(turn,-.12,.12)*clamp(v.animSpeed/110,0,1),-v.face,(walk?-.07*clamp(v.animSpeed/110,0,1.5):0)-1.42*v.k2+(b.jump>0?.25:0));v.bar.quaternion.copy(q);
       v.bar.position.y=64-14*v.k1-34*v.k2;v.label.position.y=88-14*v.k1-34*v.k2;
-      const sw=walk?Math.sin(ph)*clamp(v.animSpeed/150,0,.9)*(1-v.k1*.45)*(b.jump>0?.25:1):0;v.legs[0].rotation.z=sw;v.legs[1].rotation.z=-sw;
+      const sw=walk?Math.sin(ph)*clamp(v.animSpeed/125,0,.78)*(1-v.k1*.45)*(b.jump>0?.25:1):0;v.legs[0].rotation.z=sw;v.legs[1].rotation.z=-sw;
       if(b.run&&drop<=0&&(dustN+v.ph*10|0)%7===0&&dust.length<48)dust.push({x:X-Math.cos(b.a)*8+rr(-3,3),y:Y-Math.sin(b.a)*8+rr(-3,3),h:gh+2,t:0});
       const id=b.wp[b.cur].id,ws=b.isP?S.cfg.wskin:'std';if(v.gid!==id+ws){const gq=gunGeoOf(id,ws);v.gun.geometry=gq.geo;v.gid=id+ws;v.flash.position.set(gq.tip+4,.5,0)}
       v.bn[0].visible=b.gren>0;v.bn[1].visible=b.gren>1;v.bn[2].visible=b.smk>0;v.bn[3].visible=b.smk>1;v.bn[4].visible=b.fls>0;v.bn[5].visible=b.fls>1;v.vest.visible=b.vest>0;if(b.vest)v.vest.material=tierM[b.vest];v.helm.visible=b.helm>0;if(b.helm)v.helm.material=tierM[b.helm];
@@ -3912,8 +3912,8 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
           else if(md==='run'){v.model.rotation.x+=Math.sin(w*9)*.16;v.hand.position.y-=6;v.hand.rotation.z-=.7}
           else{v.hand.position.y-=8;v.hand.rotation.z-=1.05;v.model.rotation.z+=.18}}else v.hand.rotation.x=0
         v.prop.visible=pv}
-      if(b.down){v.dn=Math.min(1,(v.dn||0)+dt*3);v.model.rotation.z=v.dn*1.52;v.model.rotation.x=0;v.model.position.y=v.dn*4;v.hand.rotation.z=.4}else v.dn=0;
-      if(b.act==='revive'){const k=Math.max(0,Math.sin(ts/90));v.model.scale.y=1.04;v.model.position.y=-8+k*.6;v.model.rotation.z=-.42-k*.1;v.model.rotation.x=0;
+      if(b.down){v.dn=Math.min(1,(v.dn||0)+dt*3);v.model.rotation.z=v.dn*1.52;v.model.rotation.x=0;v.model.position.y=v.dn*(4-LEGUP);v.hand.rotation.z=.4}else v.dn=0;
+      if(b.act==='revive'){const k=Math.max(0,Math.sin(ts/90));v.model.scale.y=1.04;v.model.position.y=-14+k*.6;v.model.rotation.z=-.42-k*.1;v.model.rotation.x=0;
         v.legs[0].rotation.z=-1.25;v.legs[1].rotation.z=-1.25;v.hand.position.set(15,20-k*3.2,0);v.hand.rotation.z=-1.45;v.gun.visible=false}
       {const wid=b.wp[b.cur].id,FL={shotgun:[2.1,1.9,.11],autosg:[1.7,1.6,.08],sniper:[2.6,1.1,.09],dmr:[1.9,1,.07],lmg:[1.5,1.2,.06],revolver:[1.7,1.4,.08],smg:[.85,.75,.05],pistol:[.8,.8,.06]}[wid]||[1.1,1,.07];
         v.flash.visible=since<FL[2];if(v.flash.visible){const r=(.75+rnd()*.5)*(b.isP?2.6:1.7);v.flash.scale.set(FL[0]*r,FL[1]*r,FL[1]*r);v.flash.rotation.x=rnd()*TAU}}
@@ -3996,7 +3996,7 @@ const $=id=>document.getElementById(id);
 S=loadSave();setTimeout(()=>{try{mergeProg();renderLobby()}catch(e){}},0);let mode='lobby',cur=null,P=null,spec=null,speed=1,acc=0,last=0,endT=0,deadShown=false,hudN=0,lastK=0,toastT=0,vigC='',demo=null,demoSpec=null,miniBase=null;
 let mainView=null,demoView=null,noGL=false,camI=0,heardT=0,stepT=0,stepO=0,camYaw=0;
 const panOf=(x,y)=>clamp(((x-cam.x)*Math.cos(camYaw)-(y-cam.y)*Math.sin(camYaw))/600,-1,1);
-const CAMS=[{h:180,b:380,n:'Vorschau'},{h:330,b:230,n:'mittel'},{h:520,b:300,n:'weit'},{h:210,b:190,n:'nah'}],DCAM={h:180,b:380},ZCAM={h:70,b:90};
+const CAMS=[{h:180,b:380,n:'Vorschau'},{h:330,b:230,n:'mittel'},{h:520,b:300,n:'weit'},{h:210,b:190,n:'nah'}],DCAM={h:180,b:380},ZCAM={h:82,b:100};
 const cam={x:0,y:0},dcam={x:0,y:0};
 function expSave(){const code=btoa(unescape(encodeURIComponent(JSON.stringify(S))));(navigator.clipboard?navigator.clipboard.writeText(code):Promise.reject()).then(()=>alert('Code kopiert. Irgendwo speichern, z. B. in einer Notiz.'),()=>prompt('Diesen Code kopieren und speichern:',code));}
 function impSave(){const code=prompt('Spielstand-Code einfügen:');if(!code)return;try{const o=JSON.parse(decodeURIComponent(escape(atob(code.trim()))));if(!o||!o.cfg)throw 0;localStorage.setItem(KEY,JSON.stringify(o));S=loadSave();store();renderLobby();alert('Spielstand geladen.')}catch(e){alert('Code ungültig.')}}
