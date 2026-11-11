@@ -1,4 +1,5 @@
-<!doctype html><html lang="de"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="de"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}body.skinZoom .hero{height:clamp(220px,40vw,320px)!important}body.skinZoom .hero-t{display:none}
+</style></head><body>
 <title>Sturmring</title><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="icon-192.png"><meta name="theme-color" content="#080f17"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Sturmring">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Chakra+Petch:wght@600;700&display=swap">
@@ -3887,7 +3888,7 @@ const $=id=>document.getElementById(id);
 S=loadSave();setTimeout(()=>{try{mergeProg();renderLobby()}catch(e){}},0);let mode='lobby',cur=null,P=null,spec=null,speed=1,acc=0,last=0,endT=0,deadShown=false,hudN=0,lastK=0,toastT=0,vigC='',demo=null,demoSpec=null,miniBase=null;
 let mainView=null,demoView=null,noGL=false,camI=0,heardT=0,stepT=0,stepO=0,camYaw=0;
 const panOf=(x,y)=>clamp(((x-cam.x)*Math.cos(camYaw)-(y-cam.y)*Math.sin(camYaw))/600,-1,1);
-const CAMS=[{h:180,b:380,n:'Vorschau'},{h:330,b:230,n:'mittel'},{h:520,b:300,n:'weit'},{h:210,b:190,n:'nah'}],DCAM={h:180,b:380};
+const CAMS=[{h:180,b:380,n:'Vorschau'},{h:330,b:230,n:'mittel'},{h:520,b:300,n:'weit'},{h:210,b:190,n:'nah'}],DCAM={h:180,b:380},ZCAM={h:44,b:95};
 const cam={x:0,y:0},dcam={x:0,y:0};
 function expSave(){const code=btoa(unescape(encodeURIComponent(JSON.stringify(S))));(navigator.clipboard?navigator.clipboard.writeText(code):Promise.reject()).then(()=>alert('Code kopiert. Irgendwo speichern, z. B. in einer Notiz.'),()=>prompt('Diesen Code kopieren und speichern:',code));}
 function impSave(){const code=prompt('Spielstand-Code einfügen:');if(!code)return;try{const o=JSON.parse(decodeURIComponent(escape(atob(code.trim()))));if(!o||!o.cfg)throw 0;localStorage.setItem(KEY,JSON.stringify(o));S=loadSave();store();renderLobby();alert('Spielstand geladen.')}catch(e){alert('Code ungültig.')}}
@@ -4144,7 +4145,8 @@ function frame(ts){requestAnimationFrame(frame);const dt=Math.min(.05,(ts-last)/
     if(!demo||demo.over||demo.t>90)newDemo();
     if(!demo)return;step(demo);
     if(!demoSpec||!demoSpec.alive)demoSpec=(demoSpec&&demoSpec.killer&&demoSpec.killer.alive)?demoSpec.killer:demo.bots.find(b=>b.alive);
-    if(demoSpec&&demoView){dcam.x+=(demoSpec.x-dcam.x)*.08;dcam.y+=(demoSpec.y-dcam.y)*.08;demoView.render(demo,dcam.x,dcam.y,DCAM,ts,dt,1,demoSpec)}}}
+    const zl=tab==='look';document.body.classList.toggle('skinZoom',zl);if(zl){const me=demo.bots[0];me.skin=S.cfg.skin;if(me.alive){if(demoSpec!==me){dcam.x=me.x;dcam.y=me.y}demoSpec=me;me.hp=Math.max(me.hp,60)}}
+    if(demoSpec&&demoView){dcam.x+=(demoSpec.x-dcam.x)*.08;dcam.y+=(demoSpec.y-dcam.y)*.08;demoView.render(demo,dcam.x,dcam.y,zl?ZCAM:DCAM,ts,dt,1,demoSpec)}}}
 
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 idbGet().then(j=>{if(!j)return store();try{const o=JSON.parse(j);if(xpOf(o)>xpOf(S)){localStorage.setItem(KEY,j);S=loadSave();renderLobby()}else store()}catch(e){}});
