@@ -619,7 +619,7 @@ function gen(m){const W=m.W,B=m.B,A=W*W/1e6*.5,houses=[];
   m.og=mkGrid(W,200);const g=m.og;
   for(const o of m.obs){const ex=(o.k==='b'?o.hw:o.r)+R+6,ey=(o.k==='b'?o.hh:o.r)+R+6,x0=clamp(((o.x-ex)/200)|0,0,g.n-1),x1=clamp(((o.x+ex)/200)|0,0,g.n-1),y0=clamp(((o.y-ey)/200)|0,0,g.n-1),y1=clamp(((o.y+ey)/200)|0,0,g.n-1);
     for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++)g.c[cy*g.n+cx].push(o)}
-  m.cg=mkGrid(W,560);m.lg=mkGrid(W,480);m.chests=[];const C=W/2,want=Math.round(Math.max(m.N*1.6,A*6)),keep=Math.round(Math.max(m.N*.69,A*1.84));
+  m.cg=mkGrid(W,560);m.lg=mkGrid(W,480);m.chests=[];const C=W/2,want=Math.round(Math.max(m.N*1.6,A*6)),keep=Math.round(Math.max(m.N*.86,A*2.3));
   const chest=(x,y,q,rot,pr)=>{const c={x,y,q,open:false,prog:0,rot,pr:pr||0};m.chests.push(c)};
   for(const h of houses){if(!m.obs.includes(h))continue;for(let k=0;k<(h.tall?2:1);k++){const s=rnd()<.5?-1:1,v=rnd()<.5,x=v?h.x+rr(-h.hw*.6,h.hw*.6):h.x+s*(h.hw+24),y=v?h.y+s*(h.hh+24):h.y+rr(-h.hh*.6,h.hh*.6),z=rnd();
       if(freeSpot(m,x,y))chest(x,y,z<.62?0:z<.92?1:2,v?0:Math.PI/2,1)}}
