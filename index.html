@@ -4146,7 +4146,7 @@ function frame(ts){requestAnimationFrame(frame);const dt=Math.min(.05,(ts-last)/
     if(!demo)return;demo.hf=!demo.hf;const zs=tab==='look';if(!zs||demo.hf)step(demo);
     if(!demoSpec||!demoSpec.alive)demoSpec=(demoSpec&&demoSpec.killer&&demoSpec.killer.alive)?demoSpec.killer:demo.bots.find(b=>b.alive);
     const zl=tab==='look';document.body.classList.toggle('skinZoom',zl);if(zl){const me=demo.bots[0];me.skin=S.cfg.skin;if(me.alive){if(demoSpec!==me){dcam.x=me.x;dcam.y=me.y}demoSpec=me;me.hp=Math.max(me.hp,60)}}
-    if(demoSpec&&demoView){dcam.x+=(demoSpec.x-dcam.x)*.08;dcam.y+=(demoSpec.y-dcam.y)*.08;demoView.render(demo,dcam.x,dcam.y,zl?ZCAM:DCAM,ts,zl?dt*.5:dt,zl?(demo.hf?1:.5):1,demoSpec)}}}
+    if(demoSpec&&demoView){dcam.x+=(demoSpec.x-dcam.x)*.08;dcam.y+=(demoSpec.y-dcam.y)*.08;demoView.render(demo,dcam.x,dcam.y,zl?ZCAM:DCAM,ts,zl?dt*.5:dt,zl?(demo.hf?.5:1):1,demoSpec)}}}
 
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 idbGet().then(j=>{if(!j)return store();try{const o=JSON.parse(j);if(xpOf(o)>xpOf(S)){localStorage.setItem(KEY,j);S=loadSave();renderLobby()}else store()}catch(e){}});
