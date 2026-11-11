@@ -336,7 +336,7 @@ button{touch-action:manipulation}button:focus-visible,input:focus-visible{outlin
     <div class="zone"><span id="hZone"></span><i><u id="hZoneBar"></u></i></div>
     <ul id="feed"></ul>
   </div>
-  <div class="hud-r"><canvas id="mini" aria-hidden="true"></canvas><button id="camBtn" title="Kamera-Abstand">📷 weit</button><button id="rotBtn" title="Kamera dreht mit">🧭 dreht</button><button id="sndBtn" title="Ton">🔊</button><button id="fsBtn" title="Vollbild" style="grid-column:1/-1">⛶ Vollbild</button><button id="oriBtn" title="Bild drehen" style="grid-column:1/-1">🔄 Quer</button></div>
+  <div class="hud-r"><canvas id="mini" aria-hidden="true"></canvas><button id="camBtn" title="Kamera-Abstand">📷 weit</button><button id="rotBtn" title="Kamera dreht mit">🧭 dreht</button><button id="sndBtn" title="Ton">🔇</button><button id="fsBtn" title="Vollbild" style="grid-column:1/-1">⛶ Vollbild</button><button id="oriBtn" title="Bild drehen" style="grid-column:1/-1">🔄 Quer</button></div>
   <div id="toast" hidden></div>
   <div id="dead" hidden><h3 id="deadH"></h3><p id="deadP"></p><button class="go" id="toRes">Sofort zum Ergebnis</button><button class="go ghost" id="watchOn">Weiter zuschauen</button><p>Deine Platzierung und Belohnungen stehen bereits fest.</p></div>
   <div class="hud-bot">
@@ -1564,7 +1564,7 @@ $('watchOn').addEventListener('click',()=>{$('dead').hidden=true});
 $('rotBtn').addEventListener('click',()=>{S.cfg.camRot=!S.cfg.camRot;store();$('rotBtn').textContent='🧭 '+(S.cfg.camRot?'dreht':'fest')});
 $('camBtn').addEventListener('click',()=>{camI=(camI+1)%CAMS.length;$('camBtn').textContent='📷 '+CAMS[camI].n});
 /* ---------- Ton: alles erzeugt, nichts geladen. Rauschen für Knall und Wind, tiefe Töne für den Druck. ---------- */
-const AU={on:true,ctx:null};
+const AU={on:false,ctx:null};
 function auInit(){if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();return}
   try{const c=new (window.AudioContext||window.webkitAudioContext)();AU.ctx=c;AU.out=c.createDynamicsCompressor();AU.master=c.createGain();AU.master.gain.value=.8;AU.out.connect(AU.master);AU.master.connect(c.destination);
     const n=c.sampleRate,wb=c.createBuffer(1,n,n),wd=wb.getChannelData(0),bb=c.createBuffer(1,n*2,n),bd=bb.getChannelData(0);let l=0;
