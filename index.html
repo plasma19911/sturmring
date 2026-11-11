@@ -644,7 +644,7 @@ function hurt(m,b,d,from,hs,gk){if(!b.alive)return;
     if((from.isP||b.isP)&&m.dn.length<14)m.dn.push({x:b.x,y:b.y,v:Math.max(1,Math.round(d)),hs:!!hs,me:b.isP});
     const a=Math.min(b.sh,d);b.sh-=a;b.hp-=d-a;b.flash=.15;b.due=true;if(from!==b){from.dmg+=d;b.lastHit=from;b.lastHitT=m.t}if(b.isP)ev(m,'hurt',b.x,b.y,400)}
   else{b.hp-=d;b.stormDmg+=d}
-  if(b.hp<=0){if(b.perks.has('p_second')&&!b.sw){b.sw=true;b.hp=30}else die(m,b,from,gk)}}
+  if(b.hp<=0){if(b.perks.has('p_second')&&!b.sw2){b.sw2=true;b.hp=30}else die(m,b,from,gk)}}
 function die(m,b,from,gk){const self=from===b;if(self)from=null;
   b.alive=false;b.hp=0;b.place=m.alive;m.alive--;b.deathT=m.t;b.killer=from;b.killW=from?from.wp[from.cur].id:null;b.selfK=self;
   if(b===m.bounty){m.bounty=null;if(from){const bg=from.perks.has('p_gold')?20:10;from.gold+=bg;m.feed.push({sys:`${from.name} kassiert ${bg} Gold Kopfgeld`,t:m.t,x:b.x,y:b.y,me:true})}}
@@ -1459,7 +1459,7 @@ const pair=(act,v,a,b)=>`<div class="opts"><button class="opt" data-act="${act}"
 function renderLobby(){const c=S.cfg,need=xpNeed(S.level),free=ptsTotal()-ptsSpent(),slots=slotN();
   if(STYLES[c.style].lock&&!has(STYLES[c.style].lock))c.style='balanced';
   if(lockedSkin(c.skin))c.skin='rekrut';
-  while(c.perks.length>slots)c.perks.shift();
+  c.perks=c.perks.filter(p=>has(p));while(c.perks.length>slots)c.perks.shift();
   const nSk=Object.keys(SKINS).filter(k=>!lockedSkin(k)).length,nUn=S.unlocked.length;
   let h=`<section class="card prof"><div class="lvl"><span>Stufe</span>${S.level}<em>${RANKS[Math.min(RANKS.length-1,((S.level-1)/2)|0)]}</em></div><div class="prof-r"><div class="bar"><i style="width:${Math.min(100,S.xp/need*100)}%"></i></div>
     <div class="meta"><span><b>${S.xp}</b> / ${need} EP</span><span>Runden <b>${S.games}</b></span><span>Siege <b>${S.wins}</b></span><span>Kills <b>${S.kills}</b></span><span>Gold <b>${S.gold}</b></span><span>Beste Platzierung <b>${S.best?S.best+'.':'–'}</b></span><span>Freigeschaltet <b>${nUn} von ${UNLOCKS.length}</b></span></div></div></section>`;
@@ -1505,7 +1505,7 @@ $('lobbyBody').addEventListener('click',e=>{const t=e.target.closest('[data-act]
   else if(a==='shop'){const[ty,k]=v.split(':'),it=shopOf(ty,k),cost=it.cost,own=!cost||S.bought.includes(ty+k);if(!own){if(it.req&&!S.achDone.includes(it.req))return;if(S.gold<cost)return;S.gold-=cost;S.bought.push(ty+k)}if(ty==='w_')c.wskin=k;else if(ty==='t_')c.tracer=k;else if(ty==='c_')c.chute=k;else if(ty==='f_')c.shotfx=k;else if(ty==='a_')c.abil=k;else if(ty==='g_')c.grave=k;else{c.skin=k;demo=null}}else if(a==='stance')c.stance=v==='1';else if(a==='loot')c.loot=v==='1'?'all':'min';else if(a==='skin'){c.skin=v;demo=null}
   else if(a==='sk+'){if(ptsTotal()-ptsSpent()>0&&c.skills[v]<8)c.skills[v]++}
   else if(a==='sk-'){if(c.skills[v]>0)c.skills[v]--}
-  else if(a==='perk'){const i=c.perks.indexOf(v);if(i>=0)c.perks.splice(i,1);else{c.perks.push(v);while(c.perks.length>slotN())c.perks.shift()}}
+  else if(a==='perk'){const i=c.perks.indexOf(v);if(i>=0)c.perks.splice(i,1);else if(has(v)){c.perks.push(v);while(c.perks.length>slotN())c.perks.shift()}}
   store();renderLobby();if(a==='skin'&&still)staticDemo()});
 $('lobbyBody').addEventListener('input',e=>{const t=e.target;
   if(t.id==='botName'){const v=t.value.replace(/[<>]/g,'').trim().slice(0,16);S.cfg.name=v||'Dein Bot';store();return}
