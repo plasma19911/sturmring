@@ -629,16 +629,23 @@ function gen(m){const W=m.W,B=m.B,A=W*W/1e6*.5,houses=[];
   m.og=mkGrid(W,200);const g=m.og;
   for(const o of m.obs){const ex=(o.k==='b'?o.hw:o.r)+R+6,ey=(o.k==='b'?o.hh:o.r)+R+6,x0=clamp(((o.x-ex)/200)|0,0,g.n-1),x1=clamp(((o.x+ex)/200)|0,0,g.n-1),y0=clamp(((o.y-ey)/200)|0,0,g.n-1),y1=clamp(((o.y+ey)/200)|0,0,g.n-1);
     for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++)g.c[cy*g.n+cx].push(o)}
-  m.cg=mkGrid(W,560);m.lg=mkGrid(W,480);m.chests=[];const C=W/2,want=Math.round(Math.max(m.N*1.6,A*6)),keep=Math.round(Math.max(m.N*.9,A*2.42));
-  const chest=(x,y,q,rot,pr)=>{const c={x,y,q,open:false,prog:0,rot,pr:pr||0};m.chests.push(c)};
-  for(const h of houses){if(!m.obs.includes(h))continue;for(let k=0;k<(h.tall?2:1);k++){const s=rnd()<.5?-1:1,v=rnd()<.5,x=v?h.x+rr(-h.hw*.6,h.hw*.6):h.x+s*(h.hw+24),y=v?h.y+s*(h.hh+24):h.y+rr(-h.hh*.6,h.hh*.6),z=rnd();
-      if(freeSpot(m,x,y))chest(x,y,z<.62?0:z<.92?1:2,v?0:Math.PI/2,1)}}
+  m.cg=mkGrid(W,560);m.lg=mkGrid(W,480);m.chests=[];const C=W/2,want=Math.round(Math.max(m.N*1.6,A*6)),keep=Math.round(Math.max(m.N*.99,A*2.66));
+  let grpN=0;const chest=(x,y,q,rot,pr,grp)=>{const c={x,y,q,open:false,prog:0,rot,pr:pr||0,grp};m.chests.push(c)};
+  for(const h of houses){if(!m.obs.includes(h))continue;for(let k=0;k<(h.tall?3:2);k++){const s=rnd()<.5?-1:1,v=rnd()<.5,x=v?h.x+rr(-h.hw*.6,h.hw*.6):h.x+s*(h.hw+24),y=v?h.y+s*(h.hh+24):h.y+rr(-h.hh*.6,h.hh*.6),z=rnd();
+      if(freeSpot(m,x,y))chest(x,y,z<.62?0:z<.92?1:2,v?0:Math.PI/2,1,'h'+houses.indexOf(h))}}
   for(const q of m.rooms){chest(q.x,q.y,rnd()<.25?2:1,rr(0,TAU),2);for(const sx of[-1,1]){const z=rnd(),l=z<.5?rollW(rnd()<.5?1:rnd()<.6?2:3):{k:z<.57?'m':'s'};l.x=q.x+sx*rr(40,70);l.y=q.y+rr(-50,50);lootAdd(m,l)}}
-  while(m.chests.length<want){const p=spotIn(m,C,C,0,W*.49),z=rnd();chest(p.x,p.y,z<.68?0:z<.94?1:2,rr(0,TAU),0)}
+  /* Ruinen: Kisten direkt an der Wand */
+  for(const o of m.obs){if(o.kind!=='rw'||rnd()>.7)continue;const rg='r'+(grpN++);for(let k=0;k<2;k++){const L=o.hw>=o.hh,sd=rnd()<.5?-1:1,t=rr(-.4,.4),x=L?o.x+t*o.hw*2:o.x+sd*(o.hw+22),y=L?o.y+sd*(o.hh+22):o.y+t*o.hh*2,z=rnd();if(freeSpot(m,x,y))chest(x,y,z<.55?0:z<.9?1:2,L?0:Math.PI/2,1,rg)}}
+  for(let nf=0;nf<keep*1.3;nf++){const p=spotIn(m,C,C,0,W*.49),z=rnd();chest(p.x,p.y,z<.68?0:z<.94?1:2,rr(0,TAU),0)}
   /* Gleichmäßig verteilen: Räume zuerst, dann Häuser, dann freies Gelände; jede Kiste hält Abstand zu den anderen */
   {for(let i=m.chests.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[m.chests[i],m.chests[j]]=[m.chests[j],m.chests[i]]}
    m.chests.sort((a,b)=>(b.pr===2)-(a.pr===2));const out=[],sg=mkGrid(W,400),gap=Math.max(150,Math.sqrt(W*W/keep)*.55);
-   let nr=0;for(const c of m.chests){if(out.length>=keep)break;if(c.pr===2&&nr>=keep*.25)continue;const g=c.pr===2?gap*.6:gap;let ok=true;gNear(sg,c.x,c.y,g,o=>{if(ok&&Math.hypot(o.x-c.x,o.y-c.y)<g)ok=false});if(ok){out.push(c);gAdd(sg,c);if(c.pr===2)nr++}}
+   let nr=0,nh=0;for(const c of m.chests){if(out.length>=keep)break;if(c.pr===2&&nr>=keep*.22)continue;if(c.pr===1&&nh>=keep*.4)continue;let ok=true;
+     /* an Häusern, Hallen und Ruinen dürfen bis zu zwei Kisten nah beieinander stehen; im freien Gelände bleibt der volle Abstand */
+     if(c.pr>=1){let near=0;gNear(sg,c.x,c.y,gap,o=>{const d=Math.hypot(o.x-c.x,o.y-c.y);if(d<40||(o.pr===0&&d<gap*.7))ok=false;else if(d<gap)near++});if(near>=2)ok=false}
+     else gNear(sg,c.x,c.y,gap,o=>{if(ok&&Math.hypot(o.x-c.x,o.y-c.y)<gap)ok=false});if(ok){out.push(c);gAdd(sg,c);if(c.pr===2)nr++;if(c.pr===1){nh++;
+       /* jede zweite Haus- oder Ruinenkiste bekommt eine Nachbarkiste am selben Gebäude */
+       if(c.grp&&rnd()<.5){const mate=m.chests.find(d=>d!==c&&d.grp===c.grp&&!out.includes(d)&&Math.hypot(d.x-c.x,d.y-c.y)>=40);if(mate&&out.length<keep){out.push(mate);gAdd(sg,mate);nh++}}}}}
    m.chests=out;m.cg=mkGrid(W,560);for(const c of m.chests)gAdd(m.cg,c)}
   for(let i=0,nL=Math.max(m.N*.6,A*3);i<nL;i++){const p=spotIn(m,C,C,0,W*.49),q=rnd(),l=q<.4?rollW(rnd()<.65?0:rnd()<.72?1:2):q<.51?{k:'m'}:q<.84?{k:'s'}:q<.92?{k:'n'}:{k:rnd()<.5?'a':'h',t:1};l.x=p.x;l.y=p.y;lootAdd(m,l)}}
 
