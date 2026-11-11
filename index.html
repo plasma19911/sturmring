@@ -134,7 +134,7 @@ input[type=range]{width:100%;accent-color:var(--amber);height:28px}
 .hb i{display:block;height:100%;border-radius:5px;background:var(--ok)}
 .hb.s{height:5px}.hb.s i{background:var(--shield)}
 .hb.st{height:4px}.hb.st i{background:var(--amber)}
-.inv{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) minmax(0,.82fr);gap:4px;font-variant-numeric:tabular-nums}
+.inv{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);grid-template-columns:none;gap:4px;font-variant-numeric:tabular-nums}
 .inv svg{display:block;width:100%;height:16px;fill:currentColor;color:var(--fg);margin-bottom:1px}
 .inv div.g{border-style:dashed}
 .inv div{background:#1b2530;border:1px solid var(--line);border-top:3px solid var(--line);border-radius:6px;padding:3px 4px;font-size:10.5px;line-height:1.25;color:var(--muted);overflow:hidden;white-space:nowrap}
@@ -287,7 +287,7 @@ button{touch-action:manipulation}button:focus-visible,input:focus-visible{outlin
  .hud-bot{bottom:calc(8px + env(safe-area-inset-bottom));left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));max-width:none;display:grid;grid-template-columns:minmax(0,1fr) 100px;gap:6px;align-items:end}
  .status{width:auto;max-width:none;min-width:0;padding:8px 10px;gap:5px;border-radius:12px;position:relative}.status .who{display:flex;flex-wrap:wrap;gap:4px}.status .who b{font-size:13px}.status .who span{font-size:11px}#sVals{font-size:11px;gap:4px 8px;flex-wrap:wrap}.hb{height:7px}.hb.s,.hb.st{height:4px}
  #hudDetails{display:block;order:10;min-height:44px;width:100%;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--fg);font-size:12px}
- #sInv,#sArm{display:none}#match.details-open #sInv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}#match.details-open #sArm{display:flex;flex-wrap:wrap;font-size:11px}.inv div{font-size:10px;padding:5px;white-space:normal}.inv svg{height:18px}
+ #sInv,#sArm{display:none}#match.details-open #sInv{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);grid-template-columns:none;gap:3px}#match.details-open #sArm{display:flex;flex-wrap:wrap;font-size:11px}.inv div{font-size:10px;padding:5px;white-space:normal}.inv svg{height:18px}
  .speed{display:flex;flex-direction:column;gap:6px;width:100px;max-width:none}.speed button{width:100%;min-width:44px;min-height:44px;flex:auto;font-size:15px;padding:8px}
  #toast{top:32%;font-size:13px;max-width:calc(100% - 24px);pointer-events:none}#dead{top:50%;width:min(360px,calc(100% - 24px));max-height:calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));box-sizing:border-box;overflow:auto;padding:18px}#dead .go{min-height:48px}#dead h3{font-size:24px}
  #result .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#result .res-top h2{font-size:40px}#result .card{font-size:14px}#result .kf li{grid-template-columns:34px 32px minmax(0,1fr) auto;font-size:12px;gap:5px}#result .kf .kw svg{width:30px}#result .startbar .go{min-height:48px;font-size:14px}
@@ -302,7 +302,7 @@ button{touch-action:manipulation}button:focus-visible,input:focus-visible{outlin
 <style>
 /* Ausrüstung immer sichtbar, kompaktes HUD */
 #hudDetails{display:none!important}
-#sInv{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:3px!important}
+#sInv{display:grid!important;grid-auto-flow:column!important;grid-auto-columns:minmax(0,1fr)!important;grid-template-columns:none!important;gap:3px!important}
 #sArm{display:flex!important;flex-wrap:wrap}
 @media(max-width:1000px){
  .status{padding:6px 8px!important;gap:3px!important;border-radius:10px!important}
@@ -4026,6 +4026,7 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
       const id=b.wp[b.cur].id,ws=b.isP?S.cfg.wskin:'std',at=b.wp[b.cur].att||{};v.scope.visible=!!at.optic;v.scope.scale.setScalar(at.optic==='zf'?1.35:1);v.lasr.visible=!!at.laser;v.beam.visible=!!at.laser&&!mobileGraphics&&b.alive&&!b.down;v.grip.visible=!!at.grip;if(v.gid!==id+ws){const gq=gunGeoOf(id,ws);v.gun.geometry=gq.geo;v.gid=id+ws;v.flash.position.set(gq.tip+4,.5,0)}
       v.bn[0].visible=b.gren>0;v.bn[1].visible=b.gren>1;v.bn[2].visible=b.smk>0;v.bn[3].visible=b.smk>1;v.bn[4].visible=b.fls>0;v.bn[5].visible=b.fls>1;v.vest.visible=b.vest>0;if(b.vest)v.vest.material=tierM[b.vest];v.helm.visible=b.helm>0;if(b.helm)v.helm.material=tierM[b.helm];
       {const hk=b.flash>0?Math.sin(Math.min(1,b.flash/.15)*Math.PI*.5):0;v.model.rotation.z=hk*.3;v.model.position.x=-hk*3;v.lean=(v.lean||0)+((b.lean||0)*.34-(v.lean||0))*Math.min(1,dt*9);v.model.rotation.x=v.lean}const since=m.t-b.lastShotT;if(b.lastShotT!==v.shotSeen){v.shotSeen=b.lastShotT;const wid=b.wp[b.cur].id;if(since<.1&&wid!=='shotgun'&&wid!=='autosg'||since<.1&&rnd()<.6){const sa=b.a-Math.PI/2+rr(-.3,.3),sv=rr(55,85);if(fxP.length<PN)fxP.push({x:X+Math.cos(b.a)*6,y:Y+Math.sin(b.a)*6,h:gh+24,vx:Math.cos(sa)*sv,vy:Math.sin(sa)*sv,vh:rr(55,85),t:0,l:.9,q:SHELL,c:wid==='shotgun'||wid==='autosg'?0xb8342a:0xc9a24a,r:rnd()*6})}}{const ad=b.ads||0,sw=b.hold?0:ad*Math.sin(ts/260+b.i)*.6;v.hand.position.set(9-(since<.14?(1-since/.14)*(4.5-ad*2.5):0)+ad*1.5,30+ad*7+sw,8-ad*5.5);v.gun.visible=true}v.hand.rotation.z=b.act==='heal'?-.85+Math.sin(m.t*3)*.08:b.act==='open'?-.45+Math.sin(m.t*7)*.18:b.rel>0?-.55+Math.sin(m.t*8)*.12:since<.14?(1-since/.14)*.18:0;
+      {const lrT=!b.see&&!b.fire&&(b.ads||0)<.2&&!b.act&&b.rel<=0&&m.t-(b.lastShotT||-9)>2.5&&m.t-(b.lastHitT||-9)>3?1:0;v.lr=(v.lr||0)+(lrT-(v.lr||0))*Math.min(1,dt*4);if(v.lr>.01){v.hand.position.y-=6*v.lr;v.hand.position.x-=2*v.lr;v.hand.rotation.z-=.55*v.lr}}
       {const t=m.t,cid=b.cur+':'+b.wp[b.cur].id;let pv=false;v.prop.rotation.set(0,0,0);v.vest.position.y=22.5;v.vest.scale.set(1,1,1);v.helm.position.y=40-HEADY;
         if(v.pcid!==cid){if(v.pcid!==undefined)v.swS=t;v.pcid=cid}
         if(b.rel>0&&!(v.prel>0)){v.rlS=t;v.rlD=Math.max(.4,b.rel);v.magOut=false}v.prel=b.rel;
@@ -4055,11 +4056,11 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
         v.legs[0].rotation.z=-1.25;v.legs[1].rotation.z=-1.25;v.legs[0].userData.kn.rotation.z=v.legs[1].userData.kn.rotation.z=1.6;v.hand.position.set(15,20-k*3.2,0);v.hand.rotation.z=-1.45;v.gun.visible=false}
       {const wid=b.wp[b.cur].id,FL={shotgun:[2.1,1.9,.11],autosg:[1.7,1.6,.08],sniper:[2.6,1.1,.09],dmr:[1.9,1,.07],lmg:[1.5,1.2,.06],revolver:[1.7,1.4,.08],smg:[.85,.75,.05],pistol:[.8,.8,.06]}[wid]||[1.1,1,.07];
         v.flash.visible=since<FL[2];if(v.flash.visible){const r=(.75+rnd()*.5)*(b.isP?2.6:1.7);v.flash.scale.set(FL[0]*r,FL[1]*r,FL[1]*r);v.flash.rotation.x=rnd()*TAU}}
-      {/* Kopf schaut vorweg in die Laufrichtung oder zum Ziel */const tgA=b.fire?b.a:b.go&&b.gx!=null&&Math.hypot(b.gx-b.x,b.gy-b.y)>8?Math.atan2(b.gy-b.y,b.gx-b.x):(b.ta??b.a);let hy=Math.atan2(Math.sin(tgA-v.face),Math.cos(tgA-v.face));hy=clamp(hy,-1.05,1.05);if(b.down||b.act==='revive')hy=0;v.hy=(v.hy||0)+(hy-(v.hy||0))*Math.min(1,dt*7);{const wb=walk&&!b.down?clamp(v.animSpeed/125,0,1):0,gp=v.gait||0;v.head.rotation.set(Math.sin(gp)*.035*wb,-v.hy+Math.sin(gp)*.025*wb,(b.act==='revive'?-.5:0)+(b.ads||0)*-.08+Math.abs(Math.cos(gp))*.02*wb-.01*wb);v.head.position.y=HEADY+Math.abs(Math.sin(gp))*.2*wb}v.headO.visible=v.ol.visible;
+      {/* Kopf schaut vorweg in die Laufrichtung oder zum Ziel */const tgA=b.fire?b.a:b.go&&b.gx!=null&&Math.hypot(b.gx-b.x,b.gy-b.y)>8?Math.atan2(b.gy-b.y,b.gx-b.x):(b.ta??b.a);let hy=Math.atan2(Math.sin(tgA-v.face),Math.cos(tgA-v.face));if(!b.see&&!walk&&!b.act)hy+=Math.sin(ts/1700+b.i*1.7)*.7*(.5+.5*Math.sin(ts/4100+b.i));hy=clamp(hy,-1.05,1.05);if(b.down||b.act==='revive')hy=0;v.hy=(v.hy||0)+(hy-(v.hy||0))*Math.min(1,dt*(b.see?9:3.5));{const wb=walk&&!b.down?clamp(v.animSpeed/125,0,1):0,gp=v.gait||0;v.head.rotation.set(Math.sin(gp)*.035*wb,-v.hy+Math.sin(gp)*.025*wb,(b.act==='revive'?-.5:0)+(b.ads||0)*-.08+Math.abs(Math.cos(gp))*.02*wb-.01*wb);v.head.position.y=HEADY+Math.abs(Math.sin(gp))*.2*wb}v.headO.visible=v.ol.visible;
         /* Knien statt Hocken: ein Knie am Boden, das andere Bein aufgestellt */
         v.kn=(v.kn||0)+(((b.pose===1&&!b.down&&b.act!=='revive')?1:0)-(v.kn||0))*Math.min(1,dt*8);if(v.kn>.01){const q=v.kn;v.model.position.y-=q*9;v.legs[0].rotation.z=v.legs[0].rotation.z*(1-q)+q*1.45;v.legs[0].userData.kn.rotation.z=v.legs[0].userData.kn.rotation.z*(1-q)-q*1.5;v.legs[1].rotation.z=v.legs[1].rotation.z*(1-q)-q*.15;v.legs[1].userData.kn.rotation.z=v.legs[1].userData.kn.rotation.z*(1-q)-q*1.55}
         {/* Oberkörper: Gegenrotation zu den Beinen, Gewichtsverlagerung, Vorlage beim Rennen, Atmen, Rückstoß */const wb=walk&&!b.down&&b.act!=='revive'?clamp(v.animSpeed/125,0,1.3):0,gp=v.gait||0,sa=m.t-(b.lastShotT||-9),rk=sa>=0&&sa<.12?(1-sa/.12):0,br=Math.sin(ts/650+(v.ph||0))*(1-Math.min(1,wb));
-          const tx=Math.sin(gp)*.03*wb,ty=-Math.sin(gp)*.1*wb,tz=-(.04+(b.run?.07:0))*wb+rk*.06-(b.ads||0)*.03;v.torso.rotation.set(tx,ty,tz);_T.set(0,14,0).applyEuler(v.torso.rotation);v.torso.position.set(-_T.x,14-_T.y+Math.cos(gp*2)*.3*wb,-_T.z);v.torso.scale.set(1+br*.008,1+br*.007,1+br*.008)}
+          const idl=1-Math.min(1,wb),tx=Math.sin(gp)*.03*wb+Math.sin(ts/2300+b.i)*.03*idl,ty=-Math.sin(gp)*.1*wb,tz=-(.04+(b.run?.07:0))*wb+rk*.06-(b.ads||0)*.03;v.torso.rotation.set(tx,ty,tz);_T.set(0,14,0).applyEuler(v.torso.rotation);v.torso.position.set(-_T.x,14-_T.y+Math.cos(gp*2)*.3*wb,-_T.z);v.torso.scale.set(1+br*.008,1+br*.007,1+br*.008)}
         /* Arme: Schulter, Ellbogen, Handgelenk folgen Waffe und Gegenständen */
         const hp=v.hand.position,rz=v.hand.rotation.z;ikArm(v.arms[0],.5,31.5,10.4,hp.x,hp.y,hp.z,1);
         let lx,ly,lz;if(v.prop.visible){lx=v.prop.position.x;ly=v.prop.position.y;lz=v.prop.position.z}else if(v.gun.visible){lx=hp.x+Math.cos(rz)*7;ly=hp.y+Math.sin(rz)*7-.6;lz=hp.z-2.4}else{lx=hp.x;ly=hp.y;lz=hp.z-6}
@@ -4414,10 +4415,11 @@ function hud(m){const s=m.storm,p=m.ph[s.ph],f=spec||P;
   $('sHp').style.width=f.hp/f.max*100+'%';$('sSh').style.width=Math.min(100,f.sh)+'%';
   const cell=(col,icon,name,sub,on)=>`<div class="${on?'on':''}" style="border-top-color:${col};background:linear-gradient(${col}33,#1b2530 70%)">${icon}<b>${name}</b>${sub}</div>`;
   const cells=f.wp.map((w,i)=>cell(RAR[w.rar].c,ICON[w.id],SHORT[w.id],f.rel>0&&i===f.cur?'lädt':f.mags[i]+' Schuss',i===f.cur));
-  if(f.med>0)cells.push(cell('#74d66b',ICON.med,'Medikit','×'+f.med));if(f.pot>0)cells.push(cell('#4aa8ff',ICON.pot,'Schild','×'+f.pot));
-  while(cells.length<5)cells.push('<div><svg viewBox="0 0 48 22"></svg><b>&nbsp;</b>leer</div>');
+  while(cells.length<3)cells.push('<div><svg viewBox="0 0 48 22"></svg><b>&nbsp;</b>leer</div>');
+  {const e=[[f.med,'Medikit','#74d66b'],[f.pot,'Schild','#4aa8ff'],[f.bmed,'Großverband','#ff8a8a'],[f.bpot,'Gr. Schild','#6ab0ff'],[f.rpot,'Regen','#7aff8a'],[f.pz,'Pizza','#ffc070']].filter(x=>x[0]>0);
+    cells.push(`<div class="g" style="border-top-color:#74d66b;${e.length?'':'opacity:.55'}">${ICON.med}<b>Heilung</b><span style="display:flex;flex-direction:column;font-size:10px;line-height:1.15">${e.length?e.map(x=>`<span style="color:${x[2]};white-space:nowrap">${x[1]} ×${x[0]}</span>`).join(''):'leer'}</span></div>`)}
   {const g=f.gren||0,k=f.smk||0,l=f.fls||0,cap=f.tab==='tf_gurt'?3:2,sp=(c,v,ic)=>`<span style="color:${v?c:'#5b6670'};white-space:nowrap"><small style="opacity:.7;font-size:8px">${ic}</small>${v}</span>`;
-    {const e=[[f.bmed,'Großverband','#ff8a8a'],[f.bpot,'Großer Schild','#6ab0ff'],[f.rpot,'Regen','#7aff8a'],[f.pz,'Pizza','#ffc070']].filter(x=>x[0]>0);if(e.length)cells.push(`<div class="g" style="border-top-color:#ff8ac0"><b>Extra</b><span style="display:flex;flex-direction:column;font-size:10px;line-height:1.2">${e.map(x=>`<span style="color:${x[2]}">${x[1]} ×${x[0]}</span>`).join('')}</span></div>`)}
+    
     cells.push(`<div class="g" style="border-top-color:#8a9a5a;${g+k+l?'':'opacity:.55'}">${ICON.gren}<b>Granaten</b><span class="gq" style="display:flex;justify-content:center;gap:3px;font-size:11px;font-weight:700">${sp('#b5c48a',g,'S')}${sp('#c9d0d6',k,'R')}${sp('#ffe9a0',l,'B')}</span></div>`)}
   $('sInv').innerHTML=cells.join('')}
 
