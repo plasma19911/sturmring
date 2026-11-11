@@ -663,6 +663,7 @@ function newMatch(cfg,o){o=o||{};const W=o.W||32000,N=o.n||1000,id=BIOMES[o.biom
   while(m.bots.length<N){const e=randCfg(),k=ord[m.bots.length%1000];m.bots.push(mkBot(m,m.bots.length,PRE[k%25]+' '+SUF[(k/25)|0],false,e.cfg,e.pts,e.tier))}
   /* Trio: je drei Bots bilden ein Team, landen zusammen und spielen zusammen */
   if((cfg&&cfg.mode==='trio')||o.trio){m.trio=true;for(let i=0;i<m.bots.length;i++){const b=m.bots[i];b.team=(i/3)|0;if(i%3){const L=m.bots[i-i%3];for(let k=0;k<14;k++){const a=rr(0,TAU),d=rr(40,95),x=L.x+Math.cos(a)*d,y=L.y+Math.sin(a)*d;if(freeSpot(m,x,y)){b.x=b.px=x;b.y=b.py=y;break}}}}
+    for(const b of m.bots)b.tab=b.isP?(cfg&&cfg.teamAb)||null:(b.tier>=2&&rnd()<.5?pick(['tf_sani','tf_zaeh','tf_vers','tf_kampf','tf_funk']):null);
     m.teamsAlive=Math.ceil(m.bots.length/3);m.teams=m.teamsAlive}
   nextZone(m);return m}
 const mates=(m,b)=>m.trio?m.bots.slice(b.team*3,b.team*3+3).filter(o=>o!==b):[];
@@ -677,7 +678,7 @@ function stormStep(m){const s=m.storm;s.t+=DT;const p=m.ph[s.ph];if(s.t<p.wait)r
   if(k>=1){if(s.ph<m.ph.length-1){s.ph++;nextZone(m)}else s.r=0}}
 
 function hurt(m,b,d,from,hs,gk){if(!b.alive)return;if(from&&from!==b&&m.trio&&from.team===b.team)return;
-  if(from){(m.blood||(m.blood=[])).push({x:b.x,y:b.y,t:m.t});if(m.blood.length>80)m.blood.shift();d*=TUNE.dmg*b.tough;
+  if(from){(m.blood||(m.blood=[])).push({x:b.x,y:b.y,t:m.t});if(m.blood.length>80)m.blood.shift();d*=TUNE.dmg*b.tough*(b.act==='revive'&&b.perks.has('p_guard')?.75:1);
     if(hs){d*=b.helm?HELM[b.helm].m:2;if(b.helm&&--b.helmD<=0){b.helm=0;ev(m,'break',b.x,b.y,500)}}
     else if(b.vest){const ab=d*VEST[b.vest].r;d-=ab;if((b.vestD-=ab)<=0){b.vest=0;ev(m,'break',b.x,b.y,500)}}
     if((from.isP||b.isP)&&m.dn.length<14)m.dn.push({x:b.x,y:b.y,v:Math.max(1,Math.round(d)),hs:!!hs,me:b.isP});
@@ -755,7 +756,7 @@ function tryFire(m,b,foe,fd){const cw=b.wp[b.cur],w=b.W[cw.id];if(b.rel>0||b.cd>
   if(b.style==='ambush'&&!b.mv)sp*=.6;
   if(b.perks.has('p_first')&&m.t-b.lastShotT>2)sp*=.15;
   const dh=height(m,b.x,b.y)-height(m,foe.x,foe.y);if(dh>18)sp*=b.perks.has('p_high')?.55:.75;else if(dh<-18)sp*=1.2;
-  b.lastShotT=m.t;const base=Math.atan2(foe.y-b.y,foe.x-b.x),mul=rarM(cw.id,cw.rar)*fall(w,fd)*(b.perks.has('p_clutch')&&m.alive<=25?1.2:1);
+  b.lastShotT=m.t;const base=Math.atan2(foe.y-b.y,foe.x-b.x),mul=rarM(cw.id,cw.rar)*fall(w,fd)*(b.perks.has('p_clutch')&&m.alive<=25?1.2:1)*(b.perks.has('p_rally')&&mates(m,b).some(o=>o.alive&&!o.down&&d2(o,b)<250)?1.1:1);
   const f=m.focus,vis=f&&Math.abs(b.x-f.x)<1500&&Math.abs(b.y-f.y)<1500;
   if(w.splash){const err=(rnd()*2-1)*sp,ix=b.x+Math.cos(base+err)*fd,iy=b.y+Math.sin(base+err)*fd;
     if(vis){m.tracers.push({x1:b.x,y1:b.y,x2:ix,y2:iy,t:.2,big:true});m.fx.push({x:ix,y:iy,t:.45})}
@@ -822,7 +823,7 @@ function validGoal(m,x,y){x=clamp(x,24,m.W-24);y=clamp(y,24,m.W-24);if(freeSpot(
 function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
   /* Sichtweite richtet sich nach der Waffe mit der größten Reichweite im Gepäck */
   let reach=TUNE.sight;for(let i=0;i<b.wp.length;i++){const q=Math.min(720,b.W[b.wp[i].id].range*.96);if(q>reach)reach=q}
-  const sight=reach*b.sk.sight;b.sight=sight;
+  const sight=reach*b.sk.sight*(m.trio&&(b.tab==='tf_funk'||mates(m,b).some(o=>o.alive&&o.tab==='tf_funk'))?1.15:1);b.sight=sight;
   let foe=null,fd=1e9,best=1e9,nSee=0;
   {const g=m.bg,cs=g.cs,n=g.n,x0=Math.max(0,((b.x-sight)/cs)|0),x1=Math.min(n-1,((b.x+sight)/cs)|0),y0=Math.max(0,((b.y-sight)/cs)|0),y1=Math.min(n-1,((b.y+sight)/cs)|0);
     for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++){const a=g.c[cy*n+cx];for(let i=0;i<a.length;i++){const o=a[i];if(o===b||!o.alive||m.trio&&o.team===b.team)continue;const d=d2(b,o);const lh=o===b.lastHit&&m.t-b.lastHitT<3;
@@ -898,7 +899,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
   if(m.trio&&!dg&&!zoneCritical){const ms=mates(m,b);
     const dn=ms.filter(o=>o.alive&&o.down).sort((p,q)=>d2(b,p)-d2(b,q))[0];
     /* Wiederbeleben nur, wenn es taktisch geht: Zeit reicht, kein Gegner hat freie Sicht auf den Liegenden oder ist in Reichweite, Kamerad ist nicht selbst am Ende */
-    let reviveOk=false;if(dn&&!(dn.rvBy&&dn.rvBy!==b)){const dd=d2(b,dn),left=60-(m.t-dn.downT),travel=dd/(108*b.sk.spd*1.4);
+    let reviveOk=false;if(dn&&!(dn.rvBy&&dn.rvBy!==b)){const dd=d2(b,dn),left=(dn.tab==='tf_zaeh'?90:60)-(m.t-dn.downT),travel=dd/(108*b.sk.spd*1.4);
       let threat=false;const chk=e=>{if(!e||!e.alive||e.down||e.team===b.team)return;const de=d2(e,dn),rg=e.W[e.wp[e.cur].id].range;if(de<rg*1.05&&los(m,e,{x:dn.x,y:dn.y,alive:true,pose:1},false))threat=true;if(d2(e,b)<160)threat=true};
       chk(foe);for(const o of ms)chk(o.see);if(dn.downBy&&m.t-dn.downT<6)chk(dn.downBy);if(b.lastHit&&m.t-b.lastHitT<1.5)threat=true;
       reviveOk=dd<900&&left>travel+11&&(b.hp+b.sh)>(b.max+100)*.22&&!threat}
@@ -907,10 +908,11 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     else if(!foe){
       /* Ausrüstung teilen: Überschuss in die Nähe des Kameraden legen, der nichts hat; er hebt es selbst auf */
       for(const o of ms){if(!o.alive||o.down||d2(b,o)>140||m.t<(b.shareT||0))continue;
-        const give=k=>{const l=near(m,o,k);b.ban.add(l);b.shareT=m.t+3;m.feed.push({sys:`${b.name} legt ${o.name} ${k.k==='m'?'ein Medikit':k.k==='s'?'einen Schildtrank':k.k==='n'?'eine Granate':'eine Waffe'} hin`,t:m.t,x:o.x,y:o.y,me:b.isP||o.isP})};
-        if(b.med>=2&&o.med===0){b.med--;give({k:'m'});break}
-        if(b.pot>=2&&o.pot===0){b.pot--;give({k:'s'});break}
-        if(b.gren>=2&&o.gren===0){b.gren--;give({k:'n'});break}
+        const give=k=>{const l=near(m,o,k);b.ban.add(l);b.shareT=m.t+3;b.shares=(b.shares||0)+1;m.feed.push({sys:`${b.name} legt ${o.name} ${k.k==='m'?'ein Medikit':k.k==='s'?'einen Schildtrank':k.k==='n'?'eine Granate':'eine Waffe'} hin`,t:m.t,x:o.x,y:o.y,me:b.isP||o.isP})};
+        const th=b.tab==='tf_vers'&&b.hp>=b.max*.8?1:2;
+        if(b.med>=th&&o.med===0){b.med--;give({k:'m'});break}
+        if(b.pot>=th&&o.pot===0){b.pot--;give({k:'s'});break}
+        if(b.gren>=th&&o.gren===0){b.gren--;give({k:'n'});break}
         if(o.wp.length===1&&o.wp[0].id==='pistol'&&b.wp.length>=3){const wi=worst(b),wq=b.wp[wi];if(wq.id!=='pistol'){b.wp.splice(wi,1);b.mags.splice(wi,1);if(b.cur>=b.wp.length)b.cur=0;give({k:'w',id:wq.id,rar:wq.rar});break}}}
       const fighting=ms.find(o=>o.alive&&!o.down&&o.see&&o.see.alive&&d2(b,o)<750);
       const lead=m.bots.slice(b.team*3,b.team*3+3).find(o=>o.alive&&!o.down);
@@ -1034,20 +1036,20 @@ function think(m,b,dt,bi){if(m.t<DROP)return;
   b.cd-=dt;if(b.flash>0)b.flash-=dt;if(b.jump>0)b.jump-=dt;if(b.up>0)b.up-=dt;
   if(b.rel>0&&(b.rel-=dt)<=0)b.mags[b.cur]=magOf(b,b.wp[b.cur].id);
   const s=m.storm;if((b.stT+=dt)>=.13){if(Math.hypot(b.x-s.x,b.y-s.y)>s.r){hurt(m,b,m.ph[s.ph].dps*b.stT*(b.perks.has('p_storm')?.5:1),null);if(!b.alive)return}b.stT=0}
-  if(b.down){if(m.t-b.downT>=60){die(m,b,b.downBy,false);return}
-    b.pose=2;b.fire=null;b.act='';b.sprint=false;b.state=b.rvBy?'Wird wiederbelebt':'Am Boden · '+Math.ceil(60-(m.t-b.downT))+' s';
+  if(b.down){const bl=b.tab==='tf_zaeh'?90:60;if(m.t-b.downT>=bl){die(m,b,b.downBy,false);return}
+    b.pose=2;b.fire=null;b.act='';b.sprint=false;b.state=b.rvBy?'Wird wiederbelebt':'Am Boden · '+Math.ceil(bl-(m.t-b.downT))+' s';
     let nm=null,nd=1e9;for(const o of mates(m,b))if(o.alive&&!o.down){const d=d2(b,o);if(d<nd){nd=d;nm=o}}
     b.go=false;b.vx=b.vy=0}
   else if(b.due||(b.bT-=dt)<=0){b.due=false;b.bT=bi;const p0=b.pose;brain(m,b);if(p0===2&&b.pose!==2)b.up=.4}
   b.mv=false;b.run=false;if(!b.go||b.act!==''){b.vx*=.6;b.vy*=.6}
   if(b.act==='revive'){const t=b.rvT;b.moveSpeed=0;b.motionX=b.x;b.motionY=b.y;
     if(!t||!t.alive||!t.down||d2(b,t)>34||b.flash>.1&&b.lastHit&&b.lastHit.alive){b.act='';if(t&&t.rvBy===b)t.rvBy=null;b.due=true}
-    else{t.rvBy=b;b.pose=1;b.ta=Math.atan2(t.y-b.y,t.x-b.x);b.rvP=(b.rvP||0)+dt;b.state='Belebt '+t.name+' wieder · '+Math.ceil(10-b.rvP)+' s';if(b.rvP>=10){t.down=false;t.rvBy=null;t.hp=Math.round(t.max*.3);t.sh=0;t.pose=0;t.due=true;b.act='';b.rvP=0;b.due=true;
+    else{t.rvBy=b;b.pose=1;b.ta=Math.atan2(t.y-b.y,t.x-b.x);b.rvP=(b.rvP||0)+dt;const need=b.tab==='tf_sani'?6:10;b.state='Belebt '+t.name+' wieder · '+Math.ceil(need-b.rvP)+' s';if(b.rvP>=need){b.revs=(b.revs||0)+1;t.down=false;t.rvBy=null;t.hp=Math.round(t.max*(b.tab==='tf_kampf'?.6:.3));t.sh=0;t.pose=0;t.due=true;b.act='';b.rvP=0;b.due=true;
       m.feed.push({sys:`${b.name} hat ${t.name} wiederbelebt`,t:m.t,x:t.x,y:t.y,me:b.isP||t.isP||mates(m,b).some(o=>o.isP)});ev(m,'heal',t.x,t.y,600)}}}
   if(b.act==='heal'){b.moveSpeed=0;b.motionX=b.x;b.motionY=b.y;b.sta=Math.min(b.staMax,b.sta+15*dt);if((b.healT-=dt)<=0){if(b.useK==='s'){b.sh=Math.min(100,b.sh+(b.perks.has('p_shield')?75:50));b.pot--}else{b.hp=Math.min(b.max,b.hp+b.healAmt);b.med--;b.meds++}ev(m,b.useK==='s'?'shield':'heal',b.x,b.y,200);b.act='';b.due=true}return}
   if(b.act==='open'){const c=b.chest;if(c.open){b.act='';b.due=true}else if((c.prog+=dt)>=(b.perks.has('p_scav')?.4:.8)*b.lootK){openChest(m,c,b);b.act='';b.due=true}}
   else if(b.go&&b.up<=0){const dx=b.gx-b.x,dy=b.gy-b.y,l=Math.hypot(dx,dy);
-    if(l>2){let sp=108*b.sk.spd*(m.t<b.adrT?1.3:1);if(b.pose===1)sp*=.55;else if(b.pose===2)sp*=.25;else if(b.sprint&&!b.exh&&b.sta>0){sp*=1.5;b.run=true}if(b.jump>0)sp*=1.15;
+    if(l>2){let sp=108*b.sk.spd*(m.t<b.adrT?1.3:1)*(b.perks.has('p_rescue')&&b.state.startsWith('Läuft zu ')?1.3:1);if(b.pose===1)sp*=.55;else if(b.pose===2)sp*=.25;else if(b.sprint&&!b.exh&&b.sta>0){sp*=1.5;b.run=true}if(b.jump>0)sp*=1.15;
       let ux=dx/l,uy=dy/l;if(b.detT>0){b.detT-=dt;const q=Math.hypot(b.dx,b.dy)||1;ux=b.dx/q;uy=b.dy/q}
       /* Ausweichen in jedem Schritt: liegt die Kante eines Hindernisses dicht voraus, wird seitlich daran vorbeigelenkt */
       if(l>40&&b.jump<=0&&!(b.path&&b.path.length)){const arr=m.og.c[gi(m.og,b.x,b.y)],canJ=b.pose===0&&b.sta>=12;let ax=0,ay=0;
@@ -1146,7 +1148,16 @@ const UNLOCKS=[
   {id:'k_gold',type:'skin',name:'Skin „Goldjunge“',cond:'Gewinne 3 Runden insgesamt',test:(r,s)=>s.wins>=3},
   {id:'k_stadt',type:'skin',name:'Skin „Großstädter“',cond:'Spiele 15 Runden',test:(r,s)=>s.games>=15},
   ...Object.keys(BIOMES).map(id=>({id:'k_'+id,type:'skin',name:'Skin „'+Object.values(SKINS).find(s=>s.lock==='k_'+id).n+'“',cond:'Top 150 auf der Karte '+BIOMES[id].n,test:r=>r.biome===id&&r.place<=150})),
-  {id:'k_astro',type:'skin',name:'Skin „Astronaut“',cond:'Top 100 auf jeder verfügbaren Karte',test:(r,s)=>Object.keys(BIOMES).every(k=>s.maps[k]>0&&s.maps[k]<=100)}];
+  {id:'k_astro',type:'skin',name:'Skin „Astronaut“',cond:'Top 100 auf jeder verfügbaren Karte',test:(r,s)=>Object.keys(BIOMES).every(k=>s.maps[k]>0&&s.maps[k]<=100)},
+  /* nur im Trio: Teamfähigkeiten und Team-Perks */
+  {id:'tf_sani',mode:'trio',type:'team',name:'Feldsanitäter',desc:'Wiederbeleben dauert 6 statt 10 Sekunden',cond:'Belebe im Trio einen Kameraden wieder',test:r=>r.revs>=1},
+  {id:'tf_zaeh',mode:'trio',type:'team',name:'Zäher Hund',desc:'Am Boden 90 statt 60 Sekunden, bevor er ausblutet',cond:'Erreiche im Trio die Top 25',test:r=>r.place<=25},
+  {id:'tf_vers',mode:'trio',type:'team',name:'Versorger',desc:'Gibt Medikits, Schildtränke und Granaten schon ab dem ersten Überschuss ab',cond:'Gib in einer Runde 3 Gegenstände an Kameraden ab',test:r=>r.shares>=3},
+  {id:'tf_kampf',mode:'trio',type:'team',name:'Kampfsanitäter',desc:'Wiederbelebte stehen mit 60 statt 30 % Leben auf',cond:'3 Wiederbelebungen in einer Runde',test:r=>r.revs>=3},
+  {id:'tf_funk',mode:'trio',type:'team',name:'Funkkontakt',desc:'Das ganze Team sieht 15 % weiter',cond:'10 Team-Kills in einer Runde',test:r=>r.teamKills>=10},
+  {id:'p_rally',mode:'trio',type:'perk',name:'Zusammenhalt',desc:'+10 % Schaden, solange ein Kamerad in der Nähe steht',cond:'Gewinne eine Trio-Runde',test:r=>r.place===1},
+  {id:'p_guard',mode:'trio',type:'perk',name:'Beschützer',desc:'Nimmt beim Wiederbeleben 25 % weniger Schaden',cond:'2 Wiederbelebungen in einer Runde',test:r=>r.revs>=2},
+  {id:'p_rescue',mode:'trio',type:'perk',name:'Retter',desc:'Läuft 30 % schneller zu Kameraden am Boden',cond:'Erreiche im Trio die Top 10',test:r=>r.place<=10}];
 const KEY='sturmring-save-v1';
 const defSave=()=>({camV2:1,level:1,xp:0,games:0,wins:0,best:0,kills:0,gold:0,bought:[],hsTotal:0,grenTotal:0,chestTotal:0,goldTotal:0,wk:{},achDone:[],maps:{},unlocked:[],cfg:{skin:'rekrut',style:'balanced',land:'any',retreat:.35,healAt:.6,early:true,loot:'all',high:true,prep:true,stance:true,wskin:'std',tracer:'std',chute:'std',shotfx:'std',att:{},abil:'none',grave:'std',dmgNum:true,critFx:true,camRot:true,skills:{vital:0,aim:0,spd:0,rel:0,sight:0,armor:0,sta:0,crit:0,tough:0,turn:0,heal:0,quiet:0,loot:0},perks:[]}});
 let attW='rifle';
@@ -1171,6 +1182,11 @@ const xpOf=o=>o?(o.games||0)*1e6+(o.level||0)*1e3:-1;
 const ACH=[],RN=['I','II','III','IV','V'],fmt=n=>n.toLocaleString('de-DE');
 function tiers(key,label,unit,f,goals,xp,gold){goals.forEach((g,i)=>ACH.push({id:key+g,fam:key,name:label+' '+RN[i],desc:fmt(g)+' '+unit,f,goal:g,xp:xp[i],gold:Math.round(gold[i]/10)*5}))}
 tiers('ch','Schatzsucher','Kisten insgesamt öffnen',s=>s.chestTotal,[100,1000,10000],[250,1500,8000],[40,150,600]);
+tiers('rv','Lebensretter','Kameraden wiederbeleben',s=>s.revTotal||0,[1,10,50,250],[200,800,3000,10000],[20,80,250,800]);
+tiers('tw','Eingespieltes Team','Trio-Runden gewinnen',s=>s.trioWins||0,[1,10,50],[500,2500,10000],[80,300,1000]);
+tiers('sv','Versorger','Gegenstände an Kameraden abgeben',s=>s.shareTotal||0,[5,50,250],[150,800,3000],[20,80,300]);
+tiers('tk','Feuerkraft','Team-Kills im Trio',s=>s.teamKillTotal||0,[25,250,2500],[250,1500,8000],[30,150,600]);
+tiers('tg','Truppe','Trio-Runden spielen',s=>s.trioGames||0,[10,100,500],[200,1200,5000],[30,120,500]);
 tiers('kl','Vernichter','Kills insgesamt',s=>s.kills,[10,100,1000,10000],[150,600,3000,15000],[20,80,300,1200]);
 tiers('wn','Champion','Siege',s=>s.wins,[1,10,50,100],[300,1500,5000,10000],[50,200,600,1200]);
 tiers('gm','Dauerbrenner','Runden spielen',s=>s.games,[10,100,1000],[200,1200,8000],[30,150,800]);
@@ -1680,6 +1696,11 @@ let mainView=null,demoView=null,noGL=false,camI=0,heardT=0,stepT=0,stepO=0,camYa
 const panOf=(x,y)=>clamp(((x-cam.x)*Math.cos(camYaw)-(y-cam.y)*Math.sin(camYaw))/600,-1,1);
 const CAMS=[{h:180,b:380,n:'Vorschau'},{h:330,b:230,n:'mittel'},{h:520,b:300,n:'weit'},{h:210,b:190,n:'nah'}],DCAM={h:180,b:380};
 const cam={x:0,y:0},dcam={x:0,y:0};
+function swapMode(nm){const cm=S.cfg.mode||'solo';if(cm===nm)return;S.prog=S.prog||{};const sk=new Set(UNLOCKS.filter(u=>u.type==='skin').map(u=>u.id));
+  S.prog[cm]={level:S.level,xp:S.xp,unlocked:S.unlocked.filter(id=>!sk.has(id)),skills:{...S.cfg.skills},perks:[...S.cfg.perks],teamAb:S.cfg.teamAb||null};
+  const n=S.prog[nm]||{level:1,xp:0,unlocked:[],skills:{},perks:[],teamAb:null};
+  S.level=n.level;S.xp=n.xp;S.unlocked=[...S.unlocked.filter(id=>sk.has(id)),...n.unlocked];S.cfg.skills={...defSave().cfg.skills,...n.skills};S.cfg.perks=[...n.perks];S.cfg.teamAb=n.teamAb;S.cfg.mode=nm}
+const modeOk=u=>!u.mode||u.mode===(S.cfg.mode||'solo');
 const has=id=>S.unlocked.includes(id),ptsTotal=()=>3+2*(S.level-1),ptsSpent=()=>Object.values(S.cfg.skills).reduce((a,b)=>a+b,0),slotN=()=>1+has('slot2')+has('slot3');
 let tab='bot';if(!['bot','skills','look','shop','erfolge','opt'].includes(tab))tab='bot';
 const still=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1696,7 +1717,7 @@ const pair=(act,v,a,b)=>`<div class="opts"><button class="opt" data-act="${act}"
 function renderLobby(){const c=S.cfg,need=xpNeed(S.level),free=ptsTotal()-ptsSpent(),slots=slotN();
   if(STYLES[c.style].lock&&!has(STYLES[c.style].lock))c.style='balanced';
   if(lockedSkin(c.skin))c.skin='rekrut';
-  c.perks=c.perks.filter(p=>has(p));while(c.perks.length>slots)c.perks.shift();
+  c.perks=c.perks.filter(p=>has(p)&&modeOk(UNLOCKS.find(u=>u.id===p)||{}));while(c.perks.length>slots)c.perks.shift();
   const nSk=Object.keys(SKINS).filter(k=>!lockedSkin(k)).length,nUn=S.unlocked.length;
   let h=`<section class="card prof"><div class="lvl"><span>Stufe</span>${S.level}</div><div class="prof-r"><div class="bar"><i style="width:${Math.min(100,S.xp/need*100)}%"></i></div>
     <div class="meta"><span><b>${S.xp}</b> / ${need} EP</span><span>Runden <b>${S.games}</b></span><span>Siege <b>${S.wins}</b></span><span>Kills <b>${S.kills}</b></span><span>Gold <b>${S.gold}</b></span><span>Beste Platzierung <b>${S.best?S.best+'.':'–'}</b></span><span>Freigeschaltet <b>${nUn} von ${UNLOCKS.length}</b></span></div></div></section>`;
@@ -1719,17 +1740,18 @@ function renderLobby(){const c=S.cfg,need=xpNeed(S.level),free=ptsTotal()-ptsSpe
     h+=`<section class="card" data-t="look"><h2>Fallschirme</h2><div class="opts">`+Object.entries(CHU).map(([k,v])=>item('c_',k,v[0],v[1],c.chute===k,`<i class="sw" style="background:${hex(v[2])};border-radius:${v[3]==='cone'?'4px 4px 50% 50%':v[3]==='ball'?'50%':'50% 50% 6px 6px'}"></i>`,v[4])).join('')+`</div><p class="hint">Damit schwebt dein Bot zu Rundenbeginn ein.</p></section>`;
     h+=`<section class="card" data-t="opt"><h2>Anzeige <small>kostenlos</small></h2>`+pair('gfx',c.gfx!=='low',['Grafik hoch','Echte Schatten, dichtes Gras, feineres Gelände'],['Grafik sparsam','Für schwächere Handys, läuft flüssiger'])+pair('dmgNum',c.dmgNum!==false,['Schadenszahlen an','Zahlen steigen über getroffenen Gegnern auf'],['Schadenszahlen aus','Keine Zahlen im Bild'])+`<div class="opts"><button class="opt" data-act="exp"><b>Spielstand sichern</b><span>Kopiert einen Code, mit dem du alles auf ein anderes Gerät mitnimmst</span></button><button class="opt" data-act="imp"><b>Spielstand laden</b><span>Code einfügen und Fortschritt übernehmen</span></button></div>`+pair('critFx',c.critFx!==false,['Kopfschuss-Effekt an','Große goldene Zahl mit Lichtring'],['Kopfschuss-Effekt aus','Kopfschüsse sehen aus wie normale Treffer'])+`</section>`}
   h+=`<section class="card" data-t="bot"><h2>Modus</h2><div class="opts">${[['solo','Solo','Jeder gegen jeden'],['trio','Trio','Du und 2 zufällige Bots als Team: zusammen laufen, helfen, Ausrüstung teilen, wiederbeleben']].map(q=>`<button class="opt" data-act="mode" data-v="${q[0]}" aria-pressed="${(c.mode||'solo')===q[0]}"><b>${q[1]}</b><span>${q[2]}</span></button>`).join('')}</div></section>`;
+  if((c.mode||'solo')==='trio')h+=`<section class="card" data-t="bot"><h2>Teamfähigkeit <small>eine aktiv</small></h2><div class="opts">${UNLOCKS.filter(u=>u.type==='team').map(u=>{const lk=!has(u.id);return `<button class="opt${lk?' locked':''}" data-act="teamab" data-v="${u.id}" aria-pressed="${c.teamAb===u.id}" ${lk?'aria-disabled="true"':''}><b>${u.name}</b><span>${lk?u.cond:u.desc}</span></button>`}).join('')}</div><p class="hint">Freischaltungen, Stufe, Skills und Perks zählen getrennt für Solo und Trio. Skins, Gold, Shop und Erfolge gelten für beide.</p></section>`;
   h+=`<section class="card" data-t="bot"><h2>Spielweise</h2><div class="opts">`+Object.entries(STYLES).map(([k,v])=>{const lk=v.lock&&!has(v.lock);
     return `<button class="opt${lk?' locked':''}" data-act="style" data-v="${k}" aria-pressed="${c.style===k}" ${lk?'aria-disabled="true"':''}><b>${v.n}</b><span>${lk?cond(v.lock):v.d}</span></button>`}).join('')+`</div></section>`;
   h+=`<section class="card" data-t="skills"><h2>Skillpunkte <small>${free} frei</small></h2>`+Object.entries(SK).map(([k,v])=>{const n=c.skills[k];
     return `<div class="sk"><div class="t"><b>${v[0]}</b><span>${v[1]}</span><div class="pips">${'<i class="on"></i>'.repeat(n)+'<i></i>'.repeat(8-n)}</div></div><button class="ib" data-act="sk-" data-v="${k}" aria-label="${v[0]} verringern" ${n?'':'disabled'}>−</button><button class="ib" data-act="sk+" data-v="${k}" aria-label="${v[0]} erhöhen" ${free>0&&n<8?'':'disabled'}>+</button></div>`}).join('')+
     `<p class="hint">Du startest mit 3 Punkten. Jede neue Stufe bringt 2 Punkte. Umverteilen kostet nichts.</p></section>`;
-  h+=`<section class="card" data-t="bot"><h2>Perks <small>${c.perks.length} von ${slots} aktiv</small></h2><div class="opts">`+UNLOCKS.filter(u=>u.type==='perk').map(u=>{const lk=!has(u.id);
+  h+=`<section class="card" data-t="bot"><h2>Perks <small>${c.perks.length} von ${slots} aktiv</small></h2><div class="opts">`+UNLOCKS.filter(u=>u.type==='perk'&&modeOk(u)).map(u=>{const lk=!has(u.id);
     return `<button class="opt${lk?' locked':''}" data-act="perk" data-v="${u.id}" aria-pressed="${c.perks.includes(u.id)}" ${lk?'aria-disabled="true"':''}><b>${u.name}</b><span>${lk?u.cond:u.desc}</span></button>`}).join('')+`</div>${slots<3?`<p class="hint">${slots<2?'Zweiter Perk-Platz: '+cond('slot2')+'.':'Dritter Perk-Platz: '+cond('slot3')+'.'}</p>`:''}</section>`;
   {const done=S.achDone.length;h+=`<section class="card" data-t="erfolge"><h2>Erfolge <small>${done} von ${ACH.length}</small></h2>`+ACH.map(a=>{const v=a.f(S)||0,ok=S.achDone.includes(a.id);
       return `<div class="sk"><div class="t"><b>${ok?'✓ ':''}${a.name}</b><span>${a.desc} · +${fmt(a.xp)} EP${a.gold?' · +'+a.gold+' Gold':''}</span><div class="bar" style="margin-top:5px"><i style="width:${Math.min(100,v/a.goal*100)}%;${ok?'':'background:var(--line)'}"></i></div><span>${fmt(Math.min(v,a.goal))} / ${fmt(a.goal)}</span></div></div>`}).join('')+`</section>`}
   h+=`<section class="card" data-t="liste"><h2>Bestenliste <small>alle Spieler</small></h2><div id="lbBox" class="hint">${LB_URL?'Lädt …':'Die gemeinsame Bestenliste ist noch nicht verbunden.'}</div></section>`;
-  $('lobbyBody').innerHTML=h;{const L=$('lobbyBody'),ord=['Modus','Spielweise','Perks','Fähigkeit','Skin','Skins kaufen','Waffen-Skins','Schuss-Effekte','Schuss-Animationen','Fallschirme','Grabsteine'],key=el=>{const t=(el.querySelector('h2')||{}).firstChild;const n=t?t.textContent.trim():'';const i=ord.indexOf(n);return i<0?99:i};
+  $('lobbyBody').innerHTML=h;{const L=$('lobbyBody'),ord=['Modus','Teamfähigkeit','Spielweise','Perks','Fähigkeit','Skin','Skins kaufen','Waffen-Skins','Schuss-Effekte','Schuss-Animationen','Fallschirme','Grabsteine'],key=el=>{const t=(el.querySelector('h2')||{}).firstChild;const n=t?t.textContent.trim():'';const i=ord.indexOf(n);return i<0?99:i};
     [...L.querySelectorAll('section.card[data-t]')].filter(e=>key(e)<99).sort((a,b)=>key(a)-key(b)).forEach(e=>L.appendChild(e));[...L.querySelectorAll('section.card[data-t]')].filter(e=>key(e)===99).forEach(e=>L.appendChild(e))}if(tab==='liste')lbLoad();for(const el of $('lobbyBody').querySelectorAll('[data-t]'))el.hidden=el.dataset.t!==tab}
 
 $('lobbyBody').addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||t.disabled||t.getAttribute('aria-disabled'))return;
@@ -1740,7 +1762,7 @@ $('lobbyBody').addEventListener('click',e=>{const t=e.target.closest('[data-act]
   if(a==='style')c.style=v;else if(a==='land')c.land=v;else if(a==='early')c.early=v==='1';else if(a==='high')c.high=v==='1';else if(a==='prep')c.prep=v==='1';else if(a==='gfx'){const g=v==='1'?'high':'low';if(c.gfx===g||(!c.gfx&&g==='high'))return;c.gfx=g;store();location.reload();return}else if(a==='dmgNum')c.dmgNum=v==='1';else if(a==='critFx')c.critFx=v==='1';
   else if(a==='attw'){attW=v;renderLobby();return}
   else if(a==='att'){c.att=c.att||{};const L=c.att[v]||0,cost=ATTCOST[L];if(L>=2||S.gold<cost)return;S.gold-=cost;c.att[v]=L+1}
-  else if(a==='shop'){const[ty,k]=v.split(':'),it=shopOf(ty,k),cost=it.cost,own=!cost||S.bought.includes(ty+k);if(!own){if(it.req&&!S.achDone.includes(it.req))return;if(S.gold<cost)return;S.gold-=cost;S.bought.push(ty+k)}if(ty==='w_')c.wskin=k;else if(ty==='t_')c.tracer=k;else if(ty==='c_')c.chute=k;else if(ty==='f_')c.shotfx=k;else if(ty==='a_')c.abil=k;else if(ty==='g_')c.grave=k;else{c.skin=k;demo=null}}else if(a==='mode')c.mode=v;else if(a==='stance')c.stance=v==='1';else if(a==='loot')c.loot=v==='1'?'all':'min';else if(a==='skin'){c.skin=v;demo=null}
+  else if(a==='shop'){const[ty,k]=v.split(':'),it=shopOf(ty,k),cost=it.cost,own=!cost||S.bought.includes(ty+k);if(!own){if(it.req&&!S.achDone.includes(it.req))return;if(S.gold<cost)return;S.gold-=cost;S.bought.push(ty+k)}if(ty==='w_')c.wskin=k;else if(ty==='t_')c.tracer=k;else if(ty==='c_')c.chute=k;else if(ty==='f_')c.shotfx=k;else if(ty==='a_')c.abil=k;else if(ty==='g_')c.grave=k;else{c.skin=k;demo=null}}else if(a==='mode')swapMode(v);else if(a==='teamab')c.teamAb=c.teamAb===v?null:(has(v)?v:c.teamAb);else if(a==='stance')c.stance=v==='1';else if(a==='loot')c.loot=v==='1'?'all':'min';else if(a==='skin'){c.skin=v;demo=null}
   else if(a==='sk+'){if(ptsTotal()-ptsSpent()>0&&c.skills[v]<8)c.skills[v]++}
   else if(a==='sk-'){if(c.skills[v]>0)c.skills[v]--}
   else if(a==='perk'){const i=c.perks.indexOf(v);if(i>=0)c.perks.splice(i,1);else if(has(v)){c.perks.push(v);while(c.perks.length>slotN())c.perks.shift()}}
@@ -1839,14 +1861,14 @@ $('sndBtn').addEventListener('click',()=>{AU.on=!AU.on;$('sndBtn').textContent=A
 function toEnd(){if(cur&&(!P.alive||cur.over))finish()}
 
 function finish(){if(mode!=='match')return;auStop();const m=cur,N=m.trio?m.teams:m.N;if(!P.place)P.place=m.trio?Math.max(1,m.teamsAlive):1;const win=P.place===1;
-  const r={place:P.place||1,kills:P.kills,dmg:Math.round(P.dmg),stormDmg:P.stormDmg,meds:P.meds,chests:P.chests,sniperKill:!!P.sniperKill,longKill:!!P.longKill,hs:P.hs,gold:P.gold,grenKills:P.grenKills,hadV3:P.hadV3,time:win?m.t:P.deathT,win,biome:m.biome};
+  const r={place:P.place||1,kills:P.kills,dmg:Math.round(P.dmg),stormDmg:P.stormDmg,meds:P.meds,chests:P.chests,sniperKill:!!P.sniperKill,longKill:!!P.longKill,hs:P.hs,gold:P.gold,grenKills:P.grenKills,hadV3:P.hadV3,time:win?m.t:P.deathT,win,biome:m.biome,revs:P.revs||0,shares:P.shares||0,trio:!!m.trio,teamKills:m.trio?m.bots.slice(P.team*3,P.team*3+3).reduce((a,o)=>a+o.kills,0):P.kills};
   const xp=[['Platzierung',Math.round((N-r.place)/N*250)],['Eliminierungen',r.kills*15],['Schaden',Math.round(r.dmg/4)],['Kisten',r.chests*3]];if(win)xp.push(['Sieg',600]);
   const sum=xp.reduce((a,b)=>a+b[1],0),lv0=S.level;
   const share=0,pl=r.place,bonus=win?500:pl<=3?200:pl<=5?150:pl<=10?100:pl<=25?75:pl<=100?50:pl<=250?25:pl<=500?10:0,kept=bonus+r.gold;
-  S.chestTotal=(S.chestTotal||0)+r.chests;S.goldTotal=(S.goldTotal||0)+kept;S.wk=S.wk||{};for(const k in P.wk)S.wk[k]=(S.wk[k]||0)+P.wk[k];S.grenTotal=(S.grenTotal||0);S.hsTotal=(S.hsTotal||0)+r.hs;S.grenTotal=(S.grenTotal||0)+r.grenKills;S.games++;lbSend(r);S.kills+=r.kills;S.gold+=kept;if(win)S.wins++;if(!S.best||r.place<S.best)S.best=r.place;if(!S.maps[m.biome]||r.place<S.maps[m.biome])S.maps[m.biome]=r.place;S.xp+=sum;
+  S.chestTotal=(S.chestTotal||0)+r.chests;S.revTotal=(S.revTotal||0)+r.revs;S.shareTotal=(S.shareTotal||0)+r.shares;if(m.trio){S.teamKillTotal=(S.teamKillTotal||0)+r.teamKills;if(win)S.trioWins=(S.trioWins||0)+1;S.trioGames=(S.trioGames||0)+1}S.goldTotal=(S.goldTotal||0)+kept;S.wk=S.wk||{};for(const k in P.wk)S.wk[k]=(S.wk[k]||0)+P.wk[k];S.grenTotal=(S.grenTotal||0);S.hsTotal=(S.hsTotal||0)+r.hs;S.grenTotal=(S.grenTotal||0)+r.grenKills;S.games++;lbSend(r);S.kills+=r.kills;S.gold+=kept;if(win)S.wins++;if(!S.best||r.place<S.best)S.best=r.place;if(!S.maps[m.biome]||r.place<S.maps[m.biome])S.maps[m.biome]=r.place;S.xp+=sum;
   const achNew=ACH.filter(a=>!S.achDone.includes(a.id)&&(a.f(S)||0)>=a.goal);for(const a of achNew){S.achDone.push(a.id);S.xp+=a.xp;S.gold+=a.gold}
   while(S.xp>=xpNeed(S.level)){S.xp-=xpNeed(S.level);S.level++}
-  const fresh=UNLOCKS.filter(u=>!has(u.id)&&u.test(r,S));fresh.forEach(u=>S.unlocked.push(u.id));store();
+  const fresh=UNLOCKS.filter(u=>!has(u.id)&&modeOk(u)&&u.test(r,S));fresh.forEach(u=>S.unlocked.push(u.id));store();
   let tip;
   if(win)tip='Letzter von 1000. Besser geht es nicht.';
   else if(P.selfK)tip='Dein Bot hat sich mit der eigenen Rakete erwischt. Mehr Abstand hilft: probier „Vorsichtig“.';
