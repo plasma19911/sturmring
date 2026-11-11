@@ -888,13 +888,25 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     if(b.stance&&fd>(b.covO?75:110)&&b.style!=='rusher'){const cp=o=>{const q=coverPoint(o,foe.x,foe.y);return{...q,o,fo:Math.hypot(o.x-foe.x,o.y-foe.y)}};
       if(b.covO&&d2(b,b.covO)<120){const q=cp(b.covO);if(freeSpot(m,q.x,q.y))cov=q;}
       else{let bd=80;gNear(m.og,b.x,b.y,80,o=>{if(!o.low)return;const q=cp(o),d=Math.hypot(q.x-b.x,q.y-b.y);if(d<bd&&q.fo<fd+20&&freeSpot(m,q.x,q.y)){bd=d;cov=q}})}}
-    const wantHide=!cov&&b.style!=='rusher'&&(b.rel>0||b.mags[b.cur]<=0||(b.hp+b.sh)<(b.max+100)*.45)&&fd>70;
+    const tact=b.style==='careful'||b.style==='ambush'||b.style==='scharf'||b.style==='surv'||b.style==='balanced'&&(b.hp+b.sh)<(b.max+100)*.75,wantHide=!cov&&b.style!=='rusher'&&(b.rel>0||b.mags[b.cur]<=0||(b.hp+b.sh)<(b.max+100)*.45||(tact&&fd>150&&b.peek!==false))&&fd>70;
     if(b.stk>0)b.noTall=m.t+3;
     if(wantHide&&b.tCov&&m.t<b.tCov.until&&m.t>=(b.noTall||0)&&!los(m,foe,b.tCov,false))cov=b.tCov;
-    else if(wantHide&&m.t>=(b.noTall||0)){let bd=140;gNear(m.og,b.x,b.y,140,o=>{if(o.low)return;const q=coverPoint(o,foe.x,foe.y),d=Math.hypot(q.x-b.x,q.y-b.y);if(d<bd&&d>8&&freeSpot(m,q.x,q.y)&&walkClear(m,b.x,b.y,q.x,q.y)&&!los(m,foe,q,false)){bd=d;cov={...q,o,fo:Math.hypot(o.x-foe.x,o.y-foe.y),tall:true,until:m.t+4}}});b.tCov=cov}
+    else if(wantHide&&m.t>=(b.noTall||0)){const urg=b.rel>0||b.mags[b.cur]<=0||(b.hp+b.sh)<(b.max+100)*.45,RR=urg?140:95;let bd=RR;gNear(m.og,b.x,b.y,RR,o=>{if(o.low)return;const q=coverPoint(o,foe.x,foe.y),d=Math.hypot(q.x-b.x,q.y-b.y);if(d<bd&&d>8&&freeSpot(m,q.x,q.y)&&walkClear(m,b.x,b.y,q.x,q.y)&&!los(m,foe,q,false)){bd=d;cov={...q,o,fo:Math.hypot(o.x-foe.x,o.y-foe.y),tall:true,until:m.t+4}}});b.tCov=cov}
     if(!wantHide)b.tCov=null;
+    /* Um die Ecke lehnen: hinter hoher Deckung abwechselnd verstecken (nachladen, heilen, durchatmen) und seitlich herauslehnen und schießen */
+    b.lean=0;
+    if(cov&&cov.tall&&(d2(b,cov)<=26||b.pk&&!b.pk.none&&b.pk.o===cov.o&&d2(b,b.pk)<34)){const o=cov.o;
+      if(!b.pk||b.pk.o!==o||Math.hypot(b.pk.fx-foe.x,b.pk.fy-foe.y)>160){const ux=(foe.x-o.x)/(Math.hypot(foe.x-o.x,foe.y-o.y)||1),uy=(foe.y-o.y)/(Math.hypot(foe.x-o.x,foe.y-o.y)||1),px=-uy,py=ux,ext=(o.k==='b'?Math.abs(px)*o.hw+Math.abs(py)*o.hh:o.r)+R+5;
+        let pk=null;for(const sg of rnd()<.5?[1,-1]:[-1,1]){for(const e2 of[ext,ext+10,ext+22]){const x=cov.x+px*sg*e2+ux*4,y=cov.y+py*sg*e2+uy*4;if(freeSpot(m,x,y)&&walkClear(m,cov.x,cov.y,x,y)&&los(m,{x,y,alive:true,pose:0},foe,false)){pk={x,y,sg};break}}if(pk)break}
+        b.pk=pk?{o,hx:cov.x,hy:cov.y,x:pk.x,y:pk.y,sg:pk.sg,fx:foe.x,fy:foe.y,out:false,sw:m.t+rr(.6,1.2)}:{o,none:true,fx:foe.x,fy:foe.y}}
+      const p=b.pk;if(!p.none){const busy=b.rel>0||b.mags[b.cur]<=0||(b.hp+b.sh)<(b.max+100)*.3||b.act==='heal';
+        if(m.t>=p.sw){p.out=!p.out&&!busy;p.sw=m.t+(p.out?rr(1.5,2.6):rr(.6,1.2));b.lgT=null}if(busy&&p.out){p.out=false;b.lgT=null}
+        if(p.out){go(p.x,p.y);b.lean=p.sg;b.inCov=false;b.state='Lehnt sich raus und schießt'}else{go(p.hx,p.hy);b.inCov=true;b.state=busy?'Lädt hinter Deckung nach':'Wartet hinter der Ecke'}
+        b.covA=Math.atan2(o.y-b.y,o.x-b.x);cov=null;b.peekCov=true}}
+    else if(!cov)b.pk=null;
     b.covO=cov&&!cov.tall?cov.o:null;
-    if(cov){if(d2(b,cov)>(cov.tall?22:12)){go(cov.x,cov.y);b.state='Sucht Deckung'}
+    if(b.peekCov){b.peekCov=false}
+    else if(cov){if(d2(b,cov)>(cov.tall?22:12)){go(cov.x,cov.y);b.state='Sucht Deckung'}
       else{b.inCov=true;b.covA=Math.atan2(cov.o.y-b.y,cov.o.x-b.x);if(cov.tall){b.state=b.rel>0||b.mags[b.cur]<=0?'Lädt hinter Deckung nach':'Erholt sich hinter Deckung'}else if(b.rel>0||b.mags[b.cur]<=0){b.state='Lädt in Deckung nach'}else b.state='Feuert aus der Deckung'}}
     
     else{const pref=Math.min(maxR*.92,bestDist(b,foe,fd,b.style==='rusher'?-.5:P.distF>.75?.4:0));let f=fd>pref+30?1:fd<pref-40?-.7:0;
@@ -1515,7 +1527,7 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
       if(b.run&&drop<=0&&(dustN+v.ph*10|0)%7===0&&dust.length<48)dust.push({x:X-Math.cos(b.a)*8+rr(-3,3),y:Y-Math.sin(b.a)*8+rr(-3,3),h:gh+2,t:0});
       const id=b.wp[b.cur].id,ws=b.isP?S.cfg.wskin:'std';if(v.gid!==id+ws){const gq=gunGeoOf(id,ws);v.gun.geometry=gq.geo;v.gid=id+ws;v.flash.position.set(gq.tip+4,.5,0)}
       v.vest.visible=b.vest>0;if(b.vest)v.vest.material=tierM[b.vest];v.helm.visible=b.helm>0;if(b.helm)v.helm.material=tierM[b.helm];
-      {const hk=b.flash>0?Math.sin(Math.min(1,b.flash/.15)*Math.PI*.5):0;v.model.rotation.z=hk*.3;v.model.position.x=-hk*3}const since=m.t-b.lastShotT;if(b.lastShotT!==v.shotSeen){v.shotSeen=b.lastShotT;const wid=b.wp[b.cur].id;if(since<.1&&wid!=='shotgun'&&wid!=='autosg'||since<.1&&rnd()<.6){const sa=b.a-Math.PI/2+rr(-.3,.3),sv=rr(55,85);if(fxP.length<PN)fxP.push({x:X+Math.cos(b.a)*6,y:Y+Math.sin(b.a)*6,h:gh+24,vx:Math.cos(sa)*sv,vy:Math.sin(sa)*sv,vh:rr(55,85),t:0,l:.9,q:SHELL,c:wid==='shotgun'||wid==='autosg'?0xb8342a:0xc9a24a,r:rnd()*6})}}v.hand.position.x=9-(since<.14?(1-since/.14)*4.5:0);v.hand.rotation.z=b.act==='heal'?-.85+Math.sin(m.t*3)*.08:b.act==='open'?-.45+Math.sin(m.t*7)*.18:b.rel>0?-.55+Math.sin(m.t*8)*.12:since<.14?(1-since/.14)*.18:0;
+      {const hk=b.flash>0?Math.sin(Math.min(1,b.flash/.15)*Math.PI*.5):0;v.model.rotation.z=hk*.3;v.model.position.x=-hk*3;v.lean=(v.lean||0)+((b.lean||0)*.34-(v.lean||0))*Math.min(1,dt*9);v.model.rotation.x=v.lean}const since=m.t-b.lastShotT;if(b.lastShotT!==v.shotSeen){v.shotSeen=b.lastShotT;const wid=b.wp[b.cur].id;if(since<.1&&wid!=='shotgun'&&wid!=='autosg'||since<.1&&rnd()<.6){const sa=b.a-Math.PI/2+rr(-.3,.3),sv=rr(55,85);if(fxP.length<PN)fxP.push({x:X+Math.cos(b.a)*6,y:Y+Math.sin(b.a)*6,h:gh+24,vx:Math.cos(sa)*sv,vy:Math.sin(sa)*sv,vh:rr(55,85),t:0,l:.9,q:SHELL,c:wid==='shotgun'||wid==='autosg'?0xb8342a:0xc9a24a,r:rnd()*6})}}v.hand.position.x=9-(since<.14?(1-since/.14)*4.5:0);v.hand.rotation.z=b.act==='heal'?-.85+Math.sin(m.t*3)*.08:b.act==='open'?-.45+Math.sin(m.t*7)*.18:b.rel>0?-.55+Math.sin(m.t*8)*.12:since<.14?(1-since/.14)*.18:0;
       {const wid=b.wp[b.cur].id,FL={shotgun:[2.1,1.9,.11],autosg:[1.7,1.6,.08],sniper:[2.6,1.1,.09],dmr:[1.9,1,.07],lmg:[1.5,1.2,.06],revolver:[1.7,1.4,.08],smg:[.85,.75,.05],pistol:[.8,.8,.06]}[wid]||[1.1,1,.07];
         v.flash.visible=since<FL[2];if(v.flash.visible){const r=(.75+rnd()*.5)*(b.isP&&(m.pfx==='wumms'||m.pfx==='blitz')?2.6:1);v.flash.scale.set(FL[0]*r,FL[1]*r,FL[1]*r);v.flash.rotation.x=rnd()*TAU}}
       v.hp.scale.x=Math.max(.01,34*b.hp/b.max);v.shb.visible=b.sh>0;v.shb.scale.x=Math.max(.01,34*Math.min(100,b.sh)/100);
