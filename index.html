@@ -810,7 +810,10 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
   if(b.act!=='heal'){let pk=null;gNear(m.lg,b.x,b.y,28,l=>{if(!pk&&!b.ban.has(l)&&d2(b,l)<26&&want(b,l))pk=l});if(pk)take(m,b,pk)}
   const wasOpen=b.act==='open';b.priority='Erkunden';b.fire=null;b.act='';b.go=false;b.sprint=false;b.urgent=false;b.pose=0;b.inCov=false;
   let maxR=0;for(let i=0;i<b.wp.length;i++)maxR=Math.max(maxR,b.W[b.wp[i].id].range);const outR=!!foe&&fd>maxR;
-  const go=(x,y)=>{const p=validGoal(m,x,y);if(p){b.gx=p.x;b.gy=p.y;b.go=true}else{b.go=false;b.path=null;b.cover=b.spot=b.wpt=null}};
+  const go=(x,y)=>{
+    /* Festlegen statt Zappeln: innerhalb derselben Absicht bleibt ein Ziel mindestens 0,9 s bestehen, außer es ist erreicht oder nur leicht verschoben */
+    if(b.lgT!=null&&b.lgP===b.priority&&b.priority!=='Granate'&&m.t-b.lgT<1.1&&Math.hypot(x-b.lgx,y-b.lgy)>40&&Math.hypot(b.lgx-b.x,b.lgy-b.y)>18){x=b.lgx;y=b.lgy}else{b.lgx=x;b.lgy=y;b.lgT=m.t;b.lgP=b.priority}
+    const p=validGoal(m,x,y);if(p){b.gx=p.x;b.gy=p.y;b.go=true}else{b.go=false;b.path=null;b.cover=b.spot=b.wpt=null;b.lgT=null}};
   let dg=null;for(const q of m.gren)if(q.from!==b&&Math.hypot(q.x-b.x,q.y-b.y)<140&&(!dg||q.t<dg.t))dg=q;
   const zoneDistance=Math.max(0,dn-s.nr+60),zoneETA=zoneDistance/(85*b.sk.spd),zoneDeadline=s.shr?Math.max(0,ph.shrink-s.t+ph.wait):Math.max(0,ph.wait-s.t),zoneCritical=outside&&!stay;
   const safeHeal=!dg&&!zoneCritical&&!foe&&m.t-b.lastHitT>=5&&m.t-b.lastShotT>=5;
@@ -835,12 +838,13 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
   let ret=false;
   if(foe){b.retT=-9;
     if(b.hp<b.max*b.retreat&&fd>90&&!weakFoe){let bestCover=null,bestCost=Infinity;
+      if(b.cover&&d2(b,b.cover)<160&&!los(m,foe,b.cover,false)){bestCover=b.cover;bestCost=-1}else{
       const seenCover=new Set();gNear(m.og,b.x,b.y,170,o=>{if(seenCover.has(o)||o.low)return;seenCover.add(o);
         const q=coverPoint(o,foe.x,foe.y),distance=d2(b,q),travel=distance/(108*b.sk.spd);
         if(distance>150||distance<16||!freeSpot(m,q.x,q.y)||!walkClear(m,b.x,b.y,q.x,q.y)||los(m,foe,q,false))return;
         if(Math.hypot(q.x-s.x,q.y-s.y)>s.r-20)return;
         if(b.hp+b.sh<dpsAt(foe,fd)*TUNE.dmg*(travel+.4)+12)return;
-        if(distance<bestCost){bestCost=distance;bestCover=q;}});
+        if(distance<bestCost){bestCost=distance;bestCover=q;}});}
       if(bestCover){ret=true;b.cover=bestCover;b.retT=m.t+1.5;b.rfx=foe.x;b.rfy=foe.y;}}
   }
   let engage=false;
@@ -860,7 +864,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     /* Granate: gegen Gegner, die stillstehen, hocken oder in Deckung sitzen */
     if(b.gren>0&&m.t>b.grenT&&fd>110&&fd<340&&!foe.run&&(foe.inCov||!foe.mv||foe.pose===1)){b.gren--;b.grenT=m.t+7;m.gren.push({id:m.grenN++,x0:b.x,y0:b.y,x:foe.x+rr(-25,25),y:foe.y+rr(-25,25),t:.9,T:.9,from:b});ev(m,'throw',b.x,b.y,900);b.state='Wirft Granate'}
     const ux=(foe.x-b.x)/fd,uy=(foe.y-b.y)/fd;let cov=null;
-    if(b.stance&&fd>100&&b.style!=='rusher'){const cp=o=>{const q=coverPoint(o,foe.x,foe.y);return{...q,o,fo:Math.hypot(o.x-foe.x,o.y-foe.y)}};
+    if(b.stance&&fd>(b.covO?75:110)&&b.style!=='rusher'){const cp=o=>{const q=coverPoint(o,foe.x,foe.y);return{...q,o,fo:Math.hypot(o.x-foe.x,o.y-foe.y)}};
       if(b.covO&&d2(b,b.covO)<120){const q=cp(b.covO);if(freeSpot(m,q.x,q.y))cov=q;}
       else{let bd=80;gNear(m.og,b.x,b.y,80,o=>{if(!o.low)return;const q=cp(o),d=Math.hypot(q.x-b.x,q.y-b.y);if(d<bd&&q.fo<fd+20&&freeSpot(m,q.x,q.y)){bd=d;cov=q}})}}
     const wantHide=!cov&&b.style!=='rusher'&&(b.rel>0||b.mags[b.cur]<=0||(b.hp+b.sh)<(b.max+100)*.45)&&fd>70;
@@ -955,7 +959,7 @@ function think(m,b,dt,bi){if(m.t<DROP)return;
       let sepX=0,sepY=0;gNear(m.bg,b.x,b.y,38,o=>{if(o===b||!o.alive)return;let ex=b.x-o.x,ey=b.y-o.y,d=Math.hypot(ex,ey);if(d>=38)return;if(d<.01){const a=(b.i+o.i)*2.399;ex=Math.cos(a)*(b.i<o.i?1:-1);ey=Math.sin(a)*(b.i<o.i?1:-1);d=1}const w=(38-d)/38;sepX+=ex/d*w;sepY+=ey/d*w});
       const sepK=b.path&&b.path.length?.12:.45;ux+=sepX*sepK;uy+=sepY*sepK;{const n=Math.hypot(ux,uy)||1;ux/=n;uy/=n}
       if(!b.urgent&&b.detT<=0&&!(b.path&&b.path.length))sp*=clamp(l/28,.4,1);
-      const kk=1-Math.exp(-dt*8);b.vx+=(ux*sp-b.vx)*kk;b.vy+=(uy*sp-b.vy)*kk;let sx=b.vx*dt,sy=b.vy*dt;const sl=Math.hypot(sx,sy)||1e-6;if(sl>l){sx*=l/sl;sy*=l/sl}
+      const kk=1-Math.exp(-dt*(b.urgent?8:5));b.vx+=(ux*sp-b.vx)*kk;b.vy+=(uy*sp-b.vy)*kk;let sx=b.vx*dt,sy=b.vy*dt;const sl=Math.hypot(sx,sy)||1e-6;if(sl>l){sx*=l/sl;sy*=l/sl}
       const v=Math.min(l,sl),ox=b.x,oy=b.y;if(walkClear(m,ox,oy,ox+sx,oy+sy)||b.jump>0){b.x+=sx;b.y+=sy;}else if(walkClear(m,ox,oy,ox+sx,oy)){b.x+=sx;b.vy=0;}else if(walkClear(m,ox,oy,ox,oy+sy)){b.y+=sy;b.vx=0;}else{b.vx=b.vy=0;b.pathUntil=0;b.due=true;}b.mv=true;if(!b.fire&&sl>.3)b.ta=Math.atan2(sy,sx);collide(m,b,ux,uy,v);
       {const h1=height(m,b.x,b.y),dh=h1-b.gh;b.gh=h1;if(dh>8*dt){b.sta=Math.max(0,b.sta-dh*.35);b.useT=.5}}
       if(m.ig&&cellOf(m,b.x,b.y)===0){if(cellOf(m,b.x,oy)!==0)b.y=oy;else if(cellOf(m,ox,b.y)!==0)b.x=ox;else{b.x=ox;b.y=oy;b.mv=false}}}}
