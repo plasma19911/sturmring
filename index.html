@@ -897,7 +897,12 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
   let teamDone=false;
   if(m.trio&&!dg&&!zoneCritical){const ms=mates(m,b);
     const dn=ms.filter(o=>o.alive&&o.down).sort((p,q)=>d2(b,p)-d2(b,q))[0];
-    if(dn&&d2(b,dn)<900&&(!foe||fd>320||d2(b,dn)<40&&fd>160)&&!(dn.rvBy&&dn.rvBy!==b)){b.priority='Team';teamDone=true;
+    /* Wiederbeleben nur, wenn es taktisch geht: Zeit reicht, kein Gegner hat freie Sicht auf den Liegenden oder ist in Reichweite, Kamerad ist nicht selbst am Ende */
+    let reviveOk=false;if(dn&&!(dn.rvBy&&dn.rvBy!==b)){const dd=d2(b,dn),left=60-(m.t-dn.downT),travel=dd/(108*b.sk.spd*1.4);
+      let threat=false;const chk=e=>{if(!e||!e.alive||e.down||e.team===b.team)return;const de=d2(e,dn),rg=e.W[e.wp[e.cur].id].range;if(de<rg*1.05&&los(m,e,{x:dn.x,y:dn.y,alive:true,pose:1},false))threat=true;if(d2(e,b)<160)threat=true};
+      chk(foe);for(const o of ms)chk(o.see);if(dn.downBy&&m.t-dn.downT<6)chk(dn.downBy);if(b.lastHit&&m.t-b.lastHitT<1.5)threat=true;
+      reviveOk=dd<900&&left>travel+11&&(b.hp+b.sh)>(b.max+100)*.22&&!threat}
+    if(dn&&reviveOk){b.priority='Team';teamDone=true;
       if(d2(b,dn)>24){go(dn.x,dn.y);b.sprint=true;b.urgent=true;b.state='Läuft zu '+dn.name}else{if(b.rvT!==dn){b.rvT=dn;b.rvP=0}b.act='revive';b.ta=Math.atan2(dn.y-b.y,dn.x-b.x);b.state='Belebt '+dn.name+' wieder'}}
     else if(!foe){
       /* Ausrüstung teilen: Überschuss in die Nähe des Kameraden legen, der nichts hat; er hebt es selbst auf */
@@ -1036,7 +1041,7 @@ function think(m,b,dt,bi){if(m.t<DROP)return;
   else if(b.due||(b.bT-=dt)<=0){b.due=false;b.bT=bi;const p0=b.pose;brain(m,b);if(p0===2&&b.pose!==2)b.up=.4}
   b.mv=false;b.run=false;if(!b.go||b.act!==''){b.vx*=.6;b.vy*=.6}
   if(b.act==='revive'){const t=b.rvT;b.moveSpeed=0;b.motionX=b.x;b.motionY=b.y;
-    if(!t||!t.alive||!t.down||d2(b,t)>34){b.act='';b.rvP=0;if(t&&t.rvBy===b)t.rvBy=null;b.due=true}
+    if(!t||!t.alive||!t.down||d2(b,t)>34||b.flash>.1&&b.lastHit&&b.lastHit.alive){b.act='';if(t&&t.rvBy===b)t.rvBy=null;b.due=true}
     else{t.rvBy=b;b.pose=1;b.ta=Math.atan2(t.y-b.y,t.x-b.x);b.rvP=(b.rvP||0)+dt;b.state='Belebt '+t.name+' wieder · '+Math.ceil(10-b.rvP)+' s';if(b.rvP>=10){t.down=false;t.rvBy=null;t.hp=Math.round(t.max*.3);t.sh=0;t.pose=0;t.due=true;b.act='';b.rvP=0;b.due=true;
       m.feed.push({sys:`${b.name} hat ${t.name} wiederbelebt`,t:m.t,x:t.x,y:t.y,me:b.isP||t.isP||mates(m,b).some(o=>o.isP)});ev(m,'heal',t.x,t.y,600)}}}
   if(b.act==='heal'){b.moveSpeed=0;b.motionX=b.x;b.motionY=b.y;b.sta=Math.min(b.staMax,b.sta+15*dt);if((b.healT-=dt)<=0){if(b.useK==='s'){b.sh=Math.min(100,b.sh+(b.perks.has('p_shield')?75:50));b.pot--}else{b.hp=Math.min(b.max,b.hp+b.healAmt);b.med--;b.meds++}ev(m,b.useK==='s'?'shield':'heal',b.x,b.y,200);b.act='';b.due=true}return}
