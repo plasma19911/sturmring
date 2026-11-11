@@ -658,7 +658,7 @@ function die(m,b,from,gk){const self=from===b;if(self)from=null;
   for(let i=0;i<b.med;i++)near(m,b,{k:'m'});
   for(let i=0;i<b.pot;i++)near(m,b,{k:'s'});
   if(b.gold>0)near(m,b,{k:'g',n:b.gold});for(let i=0;i<b.gren;i++)near(m,b,{k:'n'});
-  if(b.vest&&b.vestD>VEST[b.vest].d*.3)near(m,b,{k:'a',t:b.vest});if(b.helm)near(m,b,{k:'h',t:b.helm});if(from&&gk)from.grenKills++;
+  if(b.vest&&b.vestD>VEST[b.vest].d*.15)near(m,b,{k:'a',t:b.vest,d:b.vestD});if(b.helm&&b.helmD>0)near(m,b,{k:'h',t:b.helm,d:b.helmD});if(from&&gk)from.grenKills++;
   if(from){from.kills++;if(from.isP)(from.klog=from.klog||[]).push({t:m.t,n:b.name,l:b.lvl,tier:b.tier,w:gk?'gren':b.killW,hs:!gk&&!!b.lastHs,left:m.alive});if(from.isP&&b.killW){const kw=gk?'gren':b.killW;from.wk[kw]=(from.wk[kw]||0)+1}if(b.killW==='sniper')from.sniperKill=true;if(b.killW==='sniper'||b.killW==='dmr')from.longKill=true;if(from.perks.has('p_blood'))from.hp=Math.min(from.max,from.hp+25)}
   m.feed.push({a:from?from.name:null,b:b.name,w:from?(gk?'Granate':WEAPONS[b.killW].n+(b.lastHs?' · Kopfschuss':'')):self?'eigene Granate':'Sturm',t:m.t,x:b.x,y:b.y,me:b.isP||!!(from&&from.isP),ap:!!(from&&from.isP),bp:b.isP});
   if(m.feed.length>60)m.feed.shift();
@@ -669,13 +669,16 @@ const used=b=>b.wp.length+(b.med>0?1:0)+(b.pot>0?1:0);
 function worst(b){let wi=0,wv=-1e9;b.wp.forEach((w,i)=>{const v=w.id==='pistol'?99:val(b,w);if(v>wv){wv=v;wi=i}});return wi}
 function dropW(m,b,i){const w=b.wp[i];if(w.id!=='pistol')b.ban.add(near(m,b,{k:'w',id:w.id,rar:w.rar}));b.wp.splice(i,1);b.mags.splice(i,1);if(b.cur===i){b.cur=0;b.rel=0}else if(b.cur>i)b.cur--}
 /* fünf Ausrüstungsplätze: Waffen einzeln, Medikits und Schildtränke je ein Platz mit bis zu drei Stück */
-function want(b,l){if(l.k==='g')return true;if(l.k==='a')return l.t>b.vest||(l.t===b.vest&&b.vestD<VEST[l.t].d*.5);if(l.k==='h')return l.t>b.helm||(l.t===b.helm&&b.helmD<2);
+const vVal=(t,d)=>t?VEST[t].r*(d??VEST[t].d):0,hVal=(t,d)=>t?(2-HELM[t].m)*(d??HELM[t].d):0;
+function want(b,l){if(l.k==='g')return true;
+  /* Rüstung: ohne Rüstung immer; sonst nur, wenn der Fund mit seiner Restfestigkeit spürbar mehr schützt als das Getragene */
+  if(l.k==='a')return!b.vest||vVal(l.t,l.d)>vVal(b.vest,b.vestD)*1.15;if(l.k==='h')return!b.helm||hVal(l.t,l.d)>hVal(b.helm,b.helmD)*1.15;
   if(l.k==='n')return b.gren<2;if(l.k==='m')return b.med<3&&(b.med>0||used(b)<5||b.wp.length>2);if(l.k==='s')return b.pot<3&&(b.pot>0||used(b)<5||b.wp.length>2);
   const same=b.wp.find(w=>w.id===l.id);if(same)return l.rar>same.rar;
   if(b.wp.some(w=>w.id==='pistol')||used(b)<5)return true;
   return val(b,b.wp[worst(b)])>val(b,l)}
 function take(m,b,l){gDel(m.lg,l);ev(m,'pick',b.x,b.y,90);
-  if(l.k==='g'){b.gold+=l.n;return}if(l.k==='a'){b.vest=l.t;b.vestD=VEST[l.t].d;if(l.t===3)b.hadV3=true;return}if(l.k==='h'){b.helm=l.t;b.helmD=HELM[l.t].d*(b.perks.has('p_helm')?2:1);return}
+  if(l.k==='g'){b.gold+=l.n;return}if(l.k==='a'){if(b.vest&&b.vestD>VEST[b.vest].d*.15)near(m,b,{k:'a',t:b.vest,d:b.vestD});b.vest=l.t;b.vestD=l.d??VEST[l.t].d;if(l.t===3)b.hadV3=true;return}if(l.k==='h'){if(b.helm&&b.helmD>0)near(m,b,{k:'h',t:b.helm,d:b.helmD});b.helm=l.t;b.helmD=l.d??HELM[l.t].d*(b.perks.has('p_helm')?2:1);return}
   if(l.k==='n'){b.gren++;return}
   if(l.k!=='w'){const key=l.k==='m'?'med':'pot';if(b[key]===0&&used(b)>=5)dropW(m,b,worst(b));b[key]++;return}
   let i=b.wp.findIndex(w=>w.id===l.id);if(i<0)i=b.wp.findIndex(w=>w.id==='pistol');
