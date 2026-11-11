@@ -1404,7 +1404,7 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
       if(!b.alive){if(v.dead<0){v.dead=0;burst(X,Y,gh+3,'death');v.ol.visible=v.sil.visible=v.bar.visible=v.label.visible=v.heal.visible=v.flash.visible=v.glider.visible=v.mark.visible=false}
         v.dead+=dt;{const u=Math.min(1,v.dead/.42),e=u*u*(3-2*u),bo=v.dead>.42&&v.dead<.7?Math.sin((v.dead-.42)/.28*Math.PI)*.08:0;v.model.rotation.z=e*1.52-bo;v.model.position.y=e*4+bo*12;
           if(v.dead>=.42&&!v.thud){v.thud=1;burst(X,Y,gh+2,'death',.5)}if(v.dead<.1)v.thud=0}v.g.position.set(X,v.dead>1.6?gh-(v.dead-1.6)*12:gh,Y);if(v.dead>1.2)v.sh.visible=false;continue}
-      const adt=v.lastAnimT===null?0:clamp(m.t-v.lastAnimT,0,.15);v.lastAnimT=m.t;
+      const animNow=m.t-(1-al)*DT,adt=v.lastAnimT===null?0:clamp(animNow-v.lastAnimT,0,.15);v.lastAnimT=animNow;
       const blend=1-Math.exp(-adt*12);v.animSpeed+=((b.moveSpeed||0)-v.animSpeed)*blend;
       v.gait+=v.animSpeed*adt*.105;const walk=v.animSpeed>3&&drop<=0,ph=v.gait;
       let y=gh;v.glider.visible=drop>0;
@@ -1711,7 +1711,7 @@ function staticDemo(){newDemo();for(let i=0;i<300;i++)step(demo);const b=demo.bo
 
 function frame(ts){requestAnimationFrame(frame);const dt=Math.min(.05,(ts-last)/1000||0);last=ts;
   if(mode==='match'&&cur){const t0=performance.now();
-    acc+=dt*speed;let n=0;while(acc>=DT&&n<12&&!cur.over&&performance.now()-t0<22){step(cur);acc-=DT;n++;}if(acc>DT*3)acc=0;const al=speed>1?1:clamp(acc/DT,0,1);
+    acc+=dt*speed;let n=0;while(acc>=DT&&n<12&&!cur.over&&performance.now()-t0<22){step(cur);acc-=DT;n++;}if(acc>DT*3)acc=0;const al=clamp(acc/DT,0,1);
     if(!P.alive&&!deadShown){deadShown=true;spec=P.killer&&P.killer.alive?P.killer:null;
       $('deadH').textContent='Platz '+P.place+' von '+cur.N;$('deadP').textContent=P.killer?`Eliminiert von ${P.killer.name} (Lvl ${P.killer.lvl}) mit ${WEAPONS[P.killW].n}`:P.selfK?'Von der eigenen Rakete erwischt':'Im Sturm gestorben';$('dead').hidden=false}
     if(!spec||!spec.alive){if(spec&&spec.killer&&spec.killer.alive)spec=spec.killer;else{let bd=1e9,nb=null;for(const b of cur.bots)if(b.alive){const d=Math.hypot(b.x-cam.x,b.y-cam.y);if(d<bd){bd=d;nb=b}}spec=nb||cur.winner||P}}
