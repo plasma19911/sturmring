@@ -1032,12 +1032,12 @@ function think(m,b,dt,bi){if(m.t<DROP)return;
   if(b.down){if(m.t-b.downT>=60){die(m,b,b.downBy,false);return}
     b.pose=2;b.fire=null;b.act='';b.sprint=false;b.state=b.rvBy?'Wird wiederbelebt':'Am Boden · '+Math.ceil(60-(m.t-b.downT))+' s';
     let nm=null,nd=1e9;for(const o of mates(m,b))if(o.alive&&!o.down){const d=d2(b,o);if(d<nd){nd=d;nm=o}}
-    if(nm&&nd>30&&!b.rvBy){b.gx=nm.x;b.gy=nm.y;b.go=true}else b.go=false}
+    b.go=false;b.vx=b.vy=0}
   else if(b.due||(b.bT-=dt)<=0){b.due=false;b.bT=bi;const p0=b.pose;brain(m,b);if(p0===2&&b.pose!==2)b.up=.4}
   b.mv=false;b.run=false;if(!b.go||b.act!==''){b.vx*=.6;b.vy*=.6}
   if(b.act==='revive'){const t=b.rvT;b.moveSpeed=0;b.motionX=b.x;b.motionY=b.y;
     if(!t||!t.alive||!t.down||d2(b,t)>34){b.act='';b.rvP=0;if(t&&t.rvBy===b)t.rvBy=null;b.due=true}
-    else{t.rvBy=b;b.rvP=(b.rvP||0)+dt;b.state='Belebt '+t.name+' wieder · '+Math.ceil(10-b.rvP)+' s';if(b.rvP>=10){t.down=false;t.rvBy=null;t.hp=Math.round(t.max*.3);t.sh=0;t.pose=0;t.due=true;b.act='';b.rvP=0;b.due=true;
+    else{t.rvBy=b;b.pose=1;b.ta=Math.atan2(t.y-b.y,t.x-b.x);b.rvP=(b.rvP||0)+dt;b.state='Belebt '+t.name+' wieder · '+Math.ceil(10-b.rvP)+' s';if(b.rvP>=10){t.down=false;t.rvBy=null;t.hp=Math.round(t.max*.3);t.sh=0;t.pose=0;t.due=true;b.act='';b.rvP=0;b.due=true;
       m.feed.push({sys:`${b.name} hat ${t.name} wiederbelebt`,t:m.t,x:t.x,y:t.y,me:b.isP||t.isP||mates(m,b).some(o=>o.isP)});ev(m,'heal',t.x,t.y,600)}}}
   if(b.act==='heal'){b.moveSpeed=0;b.motionX=b.x;b.motionY=b.y;b.sta=Math.min(b.staMax,b.sta+15*dt);if((b.healT-=dt)<=0){if(b.useK==='s'){b.sh=Math.min(100,b.sh+(b.perks.has('p_shield')?75:50));b.pot--}else{b.hp=Math.min(b.max,b.hp+b.healAmt);b.med--;b.meds++}ev(m,b.useK==='s'?'shield':'heal',b.x,b.y,200);b.act='';b.due=true}return}
   if(b.act==='open'){const c=b.chest;if(c.open){b.act='';b.due=true}else if((c.prog+=dt)>=(b.perks.has('p_scav')?.4:.8)*b.lootK){openChest(m,c,b);b.act='';b.due=true}}
@@ -1361,7 +1361,7 @@ function makeView(cv){
   function bindBot(v,b){{const cq=b.isP?CHU[S.cfg.chute]||CHU.std:CHU.std;v.glider.geometry=chG[cq[3]];v.glider.material=chM(cq)}const sk=SKINS[b.skin]||SKINS.rekrut;v.body.geometry=v.sil.geometry=v.ol.geometry=skinGeo(b.skin);v.ol.material=b.isP?olMe:olM;v.ol.visible=true;v.sil.material=b.isP?silMe:silFoe;v.sil.visible=false;v.mat.transparent=!!sk.ghost;v.mat.opacity=sk.ghost?.62:1;v.mat.needsUpdate=true;v.dead=-1;v.gid='';v.k1=v.k2=0;v.gait=v.ph;v.animSpeed=0;v.face=b.a;v.lastAnimT=null;
     v.model.rotation.set(0,0,0);v.model.position.y=0;v.model.scale.y=1.04;v.bar.visible=v.sh.visible=v.label.visible=true;v.ring.visible=v.mark.visible=b.isP;v.ally=!!(M&&M.trio&&!b.isP&&M.bots[0]&&M.bots[0].isP&&b.team===M.bots[0].team);
     const c=v.lc.getContext('2d');c.clearRect(0,0,256,64);c.textAlign='center';c.lineJoin='round';c.lineWidth=5;c.strokeStyle='rgba(8,12,16,.85)';
-    c.font='600 22px Barlow,system-ui,sans-serif';c.fillStyle=b.isP?'#35e0c8':v.ally?'#7cc4ff':'#ffffff';c.strokeText(b.name,128,24);c.fillText(b.name,128,24);
+    c.font='600 22px Barlow,system-ui,sans-serif';{const TCOL=['#ff8a5c','#ffd24a','#b98cff','#ff6fae','#9be15d','#5cc8ff','#ffa94d','#e0e6ea','#c3f04a','#ff5a5a','#7ae0c0','#d79bff'];c.fillStyle=b.isP||v.ally?'#35e0c8':M&&M.trio?TCOL[b.team%TCOL.length]:'#ffffff'}c.strokeText(b.name,128,24);c.fillText(b.name,128,24);
     {const t='LVL '+b.lvl;c.font='700 26px Barlow,system-ui,sans-serif';c.fillStyle=b.tier>=0?TIERS[b.tier].c:'#35e0c8';c.strokeText(t,128,54);c.fillText(t,128,54)}
     v.tex.needsUpdate=true}
   /* Seltenheit auf einen Blick: farbiger Bodenschein, Lichtsäule ab Ungewöhnlich, farbiger Umriss ab Selten */
@@ -1590,6 +1590,8 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
       const id=b.wp[b.cur].id,ws=b.isP?S.cfg.wskin:'std';if(v.gid!==id+ws){const gq=gunGeoOf(id,ws);v.gun.geometry=gq.geo;v.gid=id+ws;v.flash.position.set(gq.tip+4,.5,0)}
       v.vest.visible=b.vest>0;if(b.vest)v.vest.material=tierM[b.vest];v.helm.visible=b.helm>0;if(b.helm)v.helm.material=tierM[b.helm];
       {const hk=b.flash>0?Math.sin(Math.min(1,b.flash/.15)*Math.PI*.5):0;v.model.rotation.z=hk*.3;v.model.position.x=-hk*3;v.lean=(v.lean||0)+((b.lean||0)*.34-(v.lean||0))*Math.min(1,dt*9);v.model.rotation.x=v.lean}const since=m.t-b.lastShotT;if(b.lastShotT!==v.shotSeen){v.shotSeen=b.lastShotT;const wid=b.wp[b.cur].id;if(since<.1&&wid!=='shotgun'&&wid!=='autosg'||since<.1&&rnd()<.6){const sa=b.a-Math.PI/2+rr(-.3,.3),sv=rr(55,85);if(fxP.length<PN)fxP.push({x:X+Math.cos(b.a)*6,y:Y+Math.sin(b.a)*6,h:gh+24,vx:Math.cos(sa)*sv,vy:Math.sin(sa)*sv,vh:rr(55,85),t:0,l:.9,q:SHELL,c:wid==='shotgun'||wid==='autosg'?0xb8342a:0xc9a24a,r:rnd()*6})}}v.hand.position.x=9-(since<.14?(1-since/.14)*4.5:0);v.hand.rotation.z=b.act==='heal'?-.85+Math.sin(m.t*3)*.08:b.act==='open'?-.45+Math.sin(m.t*7)*.18:b.rel>0?-.55+Math.sin(m.t*8)*.12:since<.14?(1-since/.14)*.18:0;
+      if(b.down){v.dn=Math.min(1,(v.dn||0)+dt*3);v.model.rotation.z=v.dn*1.52;v.model.rotation.x=0;v.model.position.y=v.dn*4;v.hand.rotation.z=.4}else v.dn=0;
+      if(b.act==='revive'){const k=Math.sin(ts/85);v.model.rotation.z=-.62+k*.08;v.model.position.y=-2;v.hand.position.set(14,15+k*3.5,4);v.hand.rotation.z=-1.2}
       {const wid=b.wp[b.cur].id,FL={shotgun:[2.1,1.9,.11],autosg:[1.7,1.6,.08],sniper:[2.6,1.1,.09],dmr:[1.9,1,.07],lmg:[1.5,1.2,.06],revolver:[1.7,1.4,.08],smg:[.85,.75,.05],pistol:[.8,.8,.06]}[wid]||[1.1,1,.07];
         v.flash.visible=since<FL[2];if(v.flash.visible){const r=(.75+rnd()*.5)*(b.isP&&(m.pfx==='wumms'||m.pfx==='blitz')?2.6:1);v.flash.scale.set(FL[0]*r,FL[1]*r,FL[1]*r);v.flash.rotation.x=rnd()*TAU}}
       v.hp.scale.x=Math.max(.01,34*b.hp/b.max);v.shb.visible=b.sh>0;v.shb.scale.x=Math.max(.01,34*Math.min(100,b.sh)/100);
