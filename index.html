@@ -86,7 +86,7 @@ input[type=range]{width:100%;accent-color:var(--amber);height:28px}
 .go.ghost{background:var(--panel2);color:var(--fg);border:1px solid var(--line)}
 
 #match{position:fixed;inset:0;background:#a9cbd9;z-index:20;touch-action:none}
-#cv{position:absolute;inset:0;width:100%;height:100%;display:block;filter:saturate(1.12) contrast(1.1)}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;filter:saturate(1.02) contrast(1.025)}
 #grain{position:absolute;inset:-50%;pointer-events:none;opacity:.035;mix-blend-mode:overlay;animation:grn .5s steps(4) infinite}
 @keyframes grn{0%{transform:translate(0,0)}25%{transform:translate(-7%,4%)}50%{transform:translate(5%,-6%)}75%{transform:translate(-3%,-3%)}}
 #vign{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 58%,rgba(6,9,12,.32) 100%)}
@@ -3342,7 +3342,7 @@ function makeView(cv){
   const cam=new T.PerspectiveCamera(42,1,5,12000);
   if(ultra){try{composer=new THREE.EffectComposer(ren);composer.addPass(new THREE.RenderPass(scene,cam));
       const sao=new THREE.SAOPass(scene,cam,false,true);Object.assign(sao.params,{saoBias:.5,saoIntensity:.045,saoScale:900,saoKernelRadius:22,saoMinResolution:0,saoBlur:true,saoBlurRadius:6,saoBlurStdDev:4,saoBlurDepthCutoff:.01});composer.addPass(sao);
-      composer.addPass(new THREE.UnrealBloomPass(new T.Vector2(512,512),.42,.55,.86));{const tm=new THREE.ShaderPass({uniforms:{tDiffuse:{value:null},exposure:{value:1.05}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+      composer.addPass(new THREE.UnrealBloomPass(new T.Vector2(512,512),.24,.45,.92));{const tm=new THREE.ShaderPass({uniforms:{tDiffuse:{value:null},exposure:{value:1.05}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
         fragmentShader:'uniform sampler2D tDiffuse;uniform float exposure;varying vec2 vUv;vec3 aces(vec3 x){return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}void main(){vec4 c=texture2D(tDiffuse,vUv);vec3 m=aces(c.rgb*exposure*.8);gl_FragColor=vec4(pow(m,vec3(1./2.2)),c.a);}'});
         tm.material.toneMapped=false;composer.addPass(tm);composer.tm=tm}
       const pm=new T.PMREMGenerator(ren),es=new T.Scene(),sg=new T.SphereGeometry(100,24,12),cols=[];const top=new T.Color(0x3d7fd6),hor=new T.Color(0xd8e6ee),gnd=new T.Color(0x5a5a4a);
@@ -3352,13 +3352,26 @@ function makeView(cv){
   const hemi=new T.HemisphereLight(0xffffff,0x4a6a50,.72),sun=new T.DirectionalLight(0xfff2d6,1);sun.position.set(400,600,250);scene.add(hemi,sun);scene.add(sun.target);
   sun.castShadow=!mobileGraphics;sun.shadow.mapSize.set(touchDev?2048:4096,touchDev?2048:4096);sun.shadow.camera.left=-900;sun.shadow.camera.right=900;sun.shadow.camera.top=900;sun.shadow.camera.bottom=-900;sun.shadow.camera.near=10;sun.shadow.camera.far=2600;sun.shadow.bias=-.00015;sun.shadow.normalBias=1.8;sun.shadow.radius=1;
   // Reusable, deterministic surface textures: embedded and independent of gameplay RNG.
-  function surfaceTexture(kind){const n=256,c=document.createElement('canvas');c.width=c.height=n;const ctx=c.getContext('2d'),im=ctx.createImageData(n,n);
+  function surfaceTexture(kind){
+    const n=mobileGraphics?128:256;
     const hash=(x,y)=>{const q=Math.sin(x*127.1+y*311.7+kind*71.3)*43758.5453;return q-Math.floor(q)};
-    for(let y=0;y<n;y++)for(let x=0;x<n;x++){const noise=hash(x,y),patch=Math.sin(x*.098)*Math.sin(y*.074)+Math.sin(x*.031+y*.042),v=kind===1?165+noise*45+patch*12:kind===2?178+noise*30+Math.sin(y*.14+x*.025)*12:184+noise*30+patch*8,i=(y*n+x)*4;im.data[i]=im.data[i+1]=im.data[i+2]=clamp(v,0,255);im.data[i+3]=255}ctx.putImageData(im,0,0);
-    if(kind===0){ctx.strokeStyle='rgba(30,40,20,.25)';ctx.lineWidth=.6;for(let i=0;i<1300;i++){const x=hash(i,3)*n,y=hash(i,7)*n;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+hash(i,9)*3-1.5,y-2-hash(i,11)*5);ctx.stroke()}}
-    const tex=new T.CanvasTexture(c);tex.wrapS=tex.wrapT=T.RepeatWrapping;tex.anisotropy=Math.min(mobileGraphics?4:16,ren.capabilities.getMaxAnisotropy());return tex;}
-  const stoneTex=surfaceTexture(1),soilTex=surfaceTexture(0),snowTex=surfaceTexture(2);
-  soilTex.repeat.set(20,20);snowTex.repeat.set(18,18);stoneTex.repeat.set(2,2);
+    // Periodic value noise: seamless tiling, stable across runs, no gameplay RNG.
+    const noise=(x,y,f)=>{x=x/n*f;y=y/n*f;const ix=Math.floor(x),iy=Math.floor(y);let u=x-ix,v=y-iy;u=u*u*(3-2*u);v=v*v*(3-2*v);
+      const h=(a,b)=>hash((a+f)%f,(b+f)%f),a=h(ix,iy)*(1-u)+h(ix+1,iy)*u,b=h(ix,iy+1)*(1-u)+h(ix+1,iy+1)*u;return a*(1-v)+b*v};
+    const canvases=Array.from({length:3},()=>{const c=document.createElement('canvas');c.width=c.height=n;return c}),contexts=canvases.map(c=>c.getContext('2d')),images=contexts.map(c=>c.createImageData(n,n));
+    for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+      const broad=noise(x,y,4),detail=noise(x,y,16),fine=noise(x,y,64),grain=hash(x,y),h=.48*broad+.3*detail+.16*fine+.06*grain;
+      const vein=kind===1?Math.pow(1-Math.abs(detail-.5)*2,14):0;
+      const color=kind===2?222+h*30:kind===1?172+h*65-vein*20:176+h*60;
+      const height=clamp(h*220+grain*16-vein*24,0,255),rough=kind===2?185+detail*55:kind===1?177+broad*65:220+detail*34;
+      for(let k=0;k<3;k++){const v=k===0?color:k===1?height:rough,i=(y*n+x)*4;images[k].data[i]=images[k].data[i+1]=images[k].data[i+2]=v;images[k].data[i+3]=255}
+    }
+    const maps=canvases.map((c,i)=>{contexts[i].putImageData(images[i],0,0);const t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;t.anisotropy=Math.min(mobileGraphics?4:16,ren.capabilities.getMaxAnisotropy());t.encoding=i===0?T.sRGBEncoding:T.LinearEncoding;return t});
+    return {map:maps[0],bump:maps[1],rough:maps[2]};
+  }
+  const stoneSurface=surfaceTexture(1),soilSurface=surfaceTexture(0),snowSurface=surfaceTexture(2);
+  for(const [surface,repeat]of [[stoneSurface,2],[soilSurface,20],[snowSurface,18]])for(const tex of Object.values(surface))tex.repeat.set(repeat,repeat);
+  const stoneTex=stoneSurface.map,soilTex=soilSurface.map,snowTex=snowSurface.map;
   const softCanvas=document.createElement('canvas');softCanvas.width=softCanvas.height=64;const softCtx=softCanvas.getContext('2d'),softGrad=softCtx.createRadialGradient(32,32,5,32,32,32);softGrad.addColorStop(0,'rgba(255,255,255,.85)');softGrad.addColorStop(.5,'rgba(255,255,255,.55)');softGrad.addColorStop(1,'rgba(255,255,255,0)');softCtx.fillStyle=softGrad;softCtx.fillRect(0,0,64,64);const softShadowTex=new T.CanvasTexture(softCanvas);
 
   const L=(c,o)=>new T.MeshLambertMaterial(Object.assign({color:c},o||{})),B=(c,o)=>new T.MeshBasicMaterial(Object.assign({color:c,toneMapped:false},o||{}));
@@ -3530,7 +3543,9 @@ function makeView(cv){
       return merge(p)}}
   // World-space mineral / plaster grain: no image downloads or extra draw calls.
   function weatherMaterial(mat,strength,scale){
+    const previousCompile=mat.onBeforeCompile.bind(mat);
     mat.onBeforeCompile=sh=>{
+      previousCompile(sh);
       sh.vertexShader='varying vec3 vSurface;\n'+sh.vertexShader.replace('#include <project_vertex>',`vec4 surfacePos=vec4(transformed,1.0);
 #ifdef USE_INSTANCING
 surfacePos=instanceMatrix*surfacePos;
@@ -3556,12 +3571,12 @@ diffuseColor.rgb*=1.0-${strength}*(.55+.25*grain+.20*strata);`);
     outer.position.set(C,isl?-1:-3,C);outer.material.color.setHex(isl?0x2f86c0:Bm.gnd);
     for(const t of tiles.values())t.own.forEach(o=>o.dispose());tiles=new Map();
     const mix=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k];
-    const gmat=keep(new T.MeshStandardMaterial({vertexColors:true,flatShading:false,roughness:Bm.snow?.82:1,metalness:0,map:Bm.snow?snowTex:soilTex,bumpMap:Bm.snow?snowTex:soilTex,bumpScale:Bm.snow?.7:1.6}));
+    const gmat=keep(new T.MeshStandardMaterial({vertexColors:true,flatShading:false,roughness:Bm.snow?.82:1,metalness:0,map:Bm.snow?snowTex:soilTex,bumpMap:Bm.snow?snowSurface.bump:soilSurface.bump,roughnessMap:Bm.snow?snowSurface.rough:soilSurface.rough,bumpScale:Bm.snow?.45:1.15}));
     /* Sturmfärbung, Körnung und Wolkenschatten im Shader */
     gmat.onBeforeCompile=sh=>{sh.uniforms.uSt=stU;sh.uniforms.uT=tU;sh.vertexShader='varying vec2 vWXZ;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvWXZ=position.xz;');
       sh.fragmentShader='uniform vec3 uSt;\nuniform float uT;\nvarying vec2 vWXZ;\n'+sh.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nfloat spk=fract(sin(dot(floor(vWXZ/5.),vec2(12.9898,78.233)))*43758.5453);diffuseColor.rgb*=.84+.16*spk;float ptch=sin(vWXZ.x*.031+sin(vWXZ.y*.019)*2.)*sin(vWXZ.y*.027+sin(vWXZ.x*.023));float soil=smoothstep(.22,.85,ptch);diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(.82,.70,.52),soil*.38);\nfloat cld=sin(vWXZ.x*.0023+uT*.06)*sin(vWXZ.y*.0019-uT*.045);diffuseColor.rgb*=1.-.23*smoothstep(.2,.75,cld);\nif(distance(vWXZ,uSt.xy)>uSt.z)diffuseColor.rgb=diffuseColor.rgb*.42+vec3(.27,.12,.48);')};
     water=null;if(isl){water=new T.Mesh(keep(new T.PlaneGeometry(W+16000,W+16000).rotateX(-Math.PI/2)),keep(new T.MeshPhongMaterial({color:0x2f86c0,specular:0xffffff,shininess:90,transparent:true,opacity:.82})));water.position.set(C,0,C);world.add(water)}
-    const rockG=keep(Bm.crystal?new T.OctahedronGeometry(1,0):new T.IcosahedronGeometry(1,2)),rockM=keep(new T.MeshStandardMaterial({color:Bm.rock,map:stoneTex,bumpMap:stoneTex,bumpScale:Bm.crystal?.3:1.8,flatShading:!!Bm.crystal,roughness:Bm.crystal?.25:.92,metalness:Bm.crystal?.25:0,emissive:Bm.crystal?0x3a0850:0})),
+    const rockG=keep(Bm.crystal?new T.OctahedronGeometry(1,0):new T.IcosahedronGeometry(1,2)),rockM=keep(new T.MeshStandardMaterial({color:Bm.rock,map:stoneTex,bumpMap:stoneSurface.bump,roughnessMap:stoneSurface.rough,bumpScale:Bm.crystal?.2:1.3,flatShading:!!Bm.crystal,roughness:Bm.crystal?.25:.92,metalness:Bm.crystal?.25:0,emissive:Bm.crystal?0x3a0850:0})),
       treeG=keep(treeGeo(Bm)),treeM=keep((()=>{const mt=new T.MeshPhongMaterial({vertexColors:true,flatShading:true,shininess:0,emissive:Bm.dark?0x0a3a34:0});
         mt.onBeforeCompile=sh=>{sh.uniforms.uWind=tU;sh.vertexShader='uniform float uWind;\n'+sh.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
         #ifdef USE_INSTANCING
