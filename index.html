@@ -317,6 +317,15 @@ button{touch-action:manipulation}button:focus-visible,input:focus-visible{outlin
  .hud-top{right:132px!important}
 }
 </style>
+<style>
+.rs{max-width:460px;margin:0 auto;padding:22px 16px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
+.rs h2{margin:0;font-size:40px;line-height:1}.rs h2 small{font-size:18px;opacity:.6;font-weight:500}.rs .hint{margin:0}.rs .eyebrow{margin:0}
+.rs-row{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.rs-row div{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;padding:8px 4px;text-align:center}
+.rs-row b{display:block;font-size:17px}.rs-row span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.rs-new{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}.rs-new li.more{background:none;border:0;color:var(--muted);padding:2px 10px}.rs-new li{font-size:12.5px;padding:6px 10px;border-radius:9px;background:rgba(255,194,51,.09);border:1px solid rgba(255,194,51,.25)}
+.rs-det summary{cursor:pointer;font-size:13px;color:var(--muted);padding:4px 0}.rs-det .kf{margin-top:6px}
+.rs-btn{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:4px}.rs-btn .go{min-height:48px}
+</style>
 <div id="app">
   <div id="lobby" class="stack">
     <header class="hero">
@@ -608,7 +617,7 @@ function gen(m){const W=m.W,B=m.B,A=W*W/1e6*.5,houses=[];
   m.og=mkGrid(W,200);const g=m.og;
   for(const o of m.obs){const ex=(o.k==='b'?o.hw:o.r)+R+6,ey=(o.k==='b'?o.hh:o.r)+R+6,x0=clamp(((o.x-ex)/200)|0,0,g.n-1),x1=clamp(((o.x+ex)/200)|0,0,g.n-1),y0=clamp(((o.y-ey)/200)|0,0,g.n-1),y1=clamp(((o.y+ey)/200)|0,0,g.n-1);
     for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++)g.c[cy*g.n+cx].push(o)}
-  m.cg=mkGrid(W,560);m.lg=mkGrid(W,480);m.chests=[];const C=W/2,want=Math.round(Math.max(m.N*1.6,A*6)),keep=Math.round(Math.max(m.N*.6,A*1.6));
+  m.cg=mkGrid(W,560);m.lg=mkGrid(W,480);m.chests=[];const C=W/2,want=Math.round(Math.max(m.N*1.6,A*6)),keep=Math.round(Math.max(m.N*.69,A*1.84));
   const chest=(x,y,q,rot,pr)=>{const c={x,y,q,open:false,prog:0,rot,pr:pr||0};m.chests.push(c)};
   for(const h of houses){if(!m.obs.includes(h))continue;for(let k=0;k<(h.tall?2:1);k++){const s=rnd()<.5?-1:1,v=rnd()<.5,x=v?h.x+rr(-h.hw*.6,h.hw*.6):h.x+s*(h.hw+24),y=v?h.y+s*(h.hh+24):h.y+rr(-h.hh*.6,h.hh*.6),z=rnd();
       if(freeSpot(m,x,y))chest(x,y,z<.62?0:z<.92?1:2,v?0:Math.PI/2,1)}}
@@ -1693,18 +1702,17 @@ function finish(){if(mode!=='match')return;auStop();const win=P.place===1,m=cur,
   else if(r.place>700)tip='Früh ausgeschieden. „Erst ausrüsten“ und ein höherer Deckungswert halten ihn länger am Leben.';
   else if(r.kills===0&&r.dmg<40)tip='Kaum Schaden ausgeteilt. Punkte in „Zielen“ helfen beim Treffen.';
   else tip='Solide Runde. Punkte in „Leben“ und „Startschild“ machen ihn in späten Kämpfen zäher.';
-  const mm=Math.floor(r.time/60),ss=String(Math.floor(r.time%60)).padStart(2,'0'),next=UNLOCKS.filter(u=>!has(u.id)).slice(0,3);
-  $('result').innerHTML=`<div class="res-top"><p class="eyebrow">Runde ${S.games} · ${m.B.n}</p><h2 class="${win?'win':''}">${win?'Sieg':'Platz '+r.place} <small>von ${N}</small></h2>
-    <p class="hint">${win?'Dein Bot hat alle überlebt.':P.killer?`Eliminiert von ${P.killer.name} (Lvl ${P.killer.lvl}) mit ${WEAPONS[P.killW].n}`:P.selfK?'Von der eigenen Rakete erwischt':'Im Sturm gestorben'}${!win&&m.winner?` · Sieger: ${m.winner.name}`:''}</p></div>
-    <section class="card"><dl class="stats"><div><dt>Eliminierungen</dt><dd>${r.kills}</dd></div><div><dt>Schaden</dt><dd>${r.dmg}</dd></div><div><dt>Kopfschüsse</dt><dd>${r.hs}</dd></div><div><dt>Überlebt</dt><dd>${mm}:${ss}</dd></div><div><dt>Kisten geöffnet</dt><dd>${r.chests}</dd></div><div><dt>Medikits benutzt</dt><dd>${r.meds}</dd></div><div><dt>Gold gesichert${share&&share<1?' ('+share*100+' %)':''}</dt><dd>${kept} <small style="font:500 12px var(--body);color:var(--muted)">${bonus?bonus+' Platzierung':'keine Platzierung'}${r.gold?' + '+Math.min(r.gold,kept-bonus)+' Kopfgeld':''}</small></dd></div></dl></section>
-    ${(P.klog||[]).length||P.killer?`<section class="card"><h2>Killfeed <small>${(P.klog||[]).length} Eliminierungen</small></h2><ul class="kf">${(P.klog||[]).map(k=>{const t=Math.floor(k.t/60)+':'+String(Math.floor(k.t%60)).padStart(2,'0');
-      return `<li><time>${t}</time><span class="kw">${ICON[k.w]||ICON.pistol}</span><span class="kn"><b>${k.n}</b><small>${k.w==='gren'?'Granate':WEAPONS[k.w]?WEAPONS[k.w].n:''}${k.hs?' · Kopfschuss':''}</small></span><i style="color:${k.tier>=0?TIERS[k.tier].c:'#35e0c8'}">Lvl ${k.l}</i></li>`}).join('')}${P.killer?`<li class="dead"><time>${mm}:${ss}</time><span class="kw">${ICON[P.killW]||ICON.pistol}</span><span class="kn"><b>${P.killer.name}</b><small>hat dich eliminiert · ${WEAPONS[P.killW].n}</small></span><i style="color:${TIERS[P.killer.tier]?TIERS[P.killer.tier].c:'#fff'}">Lvl ${P.killer.lvl}</i></li>`:''}</ul></section>`:''}
-    <section class="card"><h2>Erfahrung</h2><div class="xp">${xp.map(x=>`<div><span>${x[0]}</span><span>+${x[1]}</span></div>`).join('')}<div class="sum"><span>Gesamt</span><span>+${sum} EP</span></div></div>
-    ${S.level>lv0?`<ul class="unl"><li><b>Stufe ${S.level} erreicht</b><br>+${2*(S.level-lv0)} Skillpunkte zum Verteilen</li></ul>`:''}</section>
-    ${achNew.length?`<section class="card"><h2>Erfolge erreicht</h2><ul class="unl">${achNew.map(a=>`<li><b>${a.name}</b><br>${a.desc} · +${fmt(a.xp)} EP${a.gold?' · +'+a.gold+' Gold':''}</li>`).join('')}</ul></section>`:''}
-    ${fresh.length?`<section class="card"><h2>Neu freigeschaltet</h2><ul class="unl">${fresh.map(u=>`<li><b>${u.name}</b>${u.desc?'<br>'+u.desc:''}</li>`).join('')}</ul></section>`:''}
-    <section class="card"><h2>Rundenanalyse</h2><p>${tip}</p>${next.length?`<p class="hint">Als Nächstes freischaltbar:</p><ul class="unl next">${next.map(u=>`<li><b>${u.name}</b><br>${u.cond}</li>`).join('')}</ul>`:''}</section>
-    <div class="startbar"><div class="stack" style="gap:8px"><button class="go" id="again">Nochmal mit dieser Einstellung</button><button class="go ghost" id="back">Bot anpassen</button></div></div>`;
+  const mm=Math.floor((r.time||0)/60),ss=String(Math.floor((r.time||0)%60)).padStart(2,'0'),next=UNLOCKS.filter(u=>!has(u.id)).slice(0,3);
+  const news=[...(S.level>lv0?[`<b>Stufe ${S.level}</b> · +${2*(S.level-lv0)} Skillpunkte`]:[]),...achNew.map(a=>`<b>${a.name}</b> · +${fmt(a.xp)} EP${a.gold?' · +'+a.gold+' Gold':''}`),...fresh.map(u=>`<b>${u.name}</b> freigeschaltet`)];
+  const kl=P.klog||[];
+  $('result').innerHTML=`<div class="rs">
+    <p class="eyebrow">Runde ${S.games} · ${m.B.n}</p>
+    <h2 class="${win?'win':''}">${win?'Sieg':'Platz '+r.place}<small> / ${N}</small></h2>
+    <p class="hint">${win?'Dein Bot hat alle überlebt.':P.killer?`Eliminiert von ${P.killer.name} (Lvl ${P.killer.lvl}) · ${WEAPONS[P.killW].n}`:P.selfK?'Eigene Rakete':'Im Sturm gestorben'}</p>
+    <div class="rs-row"><div><b>${r.kills}</b><span>Kills</span></div><div><b>${r.dmg}</b><span>Schaden</span></div><div><b>${mm}:${ss}</b><span>Überlebt</span></div><div><b>+${sum}</b><span>EP</span></div><div><b>+${kept}</b><span>Gold</span></div></div>
+    ${news.length?`<ul class="rs-new">${news.slice(0,3).map(n=>`<li>${n}</li>`).join('')}${news.length>3?`<li class="more">+ ${news.length-3} weitere Freischaltungen</li>`:''}</ul>`:''}
+    ${kl.length?`<details class="rs-det"><summary>Killfeed (${kl.length})</summary><ul class="kf">${kl.map(k=>{const t=Math.floor(k.t/60)+':'+String(Math.floor(k.t%60)).padStart(2,'0');return `<li><time>${t}</time><span class="kw">${ICON[k.w]||ICON.pistol}</span><span class="kn"><b>${k.n}</b><small>${k.w==='gren'?'Granate':WEAPONS[k.w]?WEAPONS[k.w].n:''}${k.hs?' · Kopfschuss':''}</small></span><i style="color:${k.tier>=0?TIERS[k.tier].c:'#35e0c8'}">Lvl ${k.l}</i></li>`}).join('')}</ul></details>`:''}
+    <div class="rs-btn"><button class="go" id="again">Nochmal</button><button class="go ghost" id="back">Bot anpassen</button></div></div>`;
   cur=null;demo=null;renderLobby();show('result');
   $('again').addEventListener('click',begin);$('back').addEventListener('click',()=>{show('lobby');if(still)staticDemo()})}
 
