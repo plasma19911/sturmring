@@ -4469,4 +4469,6 @@ requestAnimationFrame(frame);
 }
 </script>
 
-<script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{})</script></body></html>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{})
+;(function(){const t=()=>{try{if(matchMedia('(pointer:coarse)').matches&&screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{})}catch(e){}};t();addEventListener('pointerdown',t,{once:true})})();
+</script></body></html>
