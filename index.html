@@ -356,6 +356,23 @@ body.inMatch .lobbyGear{display:none}
 .tc{font-size:11px;font-weight:700}
 @media(max-width:1000px){#teamBox{width:108px;gap:4px}.tn{font-size:9px}.tn em,.tn i{font-size:8px}.tb{height:3px}.tw{width:18px;height:9px;border-bottom-width:1.5px}.tw svg{width:18px;height:9px}.tc{font-size:8px}}
 </style>
+<style>
+.mtag,.buy{font-style:normal;font-size:10px;font-weight:600;padding:1px 6px;border-radius:999px;margin-left:4px;vertical-align:1px}
+.mtag{background:rgba(0,255,208,.12);color:#00ffd0}.buy{background:rgba(255,196,0,.14);color:#ffc400}
+</style>
+<style>
+/* kompaktes Hauptmenü */
+.hero{min-height:0!important;height:clamp(96px,16vw,150px)!important;padding:14px 18px!important}
+.hero h1{font-size:clamp(28px,5vw,44px)!important;margin:0!important}.hero p{font-size:12px!important;margin:2px 0 0!important}
+@media(max-width:700px){.hero p,.hero .eyebrow{display:none!important}}
+.card{padding:12px 14px!important}.card h2{font-size:12px!important;margin:0 0 8px!important}
+.opts{gap:6px!important}.opt{padding:8px 10px!important;min-height:0!important}.opt b{font-size:13px!important}.opt span{font-size:11px!important;line-height:1.3!important}
+.modeCard .opts{grid-template-columns:repeat(3,1fr)!important}.modeCard .opt{text-align:center}.modeCard .opt span{font-size:10px!important}
+details.lk{margin-top:6px}details.lk summary{cursor:pointer;font-size:11px;color:var(--muted);padding:4px 2px;list-style:none}details.lk summary::before{content:'▸ '}details.lk[open] summary::before{content:'▾ '}
+details.lk .opts{margin-top:6px}details.lk .opt{opacity:.75}
+@media(min-width:1100px){#lobbyBody{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important;align-items:start}#lobbyBody>.card{margin:0!important}}
+.prof{padding:8px 14px!important}
+</style>
 <div id="gear" hidden><div class="gp"><div class="gh"><b>Einstellungen</b><button id="gearX" aria-label="Schließen">✕</button></div>
   <p class="gs">Im Spiel</p><div class="gg"><button id="camBtn" title="Kamera-Abstand">📷 weit</button><button id="rotBtn" title="Kamera dreht mit">🧭 dreht</button><button id="sndBtn" title="Ton">🔇</button><button id="fsBtn" title="Vollbild">⛶ Vollbild</button><button id="oriBtn" title="Bild drehen">🔄 Quer</button></div>
   <p class="gs">Optionen</p><div class="go2" id="gearOpts"></div></div></div>
@@ -2724,8 +2741,8 @@ function gen(m){const W=m.W,B=m.B,A=W*W/1e6*.5,houses=[];
    m.chests=out;m.cg=mkGrid(W,560);for(const c of m.chests)gAdd(m.cg,c)}
   for(let i=0,nL=Math.max(m.N*.6,A*3);i<nL;i++){const p=spotIn(m,C,C,0,W*.49),q=rnd(),l=q<.4?rollW(rnd()<.65?0:rnd()<.72?1:2):q<.51?{k:'m'}:q<.8?{k:'s'}:q<.9?{k:'n'}:{k:rnd()<.4?'a':'h',t:1};l.x=p.x;l.y=p.y;lootAdd(m,l)}}
 
-function newMatch(cfg,o){o=o||{};const trioMode=(cfg&&cfg.mode==='trio')||!!o.trio;const W=o.W||32000,N=o.n||1000,id=BIOMES[o.biome]?o.biome:pick(Object.keys(BIOMES)),B=BIOMES[id];
-  const m={trioMode,W,N,biome:id,B,t:0,tick:0,bots:[],obs:[],tracers:[],fx:[],hits:[],ev:[],dn:[],gren:[],feed:[],noise:[],graves:[],smokes:[],over:false,alive:N,winner:null,focus:null,pv:null,pvN:0,grenN:0,drops:[],nextDrop:60,bounty:null,tod:N>100?pick(['tag','tag','abend','nacht']):'tag',fxp:B.fxp||(N>100&&!B.dark&&id!=='wueste'&&rnd()<.25?{c:0xa8c8ff,vy:-520,rain:1}:null),grace:DROP,bi:6,pfx:cfg&&cfg.shotfx||'std',coarse:false,ig:null};
+function newMatch(cfg,o){o=o||{};const tsz=(cfg&&cfg.mode==='trio')||o.trio?3:(cfg&&cfg.mode==='duo')||o.duo?2:1,trioMode=tsz>1;const W=o.W||32000,N=Math.floor((o.n||1000)/tsz)*tsz,id=BIOMES[o.biome]?o.biome:pick(Object.keys(BIOMES)),B=BIOMES[id];
+  const m={tsz,trioMode,W,N,biome:id,B,t:0,tick:0,bots:[],obs:[],tracers:[],fx:[],hits:[],ev:[],dn:[],gren:[],feed:[],noise:[],graves:[],smokes:[],over:false,alive:N,winner:null,focus:null,pv:null,pvN:0,grenN:0,drops:[],nextDrop:60,bounty:null,tod:N>100?pick(['tag','tag','abend','nacht']):'tag',fxp:B.fxp||(N>100&&!B.dark&&id!=='wueste'&&rnd()<.25?{c:0xa8c8ff,vy:-520,rain:1}:null),grace:DROP,bi:6,pfx:cfg&&cfg.shotfx||'std',coarse:false,ig:null};
   if(id==='wald'&&!m.fxp&&N>100&&rnd()<.6)m.fxp={c:0xa8c8ff,vy:-520,rain:1};
   if(id==='wueste')m.fxp={c:0xdcc08e,vy:-18,vx:210,sand:1};
   if(!m.fxp&&m.tod==='nacht'&&!B.dark)m.fxp={c:0xeaff8c,vy:0,fly:1};
@@ -2739,11 +2756,13 @@ function newMatch(cfg,o){o=o||{};const trioMode=(cfg&&cfg.mode==='trio')||!!o.tr
   if(cfg)m.bots.push(mkBot(m,0,'Dein Bot',true,cfg,cfg.skills,-1));
   while(m.bots.length<N){const e=randCfg(),k=ord[m.bots.length%1000];m.bots.push(mkBot(m,m.bots.length,PRE[k%25]+' '+SUF[(k/25)|0],false,e.cfg,e.pts,e.tier))}
   /* Trio: je drei Bots bilden ein Team, landen zusammen und spielen zusammen */
-  if((cfg&&cfg.mode==='trio')||o.trio){m.trio=true;for(let i=0;i<m.bots.length;i++){const b=m.bots[i];b.team=(i/3)|0;if(i%3){const L=m.bots[i-i%3];for(let k=0;k<14;k++){const a=rr(0,TAU)+(i%3)*2.1,d=rr(120,210),x=L.x+Math.cos(a)*d,y=L.y+Math.sin(a)*d;if(freeSpot(m,x,y)){b.x=b.px=x;b.y=b.py=y;break}}}}
+  if(m.tsz>1){m.trio=true;const Z=m.tsz;for(let i=0;i<m.bots.length;i++){const b=m.bots[i];b.team=(i/Z)|0;if(i%Z){const L=m.bots[i-i%Z];for(let k=0;k<14;k++){const a=rr(0,TAU)+(i%Z)*2.1,d=rr(120,210),x=L.x+Math.cos(a)*d,y=L.y+Math.sin(a)*d;if(freeSpot(m,x,y)){b.x=b.px=x;b.y=b.py=y;break}}}}
+    for(const b of m.bots)if(!b.isP&&b.tier>=2&&rnd()<.4)b.perks.add(pick(Z===2?['p_duo','p_last','p_focus','p_rally']:['p_triad','p_squad','p_focus','p_rally','p_guard']));
     for(const b of m.bots)b.tab=b.isP?(cfg&&cfg.teamAb)||null:(b.tier>=2&&rnd()<.5?pick(['tf_sani','tf_zaeh','tf_vers','tf_kampf','tf_funk']):null);
-    m.teamsAlive=Math.ceil(m.bots.length/3);m.teams=m.teamsAlive}
+    m.teamsAlive=Math.ceil(m.bots.length/m.tsz);m.teams=m.teamsAlive}
   nextZone(m);return m}
-const mates=(m,b)=>m.trio?m.bots.slice(b.team*3,b.team*3+3).filter(o=>o!==b):[];
+const teamOf=(m,b)=>m.bots.slice(b.team*m.tsz,b.team*m.tsz+m.tsz);
+const mates=(m,b)=>m.trio?teamOf(m,b).filter(o=>o!==b):[];
 const teamUp=(m,b)=>mates(m,b).some(o=>o.alive&&!o.down);
 
 function nextZone(m){const s=m.storm,p=m.ph[s.ph],W=m.W;s.cx=s.x;s.cy=s.y;s.cr=s.r;s.nr=p.r;s.t=0;s.shr=false;
@@ -2755,7 +2774,7 @@ function stormStep(m){const s=m.storm;s.t+=DT;const p=m.ph[s.ph];if(s.t<p.wait)r
   if(k>=1){if(s.ph<m.ph.length-1){s.ph++;nextZone(m)}else s.r=0}}
 
 function hurt(m,b,d,from,hs,gk){if(!b.alive)return;if(from&&from!==b&&m.trio&&from.team===b.team)return;if(b.down&&from&&m.t-b.downT<10)return;
-  if(from){(m.blood||(m.blood=[])).push({x:b.x,y:b.y,t:m.t});if(m.blood.length>80)m.blood.shift();d*=TUNE.dmg*b.tough*(b.act==='revive'&&b.perks.has('p_guard')?.75:1);
+  if(from){(m.blood||(m.blood=[])).push({x:b.x,y:b.y,t:m.t});if(m.blood.length>80)m.blood.shift();d*=TUNE.dmg*b.tough*(b.act==='revive'&&b.perks.has('p_guard')?.75:1);if(m.trio&&!b.down){const ms=mates(m,b);if(b.perks.has('p_duo')&&ms.some(o=>o.alive&&!o.down&&d2(o,b)<200))d*=.92;if(ms.some(o=>o.alive&&!o.down&&o.perks.has('p_squad')&&d2(o,b)<300))d*=.94}
     if(hs){d*=b.helm?HELM[b.helm].m:2;if(b.helm&&--b.helmD<=0){b.helm=0;ev(m,'break',b.x,b.y,500)}}
     else if(b.vest){const ab=d*VEST[b.vest].r;d-=ab;if((b.vestD-=ab)<=0){b.vest=0;ev(m,'break',b.x,b.y,500)}}
     if((from.isP||b.isP)&&m.dn.length<14)m.dn.push({x:b.x,y:b.y,v:Math.max(1,Math.round(d)),hs:!!hs,me:b.isP});
@@ -2763,7 +2782,7 @@ function hurt(m,b,d,from,hs,gk){if(!b.alive)return;if(from&&from!==b&&m.trio&&fr
   else{b.hp-=d;b.stormDmg+=d}
   if(b.hp<=0){if(b.perks.has('p_second')&&!b.sw2&&!b.down){b.sw2=true;b.hp=30}
     else if(m.trio&&!b.down&&teamUp(m,b)){/* am Boden: kriecht, blutet aus; Teamkameraden können ihn in 10 s wiederbeleben, nach 60 s ist er tot */
-      b.down=true;b.downT=m.t;b.downBy=from;b.hp=Math.round(b.max*.5);b.sh=0;b.act='';b.fire=null;b.rvBy=null;m.feed.push({sys:`${b.name} ist am Boden`,t:m.t,x:b.x,y:b.y,me:b.isP||mates(m,b).some(o=>o.isP)});if(b.isP)ev(m,'hurt',b.x,b.y,1e9)}
+      b.down=true;b.downT=m.t;b.downBy=from;b.hp=Math.round(b.max*.5)+(b.perks.has('p_tough')?20:0);b.sh=0;b.act='';b.fire=null;b.rvBy=null;m.feed.push({sys:`${b.name} ist am Boden`,t:m.t,x:b.x,y:b.y,me:b.isP||mates(m,b).some(o=>o.isP)});if(b.isP)ev(m,'hurt',b.x,b.y,1e9)}
     else die(m,b,from||b.downBy,gk)}}
 function die(m,b,from,gk){const self=from===b;if(self)from=null;
   b.alive=false;b.hp=0;b.down=false;b.place=m.trio?0:m.alive;m.alive--;b.deathT=m.t;b.killer=from;b.killW=from?from.wp[from.cur].id:null;b.selfK=self;
@@ -2779,10 +2798,10 @@ function die(m,b,from,gk){const self=from===b;if(self)from=null;
   if(from){from.kills++;if(from.isP)(from.klog=from.klog||[]).push({t:m.t,n:b.name,l:b.lvl,tier:b.tier,w:gk?'gren':b.killW,hs:!gk&&!!b.lastHs,left:m.alive});if(from.isP&&b.killW){const kw=gk?'gren':b.killW;from.wk[kw]=(from.wk[kw]||0)+1}if(b.killW==='sniper')from.sniperKill=true;if(b.killW==='sniper'||b.killW==='dmr')from.longKill=true;if(from.perks.has('p_blood'))from.hp=Math.min(from.max,from.hp+25)}
   m.feed.push({a:from?from.name:null,b:b.name,w:from?(gk?'Granate':WEAPONS[b.killW].n+(b.lastHs?' · Kopfschuss':'')):self?'eigene Granate':'Sturm',t:m.t,x:b.x,y:b.y,me:b.isP||!!(from&&from.isP),ap:!!(from&&from.isP),bp:b.isP});
   if(m.feed.length>60)m.feed.shift();
-  if(m.trio){const team=m.bots.slice(b.team*3,b.team*3+3);
+  if(m.trio){const team=teamOf(m,b);
     if(!team.some(o=>o.alive&&!o.down))for(const o of team)if(o.alive&&o.down)die(m,o,o.downBy,false);
     if(!team.some(o=>o.alive)&&!(m.outT||(m.outT=new Set)).has(b.team)){m.outT.add(b.team);for(const o of team)o.place=m.teamsAlive;m.teamsAlive--;
-      if(m.teamsAlive<=1){const w=m.bots.find(o=>o.alive);if(w){for(const o of m.bots.slice(w.team*3,w.team*3+3))o.place=1;m.winner=w}m.over=true}}}
+      if(m.teamsAlive<=1){const w=m.bots.find(o=>o.alive);if(w){for(const o of teamOf(m,w))o.place=1;m.winner=w}m.over=true}}}
   else if(m.alive===1){m.winner=m.bots.find(o=>o.alive);m.winner.place=1;m.over=true}}
 
 const rank=(b,id)=>{const i=b.prio.indexOf(id);return i<0?99:i},val=(b,w)=>rank(b,w.id)*.5-w.rar*1.6;
@@ -2827,13 +2846,13 @@ function tryFire(m,b,foe,fd){const cw=b.wp[b.cur],w=b.W[cw.id];if(b.rel>0||b.cd>
   if(b.mags[b.cur]<=0){let bi=-1,bs=0;b.wp.forEach((q,i)=>{if(i!==b.cur&&b.mags[i]>0){const v=expDps(b.W[q.id],fd)*rarM(q.id,q.rar);if(v>bs){bs=v;bi=i}}});
     if(bi>=0){b.cur=bi;b.cd=.35;b.sw=6}else b.rel=w.reload*b.sk.rel;return}
   if(w.splash&&fd<100)return;
-  b.mags[b.cur]--;b.cd=(b.cd>-.12?b.cd:0)+1/w.rate;
+  b.mags[b.cur]--;b.cd=(b.cd>-.12?b.cd:0)+1/(w.rate*(b.perks.has('p_cover')&&m.trio&&mates(m,b).some(o=>o.down&&o.rvBy)?1.2:1));
   let sp=w.spread*TUNE.spread*b.sk.aim*(b.run?2.2:b.mv?1.5:1)*(foe.mv?(foe.run?1.9:1.25):1)*(b.pose===2?.6:b.pose===1?.7:1)*(b.jump>0?2:1);
   let tr=R*(foe.pose===2?.55:foe.pose===1?1.08:1);if(foe.inCov&&Math.cos(Math.atan2(b.y-foe.y,b.x-foe.x)-foe.covA)>.5)tr*=.55;
   if(b.style==='ambush'&&!b.mv)sp*=.6;
-  if(b.perks.has('p_first')&&m.t-b.lastShotT>2)sp*=.15;sp*=1-.38*(b.ads||0);if(m.t<(b.comboT||0)&&foe===b.comboF)sp*=.6;
+  if(b.perks.has('p_first')&&m.t-b.lastShotT>2)sp*=.15;sp*=1-.38*(b.ads||0);if(m.trio){if(b.perks.has('p_focus')&&mates(m,b).some(o=>o.fire===foe))sp*=.85;if(b.perks.has('p_triad'))sp*=1-.05*mates(m,b).filter(o=>o.alive&&!o.down&&d2(o,b)<300).length}if(m.t<(b.comboT||0)&&foe===b.comboF)sp*=.6;
   const dh=height(m,b.x,b.y)-height(m,foe.x,foe.y);if(dh>18)sp*=b.perks.has('p_high')?.55:.75;else if(dh<-18)sp*=1.2;
-  b.lastShotT=m.t;const base=Math.atan2(foe.y-b.y,foe.x-b.x),mul=rarM(cw.id,cw.rar)*fall(w,fd)*(b.perks.has('p_clutch')&&m.alive<=25?1.2:1)*(b.perks.has('p_rally')&&mates(m,b).some(o=>o.alive&&!o.down&&d2(o,b)<250)?1.1:1);
+  b.lastShotT=m.t;const base=Math.atan2(foe.y-b.y,foe.x-b.x),mul=rarM(cw.id,cw.rar)*fall(w,fd)*(b.perks.has('p_clutch')&&m.alive<=25?1.2:1)*(b.perks.has('p_rally')&&mates(m,b).some(o=>o.alive&&!o.down&&d2(o,b)<250)?1.1:1)*(b.perks.has('p_duo')&&mates(m,b).some(o=>o.alive&&!o.down&&d2(o,b)<200)?1.08:1)*(b.perks.has('p_last')&&m.trio&&mates(m,b).every(o=>!o.alive||o.down)?1.15:1);
   const f=m.focus,vis=f&&Math.abs(b.x-f.x)<1500&&Math.abs(b.y-f.y)<1500;
   if(w.splash){const err=(rnd()*2-1)*sp,ix=b.x+Math.cos(base+err)*fd,iy=b.y+Math.sin(base+err)*fd;
     if(vis){m.tracers.push({x1:b.x,y1:b.y,x2:ix,y2:iy,t:.2,big:true});m.fx.push({x:ix,y:iy,t:.45})}
@@ -3003,7 +3022,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
         if(b.gren>=th&&o.gren===0){b.gren--;give({k:'n'});break}
         if(o.wp.length===1&&o.wp[0].id==='pistol'&&b.wp.length>=3){const wi=worst(b),wq=b.wp[wi];if(wq.id!=='pistol'){b.wp.splice(wi,1);b.mags.splice(wi,1);if(b.cur>=b.wp.length)b.cur=0;give({k:'w',id:wq.id,rar:wq.rar});break}}}
       const fighting=ms.find(o=>o.alive&&!o.down&&o.see&&o.see.alive&&d2(b,o)<750);
-      const lead=m.bots.slice(b.team*3,b.team*3+3).find(o=>o.alive&&!o.down);
+      const lead=teamOf(m,b).find(o=>o.alive&&!o.down);
       if(fighting&&equipped){b.priority='Team';teamDone=true;const t=fighting.see;b.lastSeen={x:t.x,y:t.y,t:m.t};
         /* flankieren: nicht hinter den Kameraden, sondern seitlich zum Gegner, damit er aus zwei Richtungen unter Feuer gerät */
         const dx=fighting.x-t.x,dy=fighting.y-t.y,dl=Math.hypot(dx,dy)||1,side=(b.i%2?1:-1),rg=Math.min(b.W[b.wp[b.cur].id].range*.8,dl);
@@ -3138,7 +3157,7 @@ function think(m,b,dt,bi){if(m.t<DROP)return;
   b.mv=false;b.run=false;if(!b.go||b.act!==''){b.vx*=.6;b.vy*=.6}
   if(b.act==='revive'){const t=b.rvT;b.moveSpeed=0;b.motionX=b.x;b.motionY=b.y;
     if(!t||!t.alive||!t.down||d2(b,t)>34||b.flash>.1&&b.lastHit&&b.lastHit.alive){b.act='';if(t&&t.rvBy===b)t.rvBy=null;b.due=true}
-    else{t.rvBy=b;b.pose=1;b.ta=Math.atan2(t.y-b.y,t.x-b.x);b.rvP=(b.rvP||0)+dt;const need=b.tab==='tf_sani'?6:10;b.state='Belebt '+t.name+' wieder · '+Math.ceil(need-b.rvP)+' s';if(b.rvP>=need){b.revs=(b.revs||0)+1;t.down=false;t.rvBy=null;t.hp=Math.round(t.max*(b.tab==='tf_kampf'?.6:.3));t.sh=0;t.pose=0;t.due=true;b.act='';b.rvP=0;b.due=true;
+    else{t.rvBy=b;b.pose=1;b.ta=Math.atan2(t.y-b.y,t.x-b.x);b.rvP=(b.rvP||0)+dt;const need=b.tab==='tf_sani'?6:10;b.state='Belebt '+t.name+' wieder · '+Math.ceil(need-b.rvP)+' s';if(b.rvP>=need){b.revs=(b.revs||0)+1;t.revived=(t.revived||0)+1;t.down=false;t.rvBy=null;t.hp=Math.round(t.max*(b.tab==='tf_kampf'?.6:.3));t.sh=0;t.pose=0;t.due=true;b.act='';b.rvP=0;b.due=true;
       m.feed.push({sys:`${b.name} hat ${t.name} wiederbelebt`,t:m.t,x:t.x,y:t.y,me:b.isP||t.isP||mates(m,b).some(o=>o.isP)});ev(m,'heal',t.x,t.y,600)}}}
   if(b.act==='heal'){b.moveSpeed=0;b.motionX=b.x;b.motionY=b.y;b.sta=Math.min(b.staMax,b.sta+15*dt);if((b.healT-=dt)<=0){if(b.useK==='s'){b.sh=Math.min(100,b.sh+(b.perks.has('p_shield')?75:50));b.pot--}else{b.hp=Math.min(b.max,b.hp+b.healAmt);b.med--;b.meds++}ev(m,b.useK==='s'?'shield':'heal',b.x,b.y,200);b.act='';b.due=true}return}
   if(b.act==='open'){const c=b.chest;if(c.open){b.act='';b.due=true}else if((c.prog+=dt)>=(b.perks.has('p_scav')?.4:.8)*b.lootK){openChest(m,c,b);b.act='';b.due=true}}
@@ -3247,14 +3266,21 @@ const UNLOCKS=[
   ...Object.keys(BIOMES).map(id=>({id:'k_'+id,type:'skin',name:'Skin „'+Object.values(SKINS).find(s=>s.lock==='k_'+id).n+'“',cond:'Top 150 auf der Karte '+BIOMES[id].n,test:r=>r.biome===id&&r.place<=150})),
   {id:'k_astro',type:'skin',name:'Skin „Astronaut“',cond:'Top 100 auf jeder verfügbaren Karte',test:(r,s)=>Object.keys(BIOMES).every(k=>s.maps[k]>0&&s.maps[k]<=100)},
   /* nur im Trio: Teamfähigkeiten und Team-Perks */
-  {id:'tf_sani',mode:'trio',type:'team',name:'Feldsanitäter',desc:'Wiederbeleben dauert 6 statt 10 Sekunden',cond:'Belebe im Trio einen Kameraden wieder',test:r=>r.revs>=1},
-  {id:'tf_zaeh',mode:'trio',type:'team',name:'Zäher Hund',desc:'Blutet am Boden nur halb so schnell aus',cond:'Erreiche im Trio die Top 25',test:r=>r.place<=25},
-  {id:'tf_vers',mode:'trio',type:'team',name:'Versorger',desc:'Gibt Medikits, Schildtränke und Granaten schon ab dem ersten Überschuss ab',cond:'Gib in einer Runde 3 Gegenstände an Kameraden ab',test:r=>r.shares>=3},
-  {id:'tf_kampf',mode:'trio',type:'team',name:'Kampfsanitäter',desc:'Wiederbelebte stehen mit 60 statt 30 % Leben auf',cond:'3 Wiederbelebungen in einer Runde',test:r=>r.revs>=3},
-  {id:'tf_funk',mode:'trio',type:'team',name:'Funkkontakt',desc:'Das ganze Team sieht 15 % weiter',cond:'10 Team-Kills in einer Runde',test:r=>r.teamKills>=10},
-  {id:'p_rally',mode:'trio',type:'perk',name:'Zusammenhalt',desc:'+10 % Schaden, solange ein Kamerad in der Nähe steht',cond:'Gewinne eine Trio-Runde',test:r=>r.place===1},
-  {id:'p_guard',mode:'trio',type:'perk',name:'Beschützer',desc:'Nimmt beim Wiederbeleben 25 % weniger Schaden',cond:'2 Wiederbelebungen in einer Runde',test:r=>r.revs>=2},
-  {id:'p_rescue',mode:'trio',type:'perk',name:'Retter',desc:'Läuft 30 % schneller zu Kameraden am Boden',cond:'Erreiche im Trio die Top 10',test:r=>r.place<=10}];
+  {id:'tf_sani',mode:'team',cost:400,type:'team',name:'Feldsanitäter',desc:'Wiederbeleben dauert 6 statt 10 Sekunden',cond:'Belebe einen Kameraden wieder',test:r=>r.revs>=1},
+  {id:'tf_zaeh',mode:'team',cost:400,type:'team',name:'Zäher Hund',desc:'Blutet am Boden nur halb so schnell aus',cond:'Erreiche im Team-Modus die Top 25',test:r=>r.place<=25},
+  {id:'tf_vers',mode:'team',cost:350,type:'team',name:'Versorger',desc:'Gibt Medikits, Schildtränke und Granaten schon ab dem ersten Überschuss ab',cond:'Gib in einer Runde 3 Gegenstände an Kameraden ab',test:r=>r.shares>=3},
+  {id:'tf_kampf',mode:'team',cost:500,type:'team',name:'Kampfsanitäter',desc:'Wiederbelebte stehen mit 60 statt 30 % Leben auf',cond:'3 Wiederbelebungen in einer Runde',test:r=>r.revs>=3},
+  {id:'tf_funk',mode:'team',cost:500,type:'team',name:'Funkkontakt',desc:'Das ganze Team sieht 15 % weiter',cond:'10 Team-Kills in einer Runde',test:r=>r.teamKills>=10},
+  {id:'p_rally',mode:'team',cost:450,type:'perk',name:'Zusammenhalt',desc:'+10 % Schaden, solange ein Kamerad in der Nähe steht',cond:'Gewinne eine Runde im Team-Modus',test:r=>r.place===1},
+  {id:'p_guard',mode:'team',cost:350,type:'perk',name:'Beschützer',desc:'Nimmt beim Wiederbeleben 25 % weniger Schaden',cond:'2 Wiederbelebungen in einer Runde',test:r=>r.revs>=2},
+  {id:'p_rescue',mode:'team',cost:350,type:'perk',name:'Retter',desc:'Läuft 30 % schneller zu Kameraden am Boden',cond:'Erreiche im Team-Modus die Top 10',test:r=>r.place<=10},
+  {id:'p_focus',mode:'team',cost:400,type:'perk',name:'Feuerfokus',desc:'Trifft 15 % genauer auf Gegner, die ein Kamerad gerade beschießt',cond:'8 Team-Kills in einer Runde',test:r=>r.teamKills>=8},
+  {id:'p_cover',mode:'team',cost:400,type:'perk',name:'Feuerschutz',desc:'Schießt 20 % schneller, solange ein Kamerad wiederbelebt wird',cond:'Werde in einer Runde wiederbelebt',test:r=>r.revived>=1},
+  {id:'p_tough',mode:'team',cost:300,type:'perk',name:'Zweite Chance',desc:'Hat am Boden 20 Leben mehr Reserve',cond:'Spiele 5 Runden im Team-Modus',test:(r,s)=>(s.trioGames||0)>=5},
+  {id:'p_duo',mode:'duo',cost:450,type:'perk',name:'Seite an Seite',desc:'+8 % Schaden und 8 % weniger Schaden, solange der Partner in der Nähe ist',cond:'Erreiche im Duo die Top 10',test:r=>r.place<=10},
+  {id:'p_last',mode:'duo',cost:450,type:'perk',name:'Rache',desc:'+15 % Schaden, wenn der Partner am Boden oder tot ist',cond:'Gewinne eine Duo-Runde',test:r=>r.place===1},
+  {id:'p_triad',mode:'trio',cost:450,type:'perk',name:'Dreieck',desc:'+5 % Genauigkeit für jeden stehenden Kameraden in der Nähe',cond:'Erreiche im Trio die Top 5',test:r=>r.place<=5},
+  {id:'p_squad',mode:'trio',cost:500,type:'perk',name:'Truppführer',desc:'Kameraden in der Nähe nehmen 6 % weniger Schaden',cond:'Gewinne eine Trio-Runde',test:r=>r.place===1}];
 const KEY='sturmring-save-v1';
 const defSave=()=>({camV2:1,level:1,xp:0,games:0,wins:0,best:0,kills:0,gold:0,bought:[],hsTotal:0,grenTotal:0,chestTotal:0,goldTotal:0,wk:{},achDone:[],maps:{},unlocked:[],cfg:{skin:'rekrut',style:'balanced',land:'any',retreat:.35,healAt:.6,early:true,loot:'all',high:true,prep:true,stance:true,wskin:'std',tracer:'std',chute:'std',shotfx:'std',att:{},abil:'none',grave:'std',dmgNum:true,critFx:true,camRot:true,skills:{vital:0,aim:0,spd:0,rel:0,sight:0,armor:0,sta:0,crit:0,tough:0,turn:0,heal:0,quiet:0,loot:0},perks:[]}});
 let attW='rifle';
@@ -3812,18 +3838,17 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
 
 /* ---------- Oberfläche ---------- */
 const $=id=>document.getElementById(id);
-S=loadSave();let mode='lobby',cur=null,P=null,spec=null,speed=1,acc=0,last=0,endT=0,deadShown=false,hudN=0,lastK=0,toastT=0,vigC='',demo=null,demoSpec=null,miniBase=null;
+S=loadSave();setTimeout(()=>{try{mergeProg();renderLobby()}catch(e){}},0);let mode='lobby',cur=null,P=null,spec=null,speed=1,acc=0,last=0,endT=0,deadShown=false,hudN=0,lastK=0,toastT=0,vigC='',demo=null,demoSpec=null,miniBase=null;
 let mainView=null,demoView=null,noGL=false,camI=0,heardT=0,stepT=0,stepO=0,camYaw=0;
 const panOf=(x,y)=>clamp(((x-cam.x)*Math.cos(camYaw)-(y-cam.y)*Math.sin(camYaw))/600,-1,1);
 const CAMS=[{h:180,b:380,n:'Vorschau'},{h:330,b:230,n:'mittel'},{h:520,b:300,n:'weit'},{h:210,b:190,n:'nah'}],DCAM={h:180,b:380};
 const cam={x:0,y:0},dcam={x:0,y:0};
 function expSave(){const code=btoa(unescape(encodeURIComponent(JSON.stringify(S))));(navigator.clipboard?navigator.clipboard.writeText(code):Promise.reject()).then(()=>alert('Code kopiert. Irgendwo speichern, z. B. in einer Notiz.'),()=>prompt('Diesen Code kopieren und speichern:',code));}
 function impSave(){const code=prompt('Spielstand-Code einfügen:');if(!code)return;try{const o=JSON.parse(decodeURIComponent(escape(atob(code.trim()))));if(!o||!o.cfg)throw 0;localStorage.setItem(KEY,JSON.stringify(o));S=loadSave();store();renderLobby();alert('Spielstand geladen.')}catch(e){alert('Code ungültig.')}}
-function swapMode(nm){const cm=S.cfg.mode||'solo';if(cm===nm)return;S.prog=S.prog||{};const sk=new Set(UNLOCKS.filter(u=>u.type==='skin').map(u=>u.id));
-  S.prog[cm]={level:S.level,xp:S.xp,unlocked:S.unlocked.filter(id=>!sk.has(id)),skills:{...S.cfg.skills},perks:[...S.cfg.perks],teamAb:S.cfg.teamAb||null};
-  const n=S.prog[nm]||{level:1,xp:0,unlocked:[],skills:{},perks:[],teamAb:null};
-  S.level=n.level;S.xp=n.xp;S.unlocked=[...S.unlocked.filter(id=>sk.has(id)),...n.unlocked];S.cfg.skills={...defSave().cfg.skills,...n.skills};S.cfg.perks=[...n.perks];S.cfg.teamAb=n.teamAb;S.cfg.mode=nm}
-const modeOk=u=>!u.mode||u.mode===(S.cfg.mode||'solo');
+function swapMode(nm){S.cfg.mode=nm}
+/* früher getrennter Fortschritt je Modus: einmalig zusammenführen (höchste Stufe, alle Freischaltungen) */
+function mergeProg(){if(!S.prog)return;for(const k in S.prog){const p=S.prog[k];if(!p)continue;if(p.level>S.level||p.level===S.level&&p.xp>S.xp){S.level=p.level;S.xp=p.xp}for(const id of p.unlocked||[])if(!S.unlocked.includes(id))S.unlocked.push(id);for(const sk in p.skills||{})S.cfg.skills[sk]=Math.max(S.cfg.skills[sk]||0,p.skills[sk])}delete S.prog;store()}
+const modeOk=u=>{const md=S.cfg.mode||'solo';return!u.mode||u.mode===md||u.mode==='team'&&md!=='solo'};
 const has=id=>S.unlocked.includes(id),ptsTotal=()=>3+2*(S.level-1),ptsSpent=()=>Object.values(S.cfg.skills).reduce((a,b)=>a+b,0),slotN=()=>1+has('slot2')+has('slot3');
 let tab='bot';if(!['bot','skills','look','shop','erfolge','opt'].includes(tab))tab='bot';
 const still=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -3862,15 +3887,14 @@ function renderLobby(){const c=S.cfg,need=xpNeed(S.level),free=ptsTotal()-ptsSpe
     h+=`<section class="card" data-t="look"><h2>Schuss-Animationen</h2><div class="opts">`+Object.entries(SFX).map(([k,v])=>item('f_',k,v[0],v[1],c.shotfx===k,`<i class="sw" style="background:${v[2]}"></i>`,v[4],v[3])).join('')+`</div></section>`;
     h+=`<section class="card" data-t="look"><h2>Fallschirme</h2><div class="opts">`+Object.entries(CHU).map(([k,v])=>item('c_',k,v[0],v[1],c.chute===k,`<i class="sw" style="background:${hex(v[2])};border-radius:${v[3]==='cone'?'4px 4px 50% 50%':v[3]==='ball'?'50%':'50% 50% 6px 6px'}"></i>`,v[4])).join('')+`</div><p class="hint">Damit schwebt dein Bot zu Rundenbeginn ein.</p></section>`;
     h+=`<section class="card" data-t="opt"><h2>Anzeige <small>kostenlos</small></h2>`+pair('gfx',c.gfx!=='low',['Grafik hoch','Echte Schatten, dichtes Gras, feineres Gelände'],['Grafik sparsam','Für schwächere Handys, läuft flüssiger'])+pair('dmgNum',c.dmgNum!==false,['Schadenszahlen an','Zahlen steigen über getroffenen Gegnern auf'],['Schadenszahlen aus','Keine Zahlen im Bild'])+`<div class="opts"><button class="opt" data-act="exp"><b>Spielstand sichern</b><span>Kopiert einen Code, mit dem du alles auf ein anderes Gerät mitnimmst</span></button><button class="opt" data-act="imp"><b>Spielstand laden</b><span>Code einfügen und Fortschritt übernehmen</span></button></div>`+pair('critFx',c.critFx!==false,['Kopfschuss-Effekt an','Große goldene Zahl mit Lichtring'],['Kopfschuss-Effekt aus','Kopfschüsse sehen aus wie normale Treffer'])+`</section>`}
-  h+=`<section class="card" data-t="bot"><h2>Modus</h2><div class="opts">${[['solo','Solo','Jeder gegen jeden'],['trio','Trio','Du und 2 zufällige Bots als Team: zusammen laufen, helfen, Ausrüstung teilen, wiederbeleben']].map(q=>`<button class="opt" data-act="mode" data-v="${q[0]}" aria-pressed="${(c.mode||'solo')===q[0]}"><b>${q[1]}</b><span>${q[2]}</span></button>`).join('')}</div></section>`;
-  if((c.mode||'solo')==='trio')h+=`<section class="card" data-t="bot"><h2>Teamfähigkeit <small>eine aktiv</small></h2><div class="opts">${UNLOCKS.filter(u=>u.type==='team').map(u=>{const lk=!has(u.id);return `<button class="opt${lk?' locked':''}" data-act="teamab" data-v="${u.id}" aria-pressed="${c.teamAb===u.id}" ${lk?'aria-disabled="true"':''}><b>${u.name}</b><span>${lk?u.cond:u.desc}</span></button>`}).join('')}</div><p class="hint">Freischaltungen, Stufe, Skills und Perks zählen getrennt für Solo und Trio. Skins, Gold, Shop und Erfolge gelten für beide.</p></section>`;
+  h+=`<section class="card modeCard" data-t="bot"><h2>Modus</h2><div class="opts">${[['solo','Solo','Jeder gegen jeden · 1000 Bots'],['duo','Duo','Du und ein Partner · 500 Teams'],['trio','Trio','Du und zwei Kameraden · 333 Teams']].map(q=>`<button class="opt" data-act="mode" data-v="${q[0]}" aria-pressed="${(c.mode||'solo')===q[0]}"><b>${q[1]}</b><span>${q[2]}</span></button>`).join('')}</div></section>`;
+  if((c.mode||'solo')!=='solo')h+=`<section class="card" data-t="bot"><h2>Teamfähigkeit <small>eine aktiv</small></h2><div class="opts">${(()=>{const L=UNLOCKS.filter(u=>u.type==='team'),btn=u=>{const lk=!has(u.id);return `<button class="opt${lk?' locked':''}" data-act="teamab" data-v="${u.id}" aria-pressed="${c.teamAb===u.id}"><b>${u.name}${lk&&u.cost?` <em class="buy">${u.cost} Gold</em>`:''}</b><span>${lk?u.cond+(u.cost?' · oder kaufen':''):u.desc}</span></button>`};const op=L.filter(u=>has(u.id)),cl=L.filter(u=>!has(u.id));return (op.length?op.map(btn).join(''):'<p class="hint">Noch keine freigeschaltet.</p>')+(cl.length?`</div><details class="lk"><summary>Gesperrt · ${cl.length}</summary><div class="opts">${cl.map(btn).join('')}</div></details><div class="opts">`:'')})()}</div></section>`;
   h+=`<section class="card" data-t="bot"><h2>Spielweise</h2><div class="opts">`+Object.entries(STYLES).map(([k,v])=>{const lk=v.lock&&!has(v.lock);
     return `<button class="opt${lk?' locked':''}" data-act="style" data-v="${k}" aria-pressed="${c.style===k}" ${lk?'aria-disabled="true"':''}><b>${v.n}</b><span>${lk?cond(v.lock):v.d}</span></button>`}).join('')+`</div></section>`;
   h+=`<section class="card" data-t="skills"><h2>Skillpunkte <small>${free} frei</small></h2>`+Object.entries(SK).map(([k,v])=>{const n=c.skills[k];
     return `<div class="sk"><div class="t"><b>${v[0]}</b><span>${v[1]}</span><div class="pips">${'<i class="on"></i>'.repeat(n)+'<i></i>'.repeat(8-n)}</div></div><button class="ib" data-act="sk-" data-v="${k}" aria-label="${v[0]} verringern" ${n?'':'disabled'}>−</button><button class="ib" data-act="sk+" data-v="${k}" aria-label="${v[0]} erhöhen" ${free>0&&n<8?'':'disabled'}>+</button></div>`}).join('')+
     `<p class="hint">Du startest mit 3 Punkten. Jede neue Stufe bringt 2 Punkte. Umverteilen kostet nichts.</p></section>`;
-  h+=`<section class="card" data-t="bot"><h2>Perks <small>${c.perks.length} von ${slots} aktiv</small></h2><div class="opts">`+UNLOCKS.filter(u=>u.type==='perk'&&modeOk(u)).map(u=>{const lk=!has(u.id);
-    return `<button class="opt${lk?' locked':''}" data-act="perk" data-v="${u.id}" aria-pressed="${c.perks.includes(u.id)}" ${lk?'aria-disabled="true"':''}><b>${u.name}</b><span>${lk?u.cond:u.desc}</span></button>`}).join('')+`</div>${slots<3?`<p class="hint">${slots<2?'Zweiter Perk-Platz: '+cond('slot2')+'.':'Dritter Perk-Platz: '+cond('slot3')+'.'}</p>`:''}</section>`;
+  h+=`<section class="card" data-t="bot"><h2>Perks <small>${c.perks.length} von ${slots} aktiv</small></h2><div class="opts">`+(()=>{const L=UNLOCKS.filter(u=>u.type==='perk'&&modeOk(u)),btn=u=>{const lk=!has(u.id);return `<button class="opt${lk?' locked':''}" data-act="perk" data-v="${u.id}" aria-pressed="${c.perks.includes(u.id)}" ${lk&&!u.cost?'aria-disabled="true"':''}><b>${u.name}${u.mode?` <em class="mtag">${u.mode==='team'?'Team':u.mode==='duo'?'Duo':'Trio'}</em>`:''}${lk&&u.cost?` <em class="buy">${u.cost} Gold</em>`:''}</b><span>${lk?u.cond+(u.cost?' · oder kaufen':''):u.desc}</span></button>`};const op=L.filter(u=>has(u.id)),cl=L.filter(u=>!has(u.id));return op.map(btn).join('')+(cl.length?`</div><details class="lk"><summary>Gesperrt · ${cl.length}</summary><div class="opts">${cl.map(btn).join('')}</div></details><div class="opts">`:'')})()+`</div>${slots<3?`<p class="hint">${slots<2?'Zweiter Perk-Platz: '+cond('slot2')+'.':'Dritter Perk-Platz: '+cond('slot3')+'.'}</p>`:''}</section>`;
   {const done=S.achDone.length;h+=`<section class="card" data-t="erfolge"><h2>Erfolge <small>${done} von ${ACH.length}</small></h2>`+ACH.map(a=>{const v=a.f(S)||0,ok=S.achDone.includes(a.id);
       return `<div class="sk"><div class="t"><b>${ok?'✓ ':''}${a.name}</b><span>${a.desc} · +${fmt(a.xp)} EP${a.gold?' · +'+a.gold+' Gold':''}</span><div class="bar" style="margin-top:5px"><i style="width:${Math.min(100,v/a.goal*100)}%;${ok?'':'background:var(--line)'}"></i></div><span>${fmt(Math.min(v,a.goal))} / ${fmt(a.goal)}</span></div></div>`}).join('')+`</section>`}
   h+=`<section class="card" data-t="liste"><h2>Bestenliste <small>alle Spieler</small></h2><div id="lbBox" class="hint">${LB_URL?'Lädt …':'Die gemeinsame Bestenliste ist noch nicht verbunden.'}</div></section>`;
@@ -3885,9 +3909,10 @@ $('lobbyBody').addEventListener('click',e=>{const t=e.target.closest('[data-act]
   if(a==='style')c.style=v;else if(a==='land')c.land=v;else if(a==='early')c.early=v==='1';else if(a==='high')c.high=v==='1';else if(a==='prep')c.prep=v==='1';else if(a==='gfx'){const g=v==='1'?'high':'low';if(c.gfx===g||(!c.gfx&&g==='high'))return;c.gfx=g;store();location.reload();return}else if(a==='dmgNum')c.dmgNum=v==='1';else if(a==='critFx')c.critFx=v==='1';
   else if(a==='attw'){attW=v;renderLobby();return}
   else if(a==='att'){c.att=c.att||{};const L=c.att[v]||0,cost=ATTCOST[L];if(L>=2||S.gold<cost)return;S.gold-=cost;c.att[v]=L+1}
-  else if(a==='shop'){const[ty,k]=v.split(':'),it=shopOf(ty,k),cost=it.cost,own=!cost||S.bought.includes(ty+k);if(!own){if(it.req&&!S.achDone.includes(it.req))return;if(S.gold<cost)return;S.gold-=cost;S.bought.push(ty+k)}if(ty==='w_')c.wskin=k;else if(ty==='t_')c.tracer=k;else if(ty==='c_')c.chute=k;else if(ty==='f_')c.shotfx=k;else if(ty==='a_')c.abil=k;else if(ty==='g_')c.grave=k;else{c.skin=k;demo=null}}else if(a==='mode')swapMode(v);else if(a==='teamab')c.teamAb=c.teamAb===v?null:(has(v)?v:c.teamAb);else if(a==='stance')c.stance=v==='1';else if(a==='loot')c.loot=v==='1'?'all':'min';else if(a==='skin'){c.skin=v;demo=null}
+  else if(a==='shop'){const[ty,k]=v.split(':'),it=shopOf(ty,k),cost=it.cost,own=!cost||S.bought.includes(ty+k);if(!own){if(it.req&&!S.achDone.includes(it.req))return;if(S.gold<cost)return;S.gold-=cost;S.bought.push(ty+k)}if(ty==='w_')c.wskin=k;else if(ty==='t_')c.tracer=k;else if(ty==='c_')c.chute=k;else if(ty==='f_')c.shotfx=k;else if(ty==='a_')c.abil=k;else if(ty==='g_')c.grave=k;else{c.skin=k;demo=null}}else if(a==='mode')swapMode(v);else if(a==='teamab'){if(!has(v)){const u=UNLOCKS.find(q=>q.id===v);if(u&&u.cost&&S.gold>=u.cost&&confirm(`${u.name} für ${u.cost} Gold kaufen?`)){S.gold-=u.cost;S.unlocked.push(v);c.teamAb=v}}else c.teamAb=c.teamAb===v?null:v}else if(a==='stance')c.stance=v==='1';else if(a==='loot')c.loot=v==='1'?'all':'min';else if(a==='skin'){c.skin=v;demo=null}
   else if(a==='sk+'){if(ptsTotal()-ptsSpent()>0&&c.skills[v]<8)c.skills[v]++}
   else if(a==='sk-'){if(c.skills[v]>0)c.skills[v]--}
+  else if((a==='perk'||a==='teamab')&&!has(v)&&(UNLOCKS.find(u=>u.id===v)||{}).cost){const u=UNLOCKS.find(q=>q.id===v);if(S.gold>=u.cost&&confirm(`${u.name} für ${u.cost} Gold kaufen?`)){S.gold-=u.cost;S.unlocked.push(v)}}
   else if(a==='perk'){const i=c.perks.indexOf(v);if(i>=0)c.perks.splice(i,1);else if(has(v)){c.perks.push(v);while(c.perks.length>slotN())c.perks.shift()}}
   store();renderLobby();if(a==='skin'&&still)staticDemo()});
 $('lobbyBody').addEventListener('input',e=>{const t=e.target;
@@ -3984,7 +4009,7 @@ $('sndBtn').addEventListener('click',()=>{AU.on=!AU.on;$('sndBtn').textContent=A
 function toEnd(){if(cur&&(!P.alive||cur.over))finish()}
 
 function finish(){if(mode!=='match')return;auStop();const m=cur,N=m.trio?m.teams:m.N;if(!P.place)P.place=m.trio?Math.max(1,m.teamsAlive):1;const win=P.place===1;
-  const r={place:P.place||1,kills:P.kills,dmg:Math.round(P.dmg),stormDmg:P.stormDmg,meds:P.meds,chests:P.chests,sniperKill:!!P.sniperKill,longKill:!!P.longKill,hs:P.hs,gold:P.gold,grenKills:P.grenKills,hadV3:P.hadV3,time:win?m.t:P.deathT,win,biome:m.biome,revs:P.revs||0,shares:P.shares||0,trio:!!m.trio,teamKills:m.trio?m.bots.slice(P.team*3,P.team*3+3).reduce((a,o)=>a+o.kills,0):P.kills};
+  const r={place:P.place||1,kills:P.kills,dmg:Math.round(P.dmg),stormDmg:P.stormDmg,meds:P.meds,chests:P.chests,sniperKill:!!P.sniperKill,longKill:!!P.longKill,hs:P.hs,gold:P.gold,grenKills:P.grenKills,hadV3:P.hadV3,time:win?m.t:P.deathT,win,biome:m.biome,revs:P.revs||0,revived:P.revived||0,shares:P.shares||0,trio:!!m.trio,teamKills:m.trio?teamOf(m,P).reduce((a,o)=>a+o.kills,0):P.kills};
   const xp=[['Platzierung',Math.round((N-r.place)/N*250)],['Eliminierungen',r.kills*15],['Schaden',Math.round(r.dmg/4)],['Kisten',r.chests*3]];if(win)xp.push(['Sieg',600]);
   const sum=xp.reduce((a,b)=>a+b[1],0),lv0=S.level;
   const share=0,pl=r.place,bonus=win?500:pl<=3?200:pl<=5?150:pl<=10?100:pl<=25?75:pl<=100?50:pl<=250?25:pl<=500?10:0,kept=bonus+r.gold;
@@ -4008,7 +4033,7 @@ function finish(){if(mode!=='match')return;auStop();const m=cur,N=m.trio?m.teams
     <p class="eyebrow">Runde ${S.games} · ${m.B.n}</p>
     <h2 class="${win?'win':''}">${win?'Sieg':'Platz '+r.place}<small> / ${N}</small></h2>
     <p class="hint">${win?'Dein Bot hat alle überlebt.':P.killer?`Eliminiert von ${P.killer.name} (Lvl ${P.killer.lvl}) · ${WEAPONS[P.killW].n}`:P.selfK?'Eigene Rakete':'Im Sturm gestorben'}</p>
-    <div class="rs-row"><div><b>${r.kills}</b><span>Kills</span></div>${m.trio?`<div><b>${m.bots.slice(P.team*3,P.team*3+3).reduce((a,o)=>a+o.kills,0)}</b><span>Team-Kills</span></div>`:''}<div><b>${r.dmg}</b><span>Schaden</span></div><div><b>${mm}:${ss}</b><span>Überlebt</span></div><div><b>+${sum}</b><span>EP</span></div><div><b>+${kept}</b><span>Gold</span></div></div>
+    <div class="rs-row"><div><b>${r.kills}</b><span>Kills</span></div>${m.trio?`<div><b>${teamOf(m,P).reduce((a,o)=>a+o.kills,0)}</b><span>Team-Kills</span></div>`:''}<div><b>${r.dmg}</b><span>Schaden</span></div><div><b>${mm}:${ss}</b><span>Überlebt</span></div><div><b>+${sum}</b><span>EP</span></div><div><b>+${kept}</b><span>Gold</span></div></div>
     ${news.length?`<h3 class="rs-h">Neu freigeschaltet</h3><ul class="rs-new">${news.map(n=>`<li>${n}</li>`).join('')}</ul>`:''}
     ${kl.length||P.killer?`<h3 class="rs-h">Killfeed · ${kl.length} Eliminierungen</h3><ul class="kf">${kl.map(k=>{const t=Math.floor(k.t/60)+':'+String(Math.floor(k.t%60)).padStart(2,'0');return `<li><time>${t}</time><span class="kw">${ICON[k.w]||ICON.pistol}</span><span class="kn"><b>${k.n}</b><small>${k.w==='gren'?'Granate':WEAPONS[k.w]?WEAPONS[k.w].n:''}${k.hs?' · Kopfschuss':''}</small></span><i style="color:${k.tier>=0?TIERS[k.tier].c:'#35e0c8'}">Lvl ${k.l}</i></li>`}).join('')}${P.killer?`<li class="dead"><time>${mm}:${ss}</time><span class="kw">${ICON[P.killW]||ICON.pistol}</span><span class="kn"><b>${P.killer.name}</b><small>hat dich eliminiert · ${WEAPONS[P.killW].n}</small></span><i style="color:${TIERS[P.killer.tier]?TIERS[P.killer.tier].c:'#fff'}">Lvl ${P.killer.lvl}</i></li>`:''}</ul>`:''}
     <div class="rs-btn"><button class="go" id="again">Nochmal</button><button class="go ghost" id="back">Bot anpassen</button></div></div>`;
@@ -4027,11 +4052,11 @@ function drawMini(m,focus){const cv=$('mini'),[w,h,d]=fit(cv),g=cv.getContext('2
   if(focus){g.fillStyle=focus.isP?'#35e0c8':'#fff';g.strokeStyle='#0f151c';g.lineWidth=1.5;g.beginPath();g.arc(focus.x*k,focus.y*k,4.5,0,TAU);g.fill();g.stroke();g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=1;g.beginPath();g.arc(focus.x*k,focus.y*k,9,0,TAU);g.stroke()}}
 function hud(m){const s=m.storm,p=m.ph[s.ph],f=spec||P;
   $('hAlive').textContent=m.alive;
-  if(m.trio){const tb=$('teamBox');tb.hidden=false;tb.innerHTML=m.bots.slice(P.team*3,P.team*3+3).filter(o=>!o.isP).map(o=>{
+  if(m.trio){const tb=$('teamBox');tb.hidden=false;tb.innerHTML=teamOf(m,P).filter(o=>!o.isP).map(o=>{
       const st=!o.alive?'<i class="tx">✕</i>':o.down?`<i class="td">⬇ ${Math.max(0,Math.ceil(o.hp))}${m.t-o.downT<10?' 🛡':''}</i>`:o.act==='revive'?'<i class="tr">✚</i>':'';
       const inv=o.alive?o.wp.map(w=>`<span class="tw" style="border-color:${RAR[w.rar].c}">${ICON[w.id]||''}</span>`).join('')+(o.med?`<span class="tc" style="color:#74d66b">${o.med}</span>`:'')+(o.pot?`<span class="tc" style="color:#4aa8ff">${o.pot}</span>`:''):'';
       return `<div class="tm${o.alive?'':' out'}${o.down?' dn':''}"><div class="tn"><b>${o.name}</b><em>${o.lvl}</em>${st}</div><div class="tb"><u style="width:${o.alive?Math.max(0,o.hp/o.max*100):0}%"></u></div><div class="tb s"><u style="width:${o.alive?Math.min(100,o.sh):0}%"></u></div><div class="ti">${inv}</div></div>`}).join('')}else $('teamBox').hidden=true;
-  if(m.trio){const tk=m.bots.slice(P.team*3,P.team*3+3).reduce((a,o)=>a+o.kills,0);$('hKills').innerHTML=`${P.kills}<small style="font-size:.55em;opacity:.7"> / ${tk}</small>`;$('hKillsL').textContent='Kills / Team'}else{$('hKills').textContent=P.kills;$('hKillsL').textContent='Kills'}
+  if(m.trio){const tk=teamOf(m,P).reduce((a,o)=>a+o.kills,0);$('hKills').innerHTML=`${P.kills}<small style="font-size:.55em;opacity:.7"> / ${tk}</small>`;$('hKillsL').textContent='Kills / Team'}else{$('hKills').textContent=P.kills;$('hKillsL').textContent='Kills'}
   $('hZone').textContent=s.r<=.5?'Zone geschlossen':s.shr?`Zone ${s.ph+1} von ${m.ph.length} schrumpft`:`Zone ${s.ph+1} von ${m.ph.length} schrumpft in ${Math.ceil(p.wait-s.t)} s`;
   $('hZoneBar').style.width=(s.r<=.5?0:s.shr?clamp(1-(s.t-p.wait)/p.shrink,0,1):clamp(1-s.t/p.wait,0,1))*100+'%';
   $('sVals').innerHTML=`<span>Leben <b>${Math.ceil(f.hp)}</b> / ${f.max}</span><span>Schild <b>${Math.round(f.sh)}</b></span><span>Ausdauer <b>${Math.round(f.sta/f.staMax*100)} %</b></span>`;
@@ -4056,7 +4081,7 @@ function staticDemo(){newDemo();for(let i=0;i<300;i++)step(demo);const b=demo.bo
 function frame(ts){requestAnimationFrame(frame);const dt=Math.min(.05,(ts-last)/1000||0);last=ts;
   if(mode==='match'&&cur){const t0=performance.now();
     acc+=dt*speed;let n=0;while(acc>=DT&&n<12&&!cur.over&&performance.now()-t0<22){step(cur);acc-=DT;n++;}if(acc>DT*3)acc=0;const al=clamp(acc/DT,0,1);
-    if(!P.alive&&!deadShown){deadShown=true;spec=P.killer&&P.killer.alive?P.killer:null;if(cur.trio){const mt=cur.bots.slice(P.team*3,P.team*3+3).find(o=>o.alive);if(mt)spec=mt}
+    if(!P.alive&&!deadShown){deadShown=true;spec=P.killer&&P.killer.alive?P.killer:null;if(cur.trio){const mt=teamOf(cur,P).find(o=>o.alive);if(mt)spec=mt}
       $('deadH').textContent=cur.trio&&!P.place?'Eliminiert – dein Team kämpft weiter':'Platz '+P.place+' von '+(cur.trio?cur.teams+' Teams':cur.N);$('deadP').textContent=P.killer?`Eliminiert von ${P.killer.name} (Lvl ${P.killer.lvl}) mit ${WEAPONS[P.killW].n}`:P.selfK?'Von der eigenen Rakete erwischt':'Im Sturm gestorben';$('dead').hidden=false}
     if(!spec||!spec.alive){if(spec&&spec.killer&&spec.killer.alive)spec=spec.killer;else{let bd=1e9,nb=null;for(const b of cur.bots)if(b.alive){const d=Math.hypot(b.x-cam.x,b.y-cam.y);if(d<bd){bd=d;nb=b}}spec=nb||cur.winner||P}}
     /* Kamera dreht auf Wunsch langsam hinter den Bot, sonst bleibt Norden oben */
