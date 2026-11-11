@@ -733,7 +733,7 @@ function tryFire(m,b,foe,fd){const cw=b.wp[b.cur],w=b.W[cw.id];if(b.rel>0||b.cd>
     if(bi>=0){b.cur=bi;b.cd=.35;b.sw=6}else b.rel=w.reload*b.sk.rel;return}
   if(w.splash&&fd<100)return;
   b.mags[b.cur]--;b.cd=(b.cd>-.12?b.cd:0)+1/w.rate;
-  let sp=w.spread*TUNE.spread*b.sk.aim*(b.mv?1.5:1)*(foe.mv?(foe.run?1.9:1.25):1)*(b.pose===2?.6:b.pose===1?.7:1)*(b.jump>0?2:1);
+  let sp=w.spread*TUNE.spread*b.sk.aim*(b.run?2.2:b.mv?1.5:1)*(foe.mv?(foe.run?1.9:1.25):1)*(b.pose===2?.6:b.pose===1?.7:1)*(b.jump>0?2:1);
   let tr=R*(foe.pose===2?.55:foe.pose===1?1.08:1);if(foe.inCov&&Math.cos(Math.atan2(b.y-foe.y,b.x-foe.x)-foe.covA)>.5)tr*=.55;
   if(b.style==='ambush'&&!b.mv)sp*=.6;
   if(b.perks.has('p_first')&&m.t-b.lastShotT>2)sp*=.15;
@@ -970,6 +970,12 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
         b.wpt=goal||validGoal(m,s.nx,s.ny)||{x:b.x,y:b.y};b.wptT=m.t+14;
       }
       go(b.wpt.x,b.wpt.y);b.state=equipped?'Sucht Gegner':'Sucht Beute'}}
+  /* Ausdauer sinnvoll einsetzen: lange Wege ohne Feindkontakt durchsprinten, im Kampf in Deckung spurten,
+     aber für Nicht-Notfälle immer eine Reserve von 40 für Flucht, Granaten und Deckungswechsel behalten */
+  {const gd=b.go?Math.hypot(b.gx-b.x,b.gy-b.y):0,st=b.state;
+    if(!foe&&b.go&&gd>240&&b.sta>=40&&/Beute|kiste|Zone|Sucht Gegner|Folgt/.test(st))b.sprint=true;
+    if(foe&&b.go&&gd>30&&(st==='Sucht Deckung'||st==='Geht feuernd in Deckung'&&b.hp<b.max*.35||st==='Lädt hinter Deckung nach'))b.sprint=true;
+    if(b.sprint&&!b.urgent&&b.sta<40&&!b.run)b.sprint=false}
   if(b.priority!==b.prevPriority){b.path=null;b.pathRetry=0;b.prevPriority=b.priority;}
   if(b.go&&m.ig){nav(m,b,b.gx,b.gy);b.gx=NV[0];b.gy=NV[1]}
   if(b.go)route(m,b)}
