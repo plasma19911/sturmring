@@ -3480,13 +3480,51 @@ function makeView(cv){
   const chBase=chC.map(c=>merge([{g:box(26,13,17),y:6.5,c},{g:box(2.6,13.8,17.8),x:-8,y:6.5,c:0x191d22},{g:box(2.6,13.8,17.8),x:8,y:6.5,c:0x191d22},{g:box(23,1,14),y:13.1,c:0x0b0d10},{g:box(27,2,18),y:1,c:shade(c,.6)},{g:box(1.6,13.6,1.6),x:-12.6,y:6.5,z:8.2,c:0x2c333b},{g:box(1.6,13.6,1.6),x:12.6,y:6.5,z:8.2,c:0x2c333b},{g:box(1.6,13.6,1.6),x:-12.6,y:6.5,z:-8.2,c:0x2c333b},{g:box(1.6,13.6,1.6),x:12.6,y:6.5,z:-8.2,c:0x2c333b},{g:box(1.4,5,4),x:-13.4,y:8,c:0x8b949c},{g:box(1.4,5,4),x:13.4,y:8,c:0x8b949c}]));
   const chLid=chC.map(c=>merge([{g:box(26,6,17),y:3,z:8.5,c},{g:box(4.5,5.5,1.4),y:1.5,z:17.4,c:0xffd34d},{g:box(2.6,6.6,17.6),x:-8,y:3,z:8.5,c:0x191d22},{g:box(2.6,6.6,17.6),x:8,y:3,z:8.5,c:0x191d22},{g:box(22,1.2,12),y:6.4,z:8.5,c:shade(c,1.15)}]));
   const HATS={none:()=>[],cap:c=>[{g:cyl(8.4,8.4,4,12),y:46,c},{g:box(8,1.4,11),x:9,y:44.6,c}],visor:c=>[{g:box(3,4,13),x:6.6,y:41,c}],
-    helmet:c=>[{g:sph(9.4,12,8),y:41.5,c},{g:cyl(11,11,1.4,14),y:41.4,c}],antenna:c=>[{g:cyl(.7,.7,14,5),y:54,c},{g:sph(2.4),y:62,c}],
+    helmet:c=>[{g:new T.SphereGeometry(9.4,16,10,0,TAU,0,Math.PI*.53),y:41.5,c},{g:box(8,1.1,12),x:6,y:41.2,c}],antenna:c=>[{g:cyl(.7,.7,14,5),y:54,c},{g:sph(2.4),y:62,c}],
     tophat:c=>[{g:cyl(6.2,6.2,11,12),y:52.5,c},{g:cyl(10.5,10.5,1.3,14),y:47.3,c}],stem:c=>[{g:cyl(1.4,2,6,6),y:50,c}],
     horns:c=>[{g:cone(2.6,10,6).rotateX(.5),y:49,z:6,c},{g:cone(2.6,10,6).rotateX(-.5),y:49,z:-6,c}],crown:c=>[{g:cyl(7.4,6.2,6,7),y:49,c}],
     tricorn:c=>[{g:cone(13,6,3),y:49,c},{g:cyl(11,11,1,3),y:46.4,c}],eyes:c=>[{g:cyl(.8,.8,8,5),x:3,y:50,z:4,c:0x7ae08a},{g:cyl(.8,.8,8,5),x:3,y:50,z:-4,c:0x7ae08a},{g:sph(2.8),x:3,y:55,z:4,c},{g:sph(2.8),x:3,y:55,z:-4,c}],
     sombrero:c=>[{g:cyl(15,15,1.2,14),y:46,c},{g:cone(6,8,10),y:50.5,c}],straw:c=>[{g:cyl(12.5,12.5,1,14),y:46,c},{g:cyl(6,6.6,5,12),y:49,c}],flower:c=>[{g:cyl(7,7,1,8),y:47,c:0xffffff},{g:sph(3),y:48.5,c}]};
-  const skinGeos={},skinGeo=id=>{if(!skinGeos[id]){const s=SKINS[id]||SKINS.rekrut,ey=((s.head>>16)+((s.head>>8)&255)+(s.head&255))<300?0xf4f6f7:0x14171c;const dk=shade(s.body,.72),lt=shade(s.body,1.18);skinGeos[id]=merge([{g:cyl(9,11,20,10),y:22,c:s.body},{g:cyl(10.6,11.2,3,10),y:14.5,c:0x191d22},{g:box(2.4,3,3.4),x:10.6,y:14.5,c:0xc9a03a},{g:cyl(9.3,10.2,5,10),y:29,c:lt},{g:cyl(5,6.4,3.4,8),y:33.4,c:dk},{g:sph(4.3,7,5),y:30.5,z:10.2,c:dk},{g:sph(4.3,7,5),y:30.5,z:-10.2,c:dk},{g:box(1.4,17,3),x:8.6,y:23,z:4.5,c:dk},{g:cyl(3.4,3.4,13,7).rotateX(Math.PI/2),x:-11,y:32.4,c:0x6b7a4a},{g:box(2.2,5,9),x:-14.2,y:21,c:0x2c333b},{g:sph(8,mobileGraphics?12:18,mobileGraphics?10:12).scale(.9,1.04,.86),y:40,c:s.head},{g:sph(1.6,6,4).scale(1.1,1,.8),x:7,y:39.8,c:shade(s.head,.92)},{g:sph(1.6,6,4).scale(.7,1,.7),y:40,z:6.8,c:s.head},{g:sph(1.6,6,4).scale(.7,1,.7),y:40,z:-6.8,c:s.head},{g:box(1.2,1.2,4.6),x:7.6,y:38.2,c:shade(s.head,.7)},{g:box(.8,.9,1.3),x:6.8,y:41.5,z:2.7,c:ey},{g:box(.8,.9,1.3),x:6.8,y:41.5,z:-2.7,c:ey},{g:box(6,12,13),x:-11,y:24,c:0x191d22},{g:box(11,3.6,3.6),x:5,y:25,z:8,c:s.body},{g:box(9,3.6,3.6),x:4,y:23,z:-8.5,c:s.body},{g:sph(2.6,6,5),x:10.5,y:25,z:8,c:s.head},{g:sph(2.6,6,5),x:8.5,y:23,z:-8.5,c:s.head}].concat((HATS[s.hat]||HATS.none)(s.hc||0xffffff)))}return skinGeos[id]};
-  const legGeo=merge([{g:mobileGraphics?box(5,9,5):cyl(2.9,2.5,9,10),y:1.5,c:0x2a3038},{g:box(5.6,2,5.6),y:-1,c:0x3a424c},{g:box(8,3.4,5.8),x:1.4,y:-4.4,c:0x15181c}]);
+  /* Anatomische Querschnitte: vorne +X, Schulterbreite entlang Z. Ein Mesh pro Skin. */
+  function anatomy(rings,segments=mobileGraphics?10:18){
+    const pos=[],ix=[];for(const [y,rx,rz,cx=0] of rings)for(let j=0;j<segments;j++){const a=j/segments*TAU;pos.push(cx+Math.cos(a)*rx,y,Math.sin(a)*rz)}
+    for(let i=0;i<rings.length-1;i++)for(let j=0;j<segments;j++){const a=i*segments+j,b=i*segments+(j+1)%segments,c=a+segments,d=b+segments;ix.push(a,c,b,b,c,d)}
+    // End caps have their own center; no open neck, wrist or sole silhouettes.
+    for(const end of [0,rings.length-1]){const r=rings[end],c=pos.length/3;pos.push(r[3]||0,r[0],0);for(let j=0;j<segments;j++){const a=end*segments+j,b=end*segments+(j+1)%segments;ix.push(...(end===0?[c,a,b]:[c,b,a]))}}
+    const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setIndex(ix);g.computeVertexNormals();return g;
+  }
+  function limb(a,b,r1,r2){const av=new T.Vector3(...a),bv=new T.Vector3(...b),d=bv.clone().sub(av),g=cyl(r2,r1,d.length(),mobileGraphics?8:12);g.applyQuaternion(new T.Quaternion().setFromUnitVectors(new T.Vector3(0,1,0),d.normalize()));g.translate(...av.add(bv).multiplyScalar(.5).toArray());return g}
+  const skinGeos={},skinGeo=id=>{if(!skinGeos[id]){const s=SKINS[id]||SKINS.rekrut,dk=shade(s.body,.64),lt=shade(s.body,1.12),skin=s.head,hair=0x30271f;
+    const parts=[
+      {g:anatomy([[16,4.3,6.2],[19,4.6,6.7],[24,5.7,8.1],[29,5.3,9],[31,3.8,7.4],[32,2.8,3.3]]),c:s.body},
+      {g:anatomy([[12.5,4.2,6.7],[16,4.6,6.9],[18,4.4,6.4]]),c:dk},
+      {g:cyl(2.8,3.2,4,12),y:33.3,c:skin},
+      {g:anatomy([[34.8,2.2,2.5,1],[35.7,3.2,3.6,.7],[37.5,4.2,4.4,.2],[40,4.9,4.8],[42.5,4.7,4.9,-.2],[44.3,3.8,4.1,-.4],[45.2,1.7,2.1,-.4],[45.5,.1,.1,-.4]]),c:skin},
+      {g:sph(1,10,8).scale(1.5,1.5,.9),x:4.8,y:39.5,c:shade(skin,.94)},
+      {g:box(.5,.35,2.3),x:4.15,y:37.1,c:shade(skin,.65)},
+      {g:anatomy([[42.8,4.65,4.9,-.3],[44.4,3.9,4.1,-.4],[45.5,1.8,2.2,-.4],[45.7,.1,.1,-.4]]),c:hair},
+      {g:box(4.8,11,11),x:-6.7,y:24,c:0x30392f},
+      {g:box(3,5,9),x:-9,y:22,c:0x242d26},
+      {g:box(.6,9,.5),x:5.4,y:25,c:dk},
+      {g:box(1,3,4),x:5.4,y:27,z:-4.1,c:lt}
+    ];
+    for(const side of [-1,1]){
+      const z=side*8.2,el=[2,24,z+side*.7],wrist=side>0?[9,24,8]:[13,23,2.4];
+      parts.push({g:sph(1,12,8).scale(3.2,3.9,3),y:29,z,c:s.body},
+        {g:limb([0,29,z],el,3,2.5),c:s.body},{g:sph(2.5,10,8),x:el[0],y:el[1],z:el[2],c:dk},
+        {g:limb(el,wrist,2.4,1.8),c:s.body},{g:sph(1,10,8).scale(2.4,1.7,1.7),x:wrist[0],y:wrist[1],z:wrist[2],c:0x30332f},
+        {g:sph(1,10,8).scale(.8,1.45,.65),y:39.4,z:side*4.8,c:skin},
+        {g:sph(1,10,6).scale(.35,.46,.9),x:4.35,y:40.7,z:side*2.1,c:shade(skin,.62)},
+        {g:sph(1,8,6).scale(.3,.23,.5),x:4.65,y:40.7,z:side*2.1,c:0x252b2b},
+        {g:box(.4,.32,1.65).rotateX(side*.12),x:4.45,y:41.5,z:side*2.15,c:hair},
+        {g:box(1.1,13,1.7).rotateZ(-.08),x:5.2,y:24,z:side*5.9,c:0x30392f},
+        {g:box(2.4,4,3.8),x:5.8,y:20,z:side*3.4,c:dk},
+        {g:box(2.6,.65,4),x:5.9,y:21.6,z:side*3.4,c:lt});
+    }
+    if(!mobileGraphics){for(const side of [-1,1])for(let i=0;i<3;i++)parts.push({g:box(.7,.35,3.4),x:6.1,y:24+i*1.2,z:side*3.4,c:dk});parts.push({g:box(1,3,2.5),x:5.9,y:28,z:3.5,c:0x677165})}
+    const hats=(HATS[s.hat]||HATS.none)(s.hc||0xffffff).map(p=>({...p,g:p.g.clone().scale(.68,.78,.68),x:(p.x||0)*.68,z:(p.z||0)*.68,y:40+((p.y||40)-40)*.78}));
+    skinGeos[id]=merge(parts.concat(hats));}return skinGeos[id]};
+  const legGeo=merge([{g:anatomy([[-4.5,2.1,2.1],[-1,2.4,2.5],[1,2.9,2.8],[4,3.2,3],[6,3.1,3]]),c:0x303a40},{g:box(1.5,4,2.6),x:-.3,y:2,z:2.5,c:0x242d31},{g:box(1.4,3.2,3.4),x:2.6,y:-.5,c:0x444b4b},{g:box(7,3.2,5),x:1.1,y:-4.5,c:0x242727},{g:box(7.2,.7,5.2),x:1.1,y:-6,c:0x111719}]);
   const farGeo=merge([{g:cyl(9,11,26,7),y:19,c:0xffffff},{g:sph(8,7,5),y:40,c:0xffffff}]);farGeo.deleteAttribute('color');
   const CARC=[0xc8372d,0x2f6fb5,0xe9ecef,0x23272d,0xd9a514,0x3d8a4a,0x8b949c],CONC=[0xb5462f,0x2f6fb5,0x3d8a4a,0xd9a514,0x8b949c,0xe07a2c];
   const crossGeo=merge([{g:box(14,2,3).rotateY(.78),c:0x2a2f35},{g:box(14,2,3).rotateY(-.78),c:0x2a2f35}]);
@@ -3579,7 +3617,7 @@ function makeView(cv){
     const heal=new T.Mesh(G.heal,MM.heal);heal.position.y=1.4;g.add(heal);
     const bar=new T.Group();bar.position.y=64;g.add(bar);const bg=new T.Mesh(G.bar,MM.barBg);bg.scale.set(36,7.5,1);bg.position.set(-18,1,-.2);bar.add(bg);
     const hp=new T.Mesh(G.bar,MM.hp);hp.scale.set(34,3.6,1);hp.position.set(-17,0,0);bar.add(hp);const shb=new T.Mesh(G.bar,MM.shb);shb.scale.set(34,2,1);shb.position.set(-17,3.2,0);bar.add(shb);
-    const vest=new T.Mesh(G.vest,tierM[1]);vest.position.y=22.5;model.add(vest);const belt=new T.Mesh(G.belt,beltM);belt.position.y=14;model.add(belt);const helm=new T.Mesh(G.helm,tierM[1]);helm.position.y=40;model.add(helm);
+    const vest=new T.Mesh(G.vest,tierM[1]);vest.position.y=23.5;vest.scale.set(.6,.85,.75);model.add(vest);const belt=new T.Mesh(G.belt,beltM);belt.position.y=15;belt.scale.set(.48,.7,.66);model.add(belt);const helm=new T.Mesh(G.helm,tierM[1]);helm.position.y=41;helm.scale.set(.59,.63,.58);model.add(helm);
     const ring=new T.Mesh(G.ring,MM.me);ring.position.y=1.2;g.add(ring);const mark=new T.Mesh(G.mark,MM.me);g.add(mark);
     const lc=document.createElement('canvas');lc.width=256;lc.height=64;const tex=new T.CanvasTexture(lc),label=new T.Sprite(new T.SpriteMaterial({map:tex,transparent:true,depthWrite:false,toneMapped:false,fog:false}));label.scale.set(68,17,1);label.position.y=88;g.add(label);
     g.traverse(o=>{o.renderOrder=2;if(o.isMesh&&o.material&&!o.material.transparent){o.castShadow=false;o.receiveShadow=!mobileGraphics}});sil.renderOrder=1;g.visible=false;scene.add(g);return{g,model,body,sil,ol,vest,helm,mat,legs,hand,gun,flash,glider,sh,heal,bar,hp,shb,ring,mark,lc,tex,label,it:null,dead:-1,gid:'',ph:rr(0,9)}});
