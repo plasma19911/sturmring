@@ -2805,7 +2805,7 @@ function stormStep(m){const s=m.storm;s.t+=DT;const p=m.ph[s.ph];if(s.t<p.wait)r
   const k=Math.min(1,(s.t-p.wait)/p.shrink);s.shr=true;s.x=s.cx+(s.nx-s.cx)*k;s.y=s.cy+(s.ny-s.cy)*k;s.r=s.cr+(s.nr-s.cr)*k;
   if(k>=1){if(s.ph<m.ph.length-1){s.ph++;nextZone(m)}else s.r=0}}
 
-function hurt(m,b,d,from,hs,gk){if(!b.alive)return;if(from&&from!==b&&m.trio&&from.team===b.team)return;if(b.down&&from&&m.t-b.downT<prot(b))return;
+function hurt(m,b,d,from,hs,gk){if(!b.alive||b.godP)return;if(from&&from!==b&&m.trio&&from.team===b.team)return;if(b.down&&from&&m.t-b.downT<prot(b))return;
   if(from){(m.blood||(m.blood=[])).push({x:b.x,y:b.y,t:m.t});if(m.blood.length>80)m.blood.shift();d*=TUNE.dmg*b.tough*(b.act==='revive'&&b.perks.has('p_guard')?.75:1);if(m.trio&&from&&from.team!==b.team){if(b.markT>m.t&&from.team===b.markTeam)d*=1.08;if(from.tab==='tf_mark'){b.markT=m.t+4;b.markTeam=from.team}if(b.tab==='tf_rueck'&&mates(m,b).some(o=>o.fire===from))d*=.9}
   if(m.trio&&!b.down){const ms=mates(m,b);if(b.perks.has('p_duo')&&ms.some(o=>o.alive&&!o.down&&d2(o,b)<200))d*=.92;if(ms.some(o=>o.alive&&!o.down&&o.perks.has('p_squad')&&d2(o,b)<300))d*=.94}
     if(hs){d*=b.helm?HELM[b.helm].m:2;if(b.helm&&--b.helmD<=0){b.helm=0;ev(m,'break',b.x,b.y,500)}}
@@ -2817,7 +2817,7 @@ function hurt(m,b,d,from,hs,gk){if(!b.alive)return;if(from&&from!==b&&m.trio&&fr
     else if(m.trio&&!b.down&&teamUp(m,b)){/* am Boden: kriecht, blutet aus; Teamkameraden können ihn in 10 s wiederbeleben, nach 60 s ist er tot */
       b.down=true;b.downT=m.t;b.downBy=from;b.hp=Math.round(b.max*.5)+(b.perks.has('p_tough')?20:0);b.sh=0;b.act='';b.fire=null;b.rvBy=null;m.feed.push({sys:`${b.name} ist am Boden`,t:m.t,x:b.x,y:b.y,me:b.isP||mates(m,b).some(o=>o.isP)});if(b.isP)ev(m,'hurt',b.x,b.y,1e9)}
     else die(m,b,from||b.downBy,gk)}}
-function die(m,b,from,gk){const self=from===b;if(self)from=null;
+function die(m,b,from,gk){if(b.godP){b.hp=b.maxHp||100;return}const self=from===b;if(self)from=null;
   b.alive=false;b.hp=0;b.down=false;b.place=m.trio?0:m.alive;m.alive--;b.deathT=m.t;b.killer=from;b.killW=from?from.wp[from.cur].id:null;b.selfK=self;
   if(b===m.bounty){m.bounty=null;if(from){const bg=from.perks.has('p_gold')?20:10;from.gold+=bg;m.feed.push({sys:`${from.name} kassiert ${bg} Gold Kopfgeld`,t:m.t,x:b.x,y:b.y,me:true})}}
   m.graves.push({x:b.x,y:b.y,p:b.isP||!!(from&&from.isP)});if(b.isP)ev(m,'dead',b.x,b.y,1e9);else if(from&&from.isP)ev(m,'kill',b.x,b.y,1e9);
@@ -4142,11 +4142,11 @@ function frame(ts){requestAnimationFrame(frame);const dt=Math.min(.05,(ts-last)/
     hudN++;if(hudN%8===0)hud(cur);if(hudN%24===4)drawMini(cur,spec);sounds(cur,ts);
     if(cur.over){if(!endT&&P.place===1&&AU.on&&AU.ctx)for(let i=0;i<3;i++){auTone(.4,110+i*30,50,.3,0,i*.22);auNoise(.2,.12,1600,0,0,i*.22)}if(!endT)endT=ts;else if(ts-endT>2600)finish()}}
   else if(mode==='lobby'&&!still&&!document.hidden&&!noGL){
-    if(!demo||demo.over||demo.t>90)newDemo();
-    if(!demo)return;demo.hf=!demo.hf;const zs=tab==='look';if(!zs||demo.hf)step(demo);
+    if(!demo||demo.over||(demo.t>90&&tab!=='look'))newDemo();
+    if(!demo)return;const zs=tab==='look';demo.bots[0].godP=true;if(zs&&demo.t<25){for(let i=0;i<400&&demo.t<25;i++)step(demo)}demo.zk=((demo.zk||0)+1)%4;if(!zs||demo.zk===0)step(demo);
     if(!demoSpec||!demoSpec.alive)demoSpec=(demoSpec&&demoSpec.killer&&demoSpec.killer.alive)?demoSpec.killer:demo.bots.find(b=>b.alive);
     const zl=tab==='look';document.body.classList.toggle('skinZoom',zl);if(zl){const me=demo.bots[0];me.skin=S.cfg.skin;if(me.alive){if(demoSpec!==me){dcam.x=me.x;dcam.y=me.y}demoSpec=me;me.hp=Math.max(me.hp,60)}}
-    if(demoSpec&&demoView){dcam.x+=(demoSpec.x-dcam.x)*.08;dcam.y+=(demoSpec.y-dcam.y)*.08;demoView.render(demo,dcam.x,dcam.y,zl?ZCAM:DCAM,ts,zl?dt*.5:dt,zl?(demo.hf?.5:1):1,demoSpec)}}}
+    if(demoSpec&&demoView){dcam.x+=(demoSpec.x-dcam.x)*.08;dcam.y+=(demoSpec.y-dcam.y)*.08;demoView.render(demo,dcam.x,dcam.y,zl?ZCAM:DCAM,ts,zl?dt*.25:dt,zl?(demo.zk+1)/4:1,demoSpec)}}}
 
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 idbGet().then(j=>{if(!j)return store();try{const o=JSON.parse(j);if(xpOf(o)>xpOf(S)){localStorage.setItem(KEY,j);S=loadSave();renderLobby()}else store()}catch(e){}});
