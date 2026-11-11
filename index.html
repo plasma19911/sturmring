@@ -558,12 +558,10 @@ function mkBot(m,i,name,isP,cfg,pts,tier){const W=m.W,C=W/2;
   /* Flächengleich verteilen; bei Hindernissen den Kandidaten mit größtem Abstand behalten. */
   let p=null,bestGap=-1;
   for(let tr=0;tr<120;tr++){
-    const inner=cfg.land==='edge'?W*.36:0,outer=cfg.land==='center'?W*.16:W*.47;
-    const radius=Math.sqrt(inner*inner+rnd()*(outer*outer-inner*inner));
-    const candidate=spotIn(m,C,C,radius,radius);
+    /* gleichmäßig über die ganze Karte, Ecken und Mitte gleich wahrscheinlich */
+    const candidate={x:rr(80,W-80),y:rr(80,W-80)};
     if(!freeSpot(m,candidate.x,candidate.y))continue;
     let gap=m.sgD*2;gNear(m.sg,candidate.x,candidate.y,m.sgD*2,q=>{gap=Math.min(gap,d2(candidate,q))});
-    if(m.pv)gap=Math.min(gap,d2(candidate,m.pv)*.75);
     if(gap>bestGap){bestGap=gap;p=candidate}
     if(gap>=m.sgD)break;
   }
@@ -657,7 +655,7 @@ function newMatch(cfg,o){o=o||{};const W=o.W||32000,N=o.n||1000,id=BIOMES[o.biom
   if(m.fxp&&B.snow)m.fxp={...m.fxp,vx:40};
   m.hs=[1500,950,620,410].map((l,i)=>{const a=rr(0,TAU),k=TAU/(l*(B.wl||1));return{ax:Math.cos(a)*k,ay:Math.sin(a)*k,p:rr(0,TAU),a:[.45,.3,.15,.1][i]}});
   if(B.hm==='isl')genIsl(m);
-  const ts=clamp(W/20000,.3,1.8);m.ph=PHF.map((f,i)=>({r:f*W,wait:PHW[i]*ts,shrink:PHS[i]*ts,dps:PHD[i]}));
+  const ts=clamp(W/20000,.3,1.8);m.ph=PHF.map((f,i)=>({r:f*W,wait:i===0?30+DROP:PHW[i]*ts,shrink:PHS[i]*ts,dps:PHD[i]}));
   m.storm={x:W/2,y:W/2,r:W*.75,ph:0,t:0,shr:false};
   gen(m);m.bg=mkGrid(W,450);m.sgD=W/Math.sqrt(N)*(B.hm==='isl'?.42:.55);m.sg=mkGrid(W,m.sgD);
   const ord=[];for(let i=0;i<1000;i++)ord.push(i);ord.sort(()=>rnd()-.5);
