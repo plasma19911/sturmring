@@ -13,7 +13,7 @@ const hook = `window.__graphicsTest={biomes:Object.keys(BIOMES),run(gfx,biome,to
   m.fx.push({x:b.x+35,y:b.y,t:.35});
   for(let i=0;i<3;i++)view.render(m,b.x,b.y,{h:180,b:380},1000+i*16,1/60,1,b,0);
   const gl=view.renderer.getContext();const pixels=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
-  let min=255,max=0;for(let i=0;i<pixels.length;i+=4){const v=pixels[i]+pixels[i+1]+pixels[i+2];min=Math.min(min,v);max=Math.max(max,v)}
+  let min=765,max=0;for(let i=0;i<pixels.length;i+=4){const v=pixels[i]+pixels[i+1]+pixels[i+2];min=Math.min(min,v);max=Math.max(max,v)}
   const errors=[];for(let i=0;i<8;i++){const e=gl.getError();if(!e)break;errors.push(e)}
   return{errors,min,max,calls:view.renderer.info.render.calls,triangles:view.renderer.info.render.triangles,postprocessing:!!view.composer};
 }};`;
