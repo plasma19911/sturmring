@@ -3888,7 +3888,7 @@ const $=id=>document.getElementById(id);
 S=loadSave();setTimeout(()=>{try{mergeProg();renderLobby()}catch(e){}},0);let mode='lobby',cur=null,P=null,spec=null,speed=1,acc=0,last=0,endT=0,deadShown=false,hudN=0,lastK=0,toastT=0,vigC='',demo=null,demoSpec=null,miniBase=null;
 let mainView=null,demoView=null,noGL=false,camI=0,heardT=0,stepT=0,stepO=0,camYaw=0;
 const panOf=(x,y)=>clamp(((x-cam.x)*Math.cos(camYaw)-(y-cam.y)*Math.sin(camYaw))/600,-1,1);
-const CAMS=[{h:180,b:380,n:'Vorschau'},{h:330,b:230,n:'mittel'},{h:520,b:300,n:'weit'},{h:210,b:190,n:'nah'}],DCAM={h:180,b:380},ZCAM={h:44,b:95};
+const CAMS=[{h:180,b:380,n:'Vorschau'},{h:330,b:230,n:'mittel'},{h:520,b:300,n:'weit'},{h:210,b:190,n:'nah'}],DCAM={h:180,b:380},ZCAM={h:75,b:105};
 const cam={x:0,y:0},dcam={x:0,y:0};
 function expSave(){const code=btoa(unescape(encodeURIComponent(JSON.stringify(S))));(navigator.clipboard?navigator.clipboard.writeText(code):Promise.reject()).then(()=>alert('Code kopiert. Irgendwo speichern, z. B. in einer Notiz.'),()=>prompt('Diesen Code kopieren und speichern:',code));}
 function impSave(){const code=prompt('Spielstand-Code einfügen:');if(!code)return;try{const o=JSON.parse(decodeURIComponent(escape(atob(code.trim()))));if(!o||!o.cfg)throw 0;localStorage.setItem(KEY,JSON.stringify(o));S=loadSave();store();renderLobby();alert('Spielstand geladen.')}catch(e){alert('Code ungültig.')}}
