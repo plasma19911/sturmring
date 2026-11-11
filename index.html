@@ -4087,6 +4087,8 @@ function frame(ts){requestAnimationFrame(frame);const dt=Math.min(.05,(ts-last)/
     acc+=dt*speed;let n=0;while(acc>=DT&&n<12&&!cur.over&&performance.now()-t0<22){step(cur);acc-=DT;n++;}if(acc>DT*3)acc=0;const al=clamp(acc/DT,0,1);
     if(!P.alive&&!deadShown){deadShown=true;spec=P.killer&&P.killer.alive?P.killer:null;if(cur.trio){const mt=teamOf(cur,P).find(o=>o.alive);if(mt)spec=mt}
       $('deadH').textContent=cur.trio&&!P.place?'Eliminiert – dein Team kämpft weiter':'Platz '+P.place+' von '+(cur.trio?cur.teams+' Teams':cur.N);$('deadP').textContent=P.killer?`Eliminiert von ${P.killer.name} (Lvl ${P.killer.lvl}) mit ${WEAPONS[P.killW].n}`:P.selfK?'Von der eigenen Rakete erwischt':'Im Sturm gestorben';$('dead').hidden=false}
+    /* Team-Modus: liegt man am Boden oder ist raus, schaut die Kamera einem stehenden Kameraden zu; steht man wieder, zurück zu sich */
+    if(cur.trio){const up=teamOf(cur,P).filter(o=>o.alive&&!o.down&&!o.isP);if(P.alive&&!P.down)spec=P;else if(!spec||spec===P||!spec.alive||spec.down||spec.team!==P.team){if(up.length)spec=up[0];else if(P.alive)spec=P}}
     if(!spec||!spec.alive){if(spec&&spec.killer&&spec.killer.alive)spec=spec.killer;else{let bd=1e9,nb=null;for(const b of cur.bots)if(b.alive){const d=Math.hypot(b.x-cam.x,b.y-cam.y);if(d<bd){bd=d;nb=b}}spec=nb||cur.winner||P}}
     /* Kamera dreht auf Wunsch langsam hinter den Bot, sonst bleibt Norden oben */
     {let tg=S.cfg.camRot&&spec?Math.atan2(-Math.cos(spec.a),-Math.sin(spec.a)):0,dq=tg-camYaw;dq=Math.atan2(Math.sin(dq),Math.cos(dq));camYaw+=dq*(1-Math.exp(-dt*(S.cfg.camRot?1.1:3)))}
