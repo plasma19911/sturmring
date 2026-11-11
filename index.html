@@ -3524,7 +3524,7 @@ function makeView(cv){
   {g:bx(1.6,2.6,1.6),x:7.4,y:40.4,c:shade(s.head,.88)},{g:bx(1,.7,3.4),x:6.9,y:37.8,c:shade(s.head,.62)},
   {g:bx(.8,1.1,1.6),x:6.7,y:41.9,z:2.5,c:ey},{g:bx(.8,1.1,1.6),x:6.7,y:41.9,z:-2.5,c:ey},{g:bx(1.1,.7,2.6),x:7,y:43.4,z:2.5,c:shade(s.head,.55)},{g:bx(1.1,.7,2.6),x:7,y:43.4,z:-2.5,c:shade(s.head,.55)},
   {g:sph(1.7,6,5).scale(.6,1,.6),y:41,z:6.6,c:shade(s.head,.9)},{g:sph(1.7,6,5).scale(.6,1,.6),y:41,z:-6.6,c:shade(s.head,.9)}].concat((HATS[s.hat]||HATS.none)(s.hc||0xffffff)))}return skinGeos[id]};
-  const legGeo=merge([{g:cyl(3.4,2.9,6.4,R),y:3.8,c:0x2a3038},{g:bx(2.2,4,3.6),y:3.6,z:3.2,c:0x23282e},{g:sph(2.8,SR,5),x:.3,y:.4,c:0x2a3038},{g:cyl(2.8,2.3,4.6,R),y:-2,c:0x2a3038},{g:cyl(2.9,3,1.6,R),y:-3.6,c:0x15181c},{g:bx(7.4,2.6,5.2),x:1.2,y:-4.8,c:0x15181c},{g:sph(2.6,SR,5).scale(1,.7,1),x:4.2,y:-4.6,c:0x15181c},{g:bx(8,.9,5.6),x:1.3,y:-5.9,c:0x0b0d10},{g:bx(3,.5,2.2),x:2.6,y:-3.4,c:0x3a424c}]);
+  const legGeo=merge([{g:cyl(3.4,2.9,6.4,R),y:3.8,c:0x2a3038},{g:bx(2.2,4,3.6),y:3.6,z:3.2,c:0x23282e},{g:sph(2.8,SR,5),x:.3,y:.4,c:0x2a3038}]),shinGeo=merge([{g:cyl(2.8,2.3,4.6,R),y:-2.4,c:0x2a3038},{g:cyl(2.9,3,1.6,R),y:-4,c:0x15181c},{g:bx(7.4,2.6,5.2),x:1.2,y:-5.2,c:0x15181c},{g:sph(2.6,SR,5).scale(1,.7,1),x:4.2,y:-5,c:0x15181c},{g:bx(8,.9,5.6),x:1.3,y:-6.3,c:0x0b0d10},{g:bx(3,.5,2.2),x:2.6,y:-3.8,c:0x3a424c}]);
   const PROPG={mag:merge([{g:bx(1.8,5,2.6),c:0x23272d},{g:bx(2,1,2.8),y:2.6,c:0xc9a24a}]),
     hand:merge([{g:sph(2.5,8,6).scale(1,1.2,.9),c:0x26282b},{g:cyl(2.2,2.4,5,8).rotateZ(1.2),x:-2.4,y:-1.6,c:0x2a3038}]),band:merge([{g:cyl(1.9,1.9,2.6,R).rotateX(Math.PI/2),c:0xf2f2ee},{g:bx(.3,2.4,5),x:1.8,y:-1.4,c:0xe8e6e0},{g:bx(1,1,.4),x:1.9,y:-.6,z:1.4,c:0xd83a3a}]),
     pot:merge([{g:cyl(1.9,2.1,4.4,R),c:0x3a9bff},{g:cyl(.9,1.2,1.8,R),y:3,c:0x9fd4ff},{g:cyl(1,1,1,R),y:4.2,c:0x7a5230},{g:cyl(2,2,.6,R),y:.4,c:0xdff2ff}])};
@@ -3618,7 +3618,7 @@ function makeView(cv){
       if(vLoc.y<35.0){float n=sin(vLoc.x*.42+vLoc.y*.23)*sin(vLoc.z*.47-vLoc.y*.19)+sin(vLoc.x*.17+vLoc.z*.21+vLoc.y*.09)*.7;
         diffuseColor.rgb*=n>.45?.66:n>.05?.86:n<-.6?1.1:.97;}`)};
     const body=new T.Mesh(G.leg,mat),sil=new T.Mesh(G.leg,silFoe),ol=new T.Mesh(G.leg,olM);model.add(body,sil,ol);
-    const legs=[4.6,-4.6].map(z=>{const lg=new T.Group();lg.position.set(0,12,z);lg.scale.y=1.5;const l=new T.Mesh(legGeo,VM);l.position.y=-6;lg.add(l);const kp=new T.Mesh(G.knee,gearM);kp.position.set(2.6,-4,0);lg.add(kp);const bt=new T.Mesh(G.boot,gearM);bt.position.set(1.2,-11.4,0);lg.add(bt);const lo=new T.Mesh(legGeo,olM);lo.position.y=-6;lg.add(lo);model.add(lg);return lg});
+    const legs=[4.6,-4.6].map(z=>{const lg=new T.Group();lg.position.set(0,12,z);lg.scale.y=1.5;const l=new T.Mesh(legGeo,VM);l.position.y=-6;lg.add(l);const kn=new T.Group();kn.position.y=-5.6;lg.add(kn);lg.userData.kn=kn;kn.add(new T.Mesh(shinGeo,VM));const kp=new T.Mesh(G.knee,gearM);kp.position.set(2.6,1.6,0);kn.add(kp);const bt=new T.Mesh(G.boot,gearM);bt.position.set(1.2,-5.8,0);kn.add(bt);const lo=new T.Mesh(legGeo,olM);lo.position.y=-6;lg.add(lo);kn.add(new T.Mesh(shinGeo,olM));model.add(lg);return lg});
     const hand=new T.Group();hand.position.set(9,24,8);model.add(hand);const glove=new T.Mesh(G.glove,gearM);hand.add(glove);const gun=new T.Mesh(guns.pistol.geo,gunMaterial);hand.add(gun);const flash=new T.Mesh(G.flash,MM.flash);flash.visible=false;hand.add(flash);
     const glider=new T.Mesh(G.glider,MM.glider);glider.position.y=74;g.add(glider);const sh=new T.Mesh(G.disc,MM.shadow);sh.position.y=1-LEGUP;g.add(sh);
     const heal=new T.Mesh(G.heal,MM.heal);heal.position.y=1.4-LEGUP;g.add(heal);
@@ -3891,7 +3891,7 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
       v.k1=0;v.k2+=((b.pose===2?1:0)-v.k2)*blend;const turn=Math.atan2(Math.sin(b.a-v.face),Math.cos(b.a-v.face));v.face=b.fire?b.a:v.face+turn*blend;
       v.g.position.set(X,y,Y);v.model.scale.y=1.04*(1-.32*v.k1);v.model.position.y=(7-LEGUP)*v.k2;v.model.rotation.set(clamp(turn,-.12,.12)*clamp(v.animSpeed/110,0,1),-v.face,(walk?-.07*clamp(v.animSpeed/110,0,1.5):0)-1.42*v.k2+(b.jump>0?.25:0));v.bar.quaternion.copy(q);
       v.bar.position.y=64-14*v.k1-34*v.k2;v.label.position.y=88-14*v.k1-34*v.k2;
-      const sw=walk?Math.sin(ph)*clamp(v.animSpeed/125,0,.78)*(1-v.k1*.45)*(b.jump>0?.25:1):0;v.legs[0].rotation.z=sw;v.legs[1].rotation.z=-sw;
+      const sw=walk?Math.sin(ph)*clamp(v.animSpeed/125,0,.78)*(1-v.k1*.45)*(b.jump>0?.25:1):0;v.legs[0].rotation.z=sw;v.legs[1].rotation.z=-sw;{const am=walk?clamp(v.animSpeed/125,0,.78)*(b.jump>0?.25:1):0,k0=Math.max(0,Math.sin(ph-1.1))*am*1.35+v.k1*.9,k1=Math.max(0,Math.sin(ph+Math.PI-1.1))*am*1.35+v.k1*.9;v.legs[0].userData.kn.rotation.z=-k0;v.legs[1].userData.kn.rotation.z=-k1;if(v.k1>.05){v.legs[0].rotation.z+=v.k1*.55;v.legs[1].rotation.z+=v.k1*.55}}
       if(b.run&&drop<=0&&(dustN+v.ph*10|0)%7===0&&dust.length<48)dust.push({x:X-Math.cos(b.a)*8+rr(-3,3),y:Y-Math.sin(b.a)*8+rr(-3,3),h:gh+2,t:0});
       const id=b.wp[b.cur].id,ws=b.isP?S.cfg.wskin:'std';if(v.gid!==id+ws){const gq=gunGeoOf(id,ws);v.gun.geometry=gq.geo;v.gid=id+ws;v.flash.position.set(gq.tip+4,.5,0)}
       v.bn[0].visible=b.gren>0;v.bn[1].visible=b.gren>1;v.bn[2].visible=b.smk>0;v.bn[3].visible=b.smk>1;v.bn[4].visible=b.fls>0;v.bn[5].visible=b.fls>1;v.vest.visible=b.vest>0;if(b.vest)v.vest.material=tierM[b.vest];v.helm.visible=b.helm>0;if(b.helm)v.helm.material=tierM[b.helm];
@@ -3918,7 +3918,7 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
         v.prop.visible=pv}
       if(b.down){v.dn=Math.min(1,(v.dn||0)+dt*3);v.model.rotation.z=v.dn*1.52;v.model.rotation.x=0;v.model.position.y=v.dn*(4-LEGUP);v.hand.rotation.z=.4}else v.dn=0;
       if(b.act==='revive'){const k=Math.max(0,Math.sin(ts/90));v.model.scale.y=1.04;v.model.position.y=-14+k*.6;v.model.rotation.z=-.42-k*.1;v.model.rotation.x=0;
-        v.legs[0].rotation.z=-1.25;v.legs[1].rotation.z=-1.25;v.hand.position.set(15,20-k*3.2,0);v.hand.rotation.z=-1.45;v.gun.visible=false}
+        v.legs[0].rotation.z=-1.25;v.legs[1].rotation.z=-1.25;v.legs[0].userData.kn.rotation.z=v.legs[1].userData.kn.rotation.z=1.6;v.hand.position.set(15,20-k*3.2,0);v.hand.rotation.z=-1.45;v.gun.visible=false}
       {const wid=b.wp[b.cur].id,FL={shotgun:[2.1,1.9,.11],autosg:[1.7,1.6,.08],sniper:[2.6,1.1,.09],dmr:[1.9,1,.07],lmg:[1.5,1.2,.06],revolver:[1.7,1.4,.08],smg:[.85,.75,.05],pistol:[.8,.8,.06]}[wid]||[1.1,1,.07];
         v.flash.visible=since<FL[2];if(v.flash.visible){const r=(.75+rnd()*.5)*(b.isP?2.6:1.7);v.flash.scale.set(FL[0]*r,FL[1]*r,FL[1]*r);v.flash.rotation.x=rnd()*TAU}}
       v.hp.scale.x=Math.max(.01,34*b.hp/b.max);v.shb.visible=b.sh>0;v.shb.scale.x=Math.max(.01,34*Math.min(100,b.sh)/100);
