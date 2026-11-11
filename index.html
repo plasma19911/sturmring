@@ -2758,9 +2758,11 @@ function newMatch(cfg,o){o=o||{};const tsz=(cfg&&cfg.mode==='trio')||o.trio?3:(c
   /* Trio: je drei Bots bilden ein Team, landen zusammen und spielen zusammen */
   if(m.tsz>1){m.trio=true;const Z=m.tsz;for(let i=0;i<m.bots.length;i++){const b=m.bots[i];b.team=(i/Z)|0;if(i%Z){const L=m.bots[i-i%Z];for(let k=0;k<14;k++){const a=rr(0,TAU)+(i%Z)*2.1,d=rr(120,210),x=L.x+Math.cos(a)*d,y=L.y+Math.sin(a)*d;if(freeSpot(m,x,y)){b.x=b.px=x;b.y=b.py=y;break}}}}
     for(const b of m.bots)if(!b.isP&&b.tier>=2&&rnd()<.4)b.perks.add(pick(Z===2?['p_duo','p_last','p_focus','p_rally']:['p_triad','p_squad','p_focus','p_rally','p_guard']));
-    for(const b of m.bots)b.tab=b.isP?(cfg&&cfg.teamAb)||null:(b.tier>=2&&rnd()<.5?pick(['tf_sani','tf_zaeh','tf_vers','tf_kampf','tf_funk']):null);
+    for(const b of m.bots)b.tab=b.isP?(cfg&&cfg.teamAb)||null:(b.tier>=2&&rnd()<.5?pick(['tf_sani','tf_zaeh','tf_vers','tf_kampf','tf_funk','tf_spaeh','tf_mun','tf_vorhut','tf_schild','tf_spreng','tf_arzt','tf_rueck','tf_samm','tf_mark','tf_eisern']):null);
+    for(const b of m.bots){b.ttabs=new Set(teamOf(m,b).map(o=>o.tab).filter(Boolean));if(b.tab==='tf_spaeh')b.fov*=1.25;if(b.tab==='tf_spreng')b.gren=Math.max(b.gren,1)}
     m.teamsAlive=Math.ceil(m.bots.length/m.tsz);m.teams=m.teamsAlive}
   nextZone(m);return m}
+const prot=b=>b&&b.tab==='tf_eisern'?15:10;
 const teamOf=(m,b)=>m.bots.slice(b.team*m.tsz,b.team*m.tsz+m.tsz);
 const mates=(m,b)=>m.trio?teamOf(m,b).filter(o=>o!==b):[];
 const teamUp=(m,b)=>mates(m,b).some(o=>o.alive&&!o.down);
@@ -2773,8 +2775,9 @@ function stormStep(m){const s=m.storm;s.t+=DT;const p=m.ph[s.ph];if(s.t<p.wait)r
   const k=Math.min(1,(s.t-p.wait)/p.shrink);s.shr=true;s.x=s.cx+(s.nx-s.cx)*k;s.y=s.cy+(s.ny-s.cy)*k;s.r=s.cr+(s.nr-s.cr)*k;
   if(k>=1){if(s.ph<m.ph.length-1){s.ph++;nextZone(m)}else s.r=0}}
 
-function hurt(m,b,d,from,hs,gk){if(!b.alive)return;if(from&&from!==b&&m.trio&&from.team===b.team)return;if(b.down&&from&&m.t-b.downT<10)return;
-  if(from){(m.blood||(m.blood=[])).push({x:b.x,y:b.y,t:m.t});if(m.blood.length>80)m.blood.shift();d*=TUNE.dmg*b.tough*(b.act==='revive'&&b.perks.has('p_guard')?.75:1);if(m.trio&&!b.down){const ms=mates(m,b);if(b.perks.has('p_duo')&&ms.some(o=>o.alive&&!o.down&&d2(o,b)<200))d*=.92;if(ms.some(o=>o.alive&&!o.down&&o.perks.has('p_squad')&&d2(o,b)<300))d*=.94}
+function hurt(m,b,d,from,hs,gk){if(!b.alive)return;if(from&&from!==b&&m.trio&&from.team===b.team)return;if(b.down&&from&&m.t-b.downT<prot(b))return;
+  if(from){(m.blood||(m.blood=[])).push({x:b.x,y:b.y,t:m.t});if(m.blood.length>80)m.blood.shift();d*=TUNE.dmg*b.tough*(b.act==='revive'&&b.perks.has('p_guard')?.75:1);if(m.trio&&from&&from.team!==b.team){if(b.markT>m.t&&from.team===b.markTeam)d*=1.08;if(from.tab==='tf_mark'){b.markT=m.t+4;b.markTeam=from.team}if(b.tab==='tf_rueck'&&mates(m,b).some(o=>o.fire===from))d*=.9}
+  if(m.trio&&!b.down){const ms=mates(m,b);if(b.perks.has('p_duo')&&ms.some(o=>o.alive&&!o.down&&d2(o,b)<200))d*=.92;if(ms.some(o=>o.alive&&!o.down&&o.perks.has('p_squad')&&d2(o,b)<300))d*=.94}
     if(hs){d*=b.helm?HELM[b.helm].m:2;if(b.helm&&--b.helmD<=0){b.helm=0;ev(m,'break',b.x,b.y,500)}}
     else if(b.vest){const ab=d*VEST[b.vest].r;d-=ab;if((b.vestD-=ab)<=0){b.vest=0;ev(m,'break',b.x,b.y,500)}}
     if((from.isP||b.isP)&&m.dn.length<14)m.dn.push({x:b.x,y:b.y,v:Math.max(1,Math.round(d)),hs:!!hs,me:b.isP});
@@ -2844,7 +2847,7 @@ const advOf=(b,foe,d)=>(dpsAt(b,d)+1)*(b.hp+b.sh)/((dpsAt(foe,d)+1)*(foe.hp+foe.
 function bestDist(b,foe,fd,bias){let bd=fd,bs=-9;for(const d of[70,130,200,280,380,500]){const a=dpsAt(b,d),e=dpsAt(foe,d),sc=(a-e)/(a+e+12)+(1-Math.abs(d-fd)/700)*.22+bias*d/1500;if(sc>bs){bs=sc;bd=d}}return bd}
 function tryFire(m,b,foe,fd){const cw=b.wp[b.cur],w=b.W[cw.id];if(b.rel>0||b.cd>0||fd>w.range*(b.pose===1?1.1:1))return;if(fd>=110&&(b.ads||0)<.7)return;
   if(b.mags[b.cur]<=0){let bi=-1,bs=0;b.wp.forEach((q,i)=>{if(i!==b.cur&&b.mags[i]>0){const v=expDps(b.W[q.id],fd)*rarM(q.id,q.rar);if(v>bs){bs=v;bi=i}}});
-    if(bi>=0){b.cur=bi;b.cd=.35;b.sw=6}else b.rel=w.reload*b.sk.rel;return}
+    if(bi>=0){b.cur=bi;b.cd=.35;b.sw=6}else b.rel=w.reload*b.sk.rel*(m.trio&&mates(m,b).some(o=>o.alive&&!o.down&&o.tab==='tf_mun'&&d2(o,b)<260)?.8:1);return}
   if(w.splash&&fd<100)return;
   b.mags[b.cur]--;b.cd=(b.cd>-.12?b.cd:0)+1/(w.rate*(b.perks.has('p_cover')&&m.trio&&mates(m,b).some(o=>o.down&&o.rvBy)?1.2:1));
   let sp=w.spread*TUNE.spread*b.sk.aim*(b.run?2.2:b.mv?1.5:1)*(foe.mv?(foe.run?1.9:1.25):1)*(b.pose===2?.6:b.pose===1?.7:1)*(b.jump>0?2:1);
@@ -2922,7 +2925,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
   const sight=reach*b.sk.sight*(m.trio&&(b.tab==='tf_funk'||mates(m,b).some(o=>o.alive&&o.tab==='tf_funk'))?1.15:1);b.sight=sight;
   let foe=null,fd=1e9,best=1e9,nSee=0;
   {const g=m.bg,cs=g.cs,n=g.n,x0=Math.max(0,((b.x-sight)/cs)|0),x1=Math.min(n-1,((b.x+sight)/cs)|0),y0=Math.max(0,((b.y-sight)/cs)|0),y1=Math.min(n-1,((b.y+sight)/cs)|0);
-    for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++){const a=g.c[cy*n+cx];for(let i=0;i<a.length;i++){const o=a[i];if(o===b||!o.alive||m.trio&&o.team===b.team||o.down&&m.t-o.downT<10)continue;const d=d2(b,o);const lh=o===b.lastHit&&m.t-b.lastHitT<3;
+    for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++){const a=g.c[cy*n+cx];for(let i=0;i<a.length;i++){const o=a[i];if(o===b||!o.alive||m.trio&&o.team===b.team||o.down&&m.t-o.downT<prot(o))continue;const d=d2(b,o);const lh=o===b.lastHit&&m.t-b.lastHitT<3;
       /* Sichtkegel: nach vorn weit, rundum nur auf kurze Distanz. Wer trifft, verrät sich bis 560 weit. */
       if(o.smT>m.t&&d>80&&Math.hypot(o.x-o.smX,o.y-o.smY)<95)continue;
       if(d>(lh?Math.max(sight,560):sight*o.vis*(o.pose===1?.85:1)))continue;
@@ -3148,7 +3151,7 @@ function think(m,b,dt,bi){if(m.t<DROP)return;
   if(b.rel>0&&(b.rel-=dt)<=0)b.mags[b.cur]=magOf(b,b.wp[b.cur].id);
   const s=m.storm;if((b.stT+=dt)>=.13){if(Math.hypot(b.x-s.x,b.y-s.y)>s.r){hurt(m,b,m.ph[s.ph].dps*b.stT*(b.perks.has('p_storm')?.5:1),null);if(!b.alive)return}b.stT=0}
   if(b.down){b.hp-=dt*(b.tab==='tf_zaeh'?.25:.5);if(b.hp<=0){die(m,b,b.downBy,false);return}
-    b.pose=2;b.fire=null;b.act='';b.sprint=false;b.see=null;b.ta=b.a;b.state=b.rvBy?'Wird wiederbelebt':'Am Boden · '+Math.ceil(b.hp)+' Leben'+(m.t-b.downT<10?' · geschützt':'');
+    b.pose=2;b.fire=null;b.act='';b.sprint=false;b.see=null;b.ta=b.a;b.state=b.rvBy?'Wird wiederbelebt':'Am Boden · '+Math.ceil(b.hp)+' Leben'+(m.t-b.downT<prot(b)?' · geschützt':'');
     let nm=null,nd=1e9;for(const o of mates(m,b))if(o.alive&&!o.down){const d=d2(b,o);if(d<nd){nd=d;nm=o}}
     b.go=false;b.vx=b.vy=0}
   else if(b.due||(b.bT-=dt)<=0){b.due=false;b.bT=bi;const p0=b.pose;brain(m,b);if(p0===2&&b.pose!==2)b.up=.4}
@@ -3157,12 +3160,12 @@ function think(m,b,dt,bi){if(m.t<DROP)return;
   b.mv=false;b.run=false;if(!b.go||b.act!==''){b.vx*=.6;b.vy*=.6}
   if(b.act==='revive'){const t=b.rvT;b.moveSpeed=0;b.motionX=b.x;b.motionY=b.y;
     if(!t||!t.alive||!t.down||d2(b,t)>34||b.flash>.1&&b.lastHit&&b.lastHit.alive){b.act='';if(t&&t.rvBy===b)t.rvBy=null;b.due=true}
-    else{t.rvBy=b;b.pose=1;b.ta=Math.atan2(t.y-b.y,t.x-b.x);b.rvP=(b.rvP||0)+dt;const need=b.tab==='tf_sani'?6:10;b.state='Belebt '+t.name+' wieder · '+Math.ceil(need-b.rvP)+' s';if(b.rvP>=need){b.revs=(b.revs||0)+1;t.revived=(t.revived||0)+1;t.down=false;t.rvBy=null;t.hp=Math.round(t.max*(b.tab==='tf_kampf'?.6:.3));t.sh=0;t.pose=0;t.due=true;b.act='';b.rvP=0;b.due=true;
+    else{t.rvBy=b;b.pose=1;b.ta=Math.atan2(t.y-b.y,t.x-b.x);b.rvP=(b.rvP||0)+dt;const need=b.tab==='tf_sani'?6:10;b.state='Belebt '+t.name+' wieder · '+Math.ceil(need-b.rvP)+' s';if(b.rvP>=need){b.revs=(b.revs||0)+1;t.revived=(t.revived||0)+1;t.down=false;t.rvBy=null;t.hp=Math.round(t.max*(b.tab==='tf_kampf'?.6:.3));if(b.tab==='tf_schild')t.sh=40;if(b.tab==='tf_arzt')b.hp=Math.min(b.max,b.hp+25);t.sh=0;t.pose=0;t.due=true;b.act='';b.rvP=0;b.due=true;
       m.feed.push({sys:`${b.name} hat ${t.name} wiederbelebt`,t:m.t,x:t.x,y:t.y,me:b.isP||t.isP||mates(m,b).some(o=>o.isP)});ev(m,'heal',t.x,t.y,600)}}}
   if(b.act==='heal'){b.moveSpeed=0;b.motionX=b.x;b.motionY=b.y;b.sta=Math.min(b.staMax,b.sta+15*dt);if((b.healT-=dt)<=0){if(b.useK==='s'){b.sh=Math.min(100,b.sh+(b.perks.has('p_shield')?75:50));b.pot--}else{b.hp=Math.min(b.max,b.hp+b.healAmt);b.med--;b.meds++}ev(m,b.useK==='s'?'shield':'heal',b.x,b.y,200);b.act='';b.due=true}return}
-  if(b.act==='open'){const c=b.chest;if(c.open){b.act='';b.due=true}else if((c.prog+=dt)>=(b.perks.has('p_scav')?.4:.8)*b.lootK){openChest(m,c,b);b.act='';b.due=true}}
+  if(b.act==='open'){const c=b.chest;if(c.open){b.act='';b.due=true}else if((c.prog+=dt)>=(b.perks.has('p_scav')?.4:.8)*b.lootK*(b.tab==='tf_samm'?.7:1)){openChest(m,c,b);b.act='';b.due=true}}
   else if(b.go&&b.up<=0){const dx=b.gx-b.x,dy=b.gy-b.y,l=Math.hypot(dx,dy);
-    if(l>2){let sp=108*b.sk.spd*(m.t<b.adrT?1.3:1)*(b.perks.has('p_rescue')&&b.state.startsWith('Läuft zu ')?1.3:1);if(b.pose===1)sp*=.55;else if(b.pose===2)sp*=.25;else if(b.sprint&&!b.exh&&b.sta>0){sp*=1.5;b.run=true}if(b.jump>0)sp*=1.15;
+    if(l>2){let sp=108*b.sk.spd*(m.t<b.adrT?1.3:1)*(b.perks.has('p_rescue')&&b.state.startsWith('Läuft zu ')?1.3:1)*(b.ttabs&&b.ttabs.has('tf_vorhut')?1.06:1);if(b.pose===1)sp*=.55;else if(b.pose===2)sp*=.25;else if(b.sprint&&!b.exh&&b.sta>0){sp*=1.5;b.run=true}if(b.jump>0)sp*=1.15;
       let ux=dx/l,uy=dy/l;if(b.detT>0){b.detT-=dt;const q=Math.hypot(b.dx,b.dy)||1;ux=b.dx/q;uy=b.dy/q}
       /* Ausweichen in jedem Schritt: liegt die Kante eines Hindernisses dicht voraus, wird seitlich daran vorbeigelenkt */
       if(l>40&&b.jump<=0&&!(b.path&&b.path.length)){const arr=m.og.c[gi(m.og,b.x,b.y)],canJ=b.pose===0&&b.sta>=12;let ax=0,ay=0;
@@ -3202,8 +3205,8 @@ function think(m,b,dt,bi){if(m.t<DROP)return;
     const wid=b.wp[b.cur].id,far=fdA>=(wid==='sniper'||wid==='dmr'?200:300);
     if(b.ads>=.95&&far&&b.sta>12&&!b.exh&&m.t>=(b.brCd||0)){b.hold=true;b.holdT=(b.holdT||0)+dt;b.sta-=12*dt;b.useT=.6;if(b.holdT>=4){b.hold=false;b.holdT=0;b.brCd=m.t+2}}
     else{if(b.hold){b.brCd=m.t+1}b.hold=false;b.holdT=0}}
-  if(f&&f.down&&m.t-f.downT<10){b.fire=null;b.due=true}
-  else if(f&&!b.down&&!b.dive){if(!f.alive){b.fire=null;b.due=true}else if(Math.abs(Math.atan2(Math.sin(b.ta-b.a),Math.cos(b.ta-b.a)))<.22&&los(m,b,f,b.pose>0||f.pose>0)){const fd=d2(b,f);for(let k=0;k<3&&b.cd<=0&&f.alive&&!(f.down&&m.t-f.downT<10);k++){const c0=b.cd;tryFire(m,b,f,fd);if(b.cd===c0)break}}}}
+  if(f&&f.down&&m.t-f.downT<prot(f)){b.fire=null;b.due=true}
+  else if(f&&!b.down&&!b.dive){if(!f.alive){b.fire=null;b.due=true}else if(Math.abs(Math.atan2(Math.sin(b.ta-b.a),Math.cos(b.ta-b.a)))<.22&&los(m,b,f,b.pose>0||f.pose>0)){const fd=d2(b,f);for(let k=0;k<3&&b.cd<=0&&f.alive&&!(f.down&&m.t-f.downT<prot(f));k++){const c0=b.cd;tryFire(m,b,f,fd);if(b.cd===c0)break}}}}
 
 /* Bots weit weg von der Kamera rechnen nur jeden dritten Schritt mit dreifacher Schrittweite */
 function step(m){if(m.over)return;m.t+=DT;m.tick++;stormStep(m);
@@ -3218,7 +3221,7 @@ function step(m){if(m.over)return;m.t+=DT;m.tick++;stormStep(m);
     if(!far&&f){const dx=b.x-f.x,dy=b.y-f.y;far=dx*dx+dy*dy>3240000}
     if(far){if(b.i%3===k3){think(m,b,DT*3,m.bi*DT*3);b.px=b.x;b.py=b.y}}else{b.px=b.x;b.py=b.y;think(m,b,DT,m.bi*DT)}}
   for(let i=m.gren.length-1;i>=0;i--){const q=m.gren[i];if((q.t-=DT)>0)continue;m.gren.splice(i,1);ev(m,'boom',q.x,q.y,1400);const fc=m.focus;if(fc&&Math.abs(q.x-fc.x)<1500&&Math.abs(q.y-fc.y)<1500)m.fx.push({x:q.x,y:q.y,t:.45});
-    gNear(m.bg,q.x,q.y,170,o=>{if(!o.alive)return;const d=Math.hypot(o.x-q.x,o.y-q.y);if(d<128)hurt(m,o,150*(1-d/128*.7),q.from,false,true)})}
+    {const GR=q.from&&q.from.tab==='tf_spreng'?147:128;gNear(m.bg,q.x,q.y,190,o=>{if(!o.alive)return;const d=Math.hypot(o.x-q.x,o.y-q.y);if(d<GR)hurt(m,o,150*(1-d/GR*.7),q.from,false,true)})}}
   for(let i=m.tracers.length-1;i>=0;i--)if((m.tracers[i].t-=DT)<=0)m.tracers.splice(i,1);
   for(let i=m.fx.length-1;i>=0;i--)if((m.fx[i].t-=DT)<=0)m.fx.splice(i,1);
   for(let i=m.hits.length-1;i>=0;i--)if((m.hits[i].t-=DT)<=0)m.hits.splice(i,1);
@@ -3275,6 +3278,16 @@ const UNLOCKS=[
   {id:'tf_vers',mode:'team',cost:350,type:'team',name:'Versorger',desc:'Gibt Medikits, Schildtränke und Granaten schon ab dem ersten Überschuss ab',cond:'Gib in einer Runde 3 Gegenstände an Kameraden ab',test:r=>r.shares>=3},
   {id:'tf_kampf',mode:'team',cost:500,type:'team',name:'Kampfsanitäter',desc:'Wiederbelebte stehen mit 60 statt 30 % Leben auf',cond:'3 Wiederbelebungen in einer Runde',test:r=>r.revs>=3},
   {id:'tf_funk',mode:'team',cost:500,type:'team',name:'Funkkontakt',desc:'Das ganze Team sieht 15 % weiter',cond:'10 Team-Kills in einer Runde',test:r=>r.teamKills>=10},
+  {id:'tf_spaeh',mode:'team',type:'team',name:'Späher',desc:'Breiteres Sichtfeld (+25 %)',cond:'Erreiche im Team-Modus die Top 50',test:r=>r.trio&&r.place<=50},
+  {id:'tf_mun',mode:'team',type:'team',name:'Munitionsträger',desc:'Kameraden in der Nähe laden 20 % schneller nach',cond:'Gib in einer Runde 5 Gegenstände ab',test:r=>r.shares>=5},
+  {id:'tf_vorhut',mode:'team',type:'team',name:'Vorhut',desc:'Das ganze Team läuft 6 % schneller',cond:'Spiele 15 Runden im Team-Modus',test:(r,s)=>(s.trioGames||0)>=15},
+  {id:'tf_schild',mode:'team',type:'team',name:'Schildträger',desc:'Wiederbelebte stehen zusätzlich mit 40 Schild auf',cond:'4 Wiederbelebungen in einer Runde',test:r=>r.revs>=4},
+  {id:'tf_spreng',mode:'team',type:'team',name:'Sprengmeister',desc:'Startet mit einer Granate, 15 % größerer Explosionsradius',cond:'2 Granaten-Kills in einer Team-Runde',test:r=>r.trio&&r.grenKills>=2},
+  {id:'tf_arzt',mode:'team',type:'team',name:'Feldarzt',desc:'Heilt sich beim Wiederbeleben selbst um 25 Leben',cond:'Belebe insgesamt 25 Kameraden wieder',test:(r,s)=>(s.revTotal||0)>=25},
+  {id:'tf_rueck',mode:'team',type:'team',name:'Rückendeckung',desc:'Nimmt 10 % weniger Schaden von Gegnern, die ein Kamerad beschießt',cond:'15 Team-Kills in einer Runde',test:r=>r.teamKills>=15},
+  {id:'tf_samm',mode:'team',type:'team',name:'Sammler',desc:'Öffnet Kisten 30 % schneller',cond:'Öffne 20 Kisten in einer Team-Runde',test:r=>r.trio&&r.chests>=20},
+  {id:'tf_mark',mode:'team',type:'team',name:'Markierer',desc:'Getroffene Gegner nehmen 4 s lang 8 % mehr Schaden vom Team',cond:'1500 Schaden in einer Team-Runde',test:r=>r.trio&&r.dmg>=1500},
+  {id:'tf_eisern',mode:'team',type:'team',name:'Eiserner Wille',desc:'Am Boden 15 statt 10 Sekunden vor Waffen geschützt',cond:'Werde in einer Runde zweimal wiederbelebt',test:r=>r.revived>=2},
   {id:'p_rally',mode:'team',cost:450,type:'perk',name:'Zusammenhalt',desc:'+10 % Schaden, solange ein Kamerad in der Nähe steht',cond:'Gewinne eine Runde im Team-Modus',test:r=>r.place===1},
   {id:'p_guard',mode:'team',cost:350,type:'perk',name:'Beschützer',desc:'Nimmt beim Wiederbeleben 25 % weniger Schaden',cond:'2 Wiederbelebungen in einer Runde',test:r=>r.revs>=2},
   {id:'p_rescue',mode:'team',cost:350,type:'perk',name:'Retter',desc:'Läuft 30 % schneller zu Kameraden am Boden',cond:'Erreiche im Team-Modus die Top 10',test:r=>r.place<=10},
@@ -4057,7 +4070,7 @@ function drawMini(m,focus){const cv=$('mini'),[w,h,d]=fit(cv),g=cv.getContext('2
 function hud(m){const s=m.storm,p=m.ph[s.ph],f=spec||P;
   $('hAlive').textContent=m.alive;
   if(m.trio){const tb=$('teamBox');tb.hidden=false;tb.innerHTML=teamOf(m,P).filter(o=>!o.isP).map(o=>{
-      const st=!o.alive?'<i class="tx">✕</i>':o.down?`<i class="td">⬇ ${Math.max(0,Math.ceil(o.hp))}${m.t-o.downT<10?' 🛡':''}</i>`:o.act==='revive'?'<i class="tr">✚</i>':'';
+      const st=!o.alive?'<i class="tx">✕</i>':o.down?`<i class="td">⬇ ${Math.max(0,Math.ceil(o.hp))}${m.t-o.downT<prot(o)?' 🛡':''}</i>`:o.act==='revive'?'<i class="tr">✚</i>':'';
       const inv=o.alive?o.wp.map(w=>`<span class="tw" style="border-color:${RAR[w.rar].c}">${ICON[w.id]||''}</span>`).join('')+(o.med?`<span class="tc" style="color:#74d66b">${o.med}</span>`:'')+(o.pot?`<span class="tc" style="color:#4aa8ff">${o.pot}</span>`:''):'';
       return `<div class="tm${o.alive?'':' out'}${o.down?' dn':''}"><div class="tn"><b>${o.name}</b><em>${o.lvl}</em>${st}</div><div class="tb"><u style="width:${o.alive?Math.max(0,o.hp/o.max*100):0}%"></u></div><div class="tb s"><u style="width:${o.alive?Math.min(100,o.sh):0}%"></u></div><div class="ti">${inv}</div></div>`}).join('')}else $('teamBox').hidden=true;
   if(m.trio){const tk=teamOf(m,P).reduce((a,o)=>a+o.kills,0);$('hKills').innerHTML=`${P.kills}<small style="font-size:.55em;opacity:.7"> / ${tk}</small>`;$('hKillsL').textContent='Kills / Team'}else{$('hKills').textContent=P.kills;$('hKillsL').textContent='Kills'}
