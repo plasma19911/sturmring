@@ -518,10 +518,10 @@ const obsTop=o=>o.k==='b'?(o.ht||40):o.k==='t'?95:o.r*1.15;
 function los(m,a,b,low){const g=m.og,cs=g.cs,n=g.n,dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy||1,flat=m.B.hm==='flat';
   const ha=(flat?0:height(m,a.x,a.y))+EYE(a),hb=(flat?0:height(m,b.x,b.y))+CHEST(b),lineH=t=>ha+(hb-ha)*t;
   const x0=clamp((Math.min(a.x,b.x)/cs)|0,0,n-1),x1=clamp((Math.max(a.x,b.x)/cs)|0,0,n-1),y0=clamp((Math.min(a.y,b.y)/cs)|0,0,n-1),y1=clamp((Math.max(a.y,b.y)/cs)|0,0,n-1);
-  for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++){const arr=g.c[cy*n+cx];for(let i=0;i<arr.length;i++){const o=arr[i];if(o.low&&!low)continue;
+  for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++){const arr=g.c[cy*n+cx];for(let i=0;i<arr.length;i++){const o=arr[i];const duck=o.low&&!low&&b.alive!==undefined&&b.pose===1&&Math.hypot(o.x-b.x,o.y-b.y)<(o.r||Math.max(o.hw,o.hh))+45;if(o.low&&!low&&!duck)continue;
     const t=clamp(((o.x-a.x)*dx+(o.y-a.y)*dy)/l2,0,1);
     let hitO=false;if(o.k==='b')hitO=segBox(a.x,a.y,dx,dy,o);else{const px=a.x+dx*t-o.x,py=a.y+dy*t-o.y;hitO=px*px+py*py<o.r*o.r}
-    if(!hitO)continue;
+    if(!hitO)continue;if(duck)return false;
     const top=(flat?0:height(m,o.x,o.y))+obsTop(o);if(top>lineH(t)-2)return false}}
   if(!flat&&l2>6400){const L=Math.sqrt(l2),st=Math.max(2,Math.ceil(L/55));for(let k=1;k<st;k++){const t=k/st;if(height(m,a.x+dx*t,a.y+dy*t)>lineH(t)-3)return false}}
   return true}
@@ -895,7 +895,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     if(b.stance&&fd>(b.covO?75:110)&&b.style!=='rusher'){const cp=o=>{const q=coverPoint(o,foe.x,foe.y);return{...q,o,fo:Math.hypot(o.x-foe.x,o.y-foe.y)}};
       if(b.covO&&d2(b,b.covO)<120){const q=cp(b.covO);if(freeSpot(m,q.x,q.y))cov=q;}
       else{let bd=80;gNear(m.og,b.x,b.y,80,o=>{if(!o.low)return;const q=cp(o),d=Math.hypot(q.x-b.x,q.y-b.y);if(d<bd&&q.fo<fd+20&&freeSpot(m,q.x,q.y)){bd=d;cov=q}})}}
-    const tact=b.style==='careful'||b.style==='ambush'||b.style==='scharf'||b.style==='surv'||b.style==='balanced'&&(b.hp+b.sh)<(b.max+100)*.75,wantHide=!cov&&b.style!=='rusher'&&(b.rel>0||b.mags[b.cur]<=0||(b.hp+b.sh)<(b.max+100)*.45||(tact&&fd>150&&b.peek!==false))&&fd>70;
+    const tact=(w.range>=300||nSee>=2)&&(b.style==='careful'||b.style==='ambush'||b.style==='scharf'||b.style==='surv'||b.style==='hunter'&&w.range>=600||b.style==='balanced'&&((b.hp+b.sh)<(b.max+100)*.75||nSee>=2)),wantHide=!cov&&b.style!=='rusher'&&(b.rel>0||b.mags[b.cur]<=0||(b.hp+b.sh)<(b.max+100)*.45||(tact&&fd>150&&b.peek!==false))&&fd>70;
     if(b.stk>0)b.noTall=m.t+3;
     if(wantHide&&b.tCov&&m.t<b.tCov.until&&m.t>=(b.noTall||0)&&!los(m,foe,b.tCov,false))cov=b.tCov;
     else if(wantHide&&m.t>=(b.noTall||0)){const urg=b.rel>0||b.mags[b.cur]<=0||(b.hp+b.sh)<(b.max+100)*.45,RR=urg?140:95;let bd=RR;gNear(m.og,b.x,b.y,RR,o=>{if(o.low)return;const q=coverPoint(o,foe.x,foe.y),d=Math.hypot(q.x-b.x,q.y-b.y);if(d<bd&&d>8&&freeSpot(m,q.x,q.y)&&walkClear(m,b.x,b.y,q.x,q.y)&&!los(m,foe,q,false)){bd=d;cov={...q,o,fo:Math.hypot(o.x-foe.x,o.y-foe.y),tall:true,until:m.t+4}}});b.tCov=cov}
@@ -914,9 +914,11 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     b.covO=cov&&!cov.tall?cov.o:null;
     if(b.peekCov){b.peekCov=false}
     else if(cov){if(d2(b,cov)>(cov.tall?22:12)){go(cov.x,cov.y);b.state='Sucht Deckung'}
-      else{b.inCov=true;b.covA=Math.atan2(cov.o.y-b.y,cov.o.x-b.x);if(cov.tall){b.state=b.rel>0||b.mags[b.cur]<=0?'Lädt hinter Deckung nach':'Erholt sich hinter Deckung'}else if(b.rel>0||b.mags[b.cur]<=0){b.state='Lädt in Deckung nach'}else b.state='Feuert aus der Deckung'}}
+      else{b.inCov=true;b.covA=Math.atan2(cov.o.y-b.y,cov.o.x-b.x);if(cov.tall){b.state=b.rel>0||b.mags[b.cur]<=0?'Lädt hinter Deckung nach':'Erholt sich hinter Deckung'}else{const busy=b.rel>0||b.mags[b.cur]<=0||(b.hp+b.sh)<(b.max+100)*.3;b.dkT=b.dkT||0;
+          if(!busy&&m.t>=b.dkT){b.dkUp=!b.dkUp;b.dkT=m.t+(b.dkUp?rr(1.4,2.4):rr(.5,.9))}
+          if(busy||!b.dkUp||nSee>=2&&foe.fire===b&&!b.dkUp){b.pose=1;b.state=busy?'Lädt geduckt nach':'Duckt sich hinter Deckung'}else b.state='Feuert aus der Deckung'}}}
     
-    else if(fd>=150&&b.style!=='rusher'&&!outR&&b.rel<=0&&!(foe.inCov&&b.rel<=0)&&(b.crT=b.crT??0,m.t<b.crT||(m.t>=b.crT+(b.crGap||1.2)&&(b.crT=m.t+rr(1.6,3),b.crGap=rr(.9,1.8),true)))){
+    else if(fd>=150&&b.style!=='rusher'&&!outR&&b.rel<=0&&!(foe.inCov&&b.rel<=0)&&w.range>=300&&nSee<=2&&hpF>.25&&!(foe.fire===b&&ratio<.7)&&(b.crT=b.crT??0,m.t<b.crT||(m.t>=b.crT+(b.crGap||1.2)&&(b.crT=m.t+rr(1.6,3),b.crGap=rr(.9,1.8),true)))){
       /* Hocken: steht still, zielt ruhiger und reicht etwas weiter; ist dafür ein leichteres Ziel. Nur auf Distanz, nie im Nahkampf. */
       b.pose=1;b.state='Schießt aus der Hocke';b.go=false;b.lgT=null}
     else{const pref=Math.min(maxR*.92,bestDist(b,foe,fd,b.style==='rusher'?-.5:P.distF>.75?.4:0));let f=fd>pref+30?1:fd<pref-40?-.7:0;
