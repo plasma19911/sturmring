@@ -2793,7 +2793,9 @@ function newMatch(cfg,o){o=o||{};const tsz=(cfg&&cfg.mode==='trio')||o.trio?3:(c
     for(const b of m.bots)b.tab=b.isP?(cfg&&cfg.teamAb)||null:(b.tier>=2&&rnd()<.5?pick(['tf_sani','tf_zaeh','tf_vers','tf_kampf','tf_funk','tf_spaeh','tf_mun','tf_vorhut','tf_schild','tf_spreng','tf_arzt','tf_rueck','tf_samm','tf_mark','tf_eisern','tf_nebel','tf_blend','tf_gurt','tf_brille','tf_rett','tf_deck']):null);
     for(const b of m.bots){b.ttabs=new Set(teamOf(m,b).map(o=>o.tab).filter(Boolean));if(b.tab==='tf_spaeh')b.fov*=1.25;if(b.tab==='tf_spreng')b.gren=Math.max(b.gren,1);if(b.tab==='tf_nebel')b.smk=Math.max(b.smk,1);if(b.tab==='tf_blend')b.fls=Math.max(b.fls,1)}
     m.teamsAlive=Math.ceil(m.bots.length/m.tsz);m.teams=m.teamsAlive}
-  nextZone(m);{m.vend=[];const rs=(m.rooms||[]).slice();for(let i=0;i<3000&&m.vend.length<250;i++){let x,y;if(rs.length&&rnd()<.75){const q=rs[(rnd()*rs.length)|0];const sd=rnd()<.5?1:-1;x=q.x+sd*(q.hw+22);y=q.y+rr(-q.hh*.6,q.hh*.6)}else{x=rr(200,m.W-200);y=rr(200,m.W-200)}if(!freeSpot(m,x,y))continue;if(m.vend.some(v=>Math.hypot(v.x-x,v.y-y)<800))continue;m.vend.push({x,y,a:rr(0,TAU)})}}
+  nextZone(m);{m.vend=[];const rs=(m.rooms||[]).slice();for(let i=0;i<4000&&m.vend.length<250;i++){if(!rs.length)break;const q=rs[(rnd()*rs.length)|0],sd=rnd()<.5?1:-1,ax=rnd()<.5;let x,y,a;
+    if(ax){x=q.x+sd*(q.hw+13);y=q.y+rr(-q.hh*.55,q.hh*.55);a=sd>0?0:Math.PI}else{y=q.y+sd*(q.hh+13);x=q.x+rr(-q.hw*.55,q.hw*.55);a=sd>0?Math.PI/2:-Math.PI/2}
+    const fx=x+Math.cos(a)*34,fy=y+Math.sin(a)*34;if(!freeSpot(m,fx,fy))continue;if(m.vend.some(v=>Math.hypot(v.x-x,v.y-y)<800))continue;m.vend.push({x,y,a,fx,fy})}}
   return m}
 const prot=b=>b&&b.tab==='tf_eisern'?15:10;
 const teamOf=(m,b)=>m.bots.slice(b.team*m.tsz,b.team*m.tsz+m.tsz);
@@ -2890,12 +2892,12 @@ function attMerge(a,b){const o={...(a||{})};if(b)for(const sl in b){const cur=AT
 function vendPick(b,cw){let best=null,bv=0;for(const id in ATTS){const a=ATTS[id];if(a[2]>b.gold)continue;const cur=cw.att&&ATTS[cw.att[a[1]]];if(cur&&cur[2]>=a[2])continue;const v=a[2]-(cur?cur[2]:0)+(cur?0:30);if(v>bv){bv=v;best=id}}return best}
 function respawnMate(m,o,x,y){o.alive=true;o.down=false;o.hp=o.max;o.sh=0;o.wp=[{id:'pistol',rar:0}];o.mags=[magOf(o,'pistol')];o.cur=0;o.rel=0;o.cd=0;o.med=0;o.pot=0;o.gren=0;o.smk=0;o.fls=0;o.vest=0;o.vestD=0;o.helm=0;o.helmD=0;o.gold=0;o.place=0;o.x=o.px=x;o.y=o.py=y;o.rsL=m.t+10;o.rsPend=false;o.act='';o.fire=null;o.go=false;o.path=null;o.bleed=0;o.rvBy=null;o.state='Fallschirm';o.respawns=(o.respawns||0)+1;m.alive++;m.feed.push({sys:o.name+' wurde zurückgekauft und springt ab',t:m.t,x,y,me:o.isP||teamOf(m,o).some(q=>q.isP)})}
 function vendGo(m,b,go){
-  if(m.trio&&b.gold>=50){const dead=mates(m,b).filter(o=>!o.alive&&!o.rsPend);if(dead.length){let v=null,vd=1600;for(const q of m.vend){const d=Math.hypot(q.x-b.x,q.y-b.y);if(d<vd){vd=d;v=q}}
+  if(m.trio&&b.gold>=50){const dead=mates(m,b).filter(o=>!o.alive&&!o.rsPend);if(dead.length){let v=null,vd=1600;for(const q of m.vend){const d=Math.hypot((q.fx??q.x)-b.x,(q.fy??q.y)-b.y);if(d<vd){vd=d;v=q}}
     if(v){if(vd<24){b.ta=b.a=Math.atan2(v.y-b.y,v.x-b.x);b.bT=1.6;b.gold-=50;const o=dead[0];o.rsPend=true;const p=validGoal(m,v.x+rr(-70,70),v.y+rr(-70,70))||{x:v.x+30,y:v.y};respawnMate(m,o,p.x,p.y);b.attBuys=(b.attBuys||0)+1;b.rebuys=(b.rebuys||0)+1;b.state='Kauft '+o.name+' zurück';ev(m,'buy',b.x,b.y,300);return true}
-      go(v.x,v.y);b.state='Läuft zum Automaten · '+dead[0].name+' zurückkaufen';return true}}}
-  const cw=b.wp[b.cur];if(!cw||cw.id==='pistol'&&b.wp.length>1)return false;const want=vendPick(b,cw);if(!want)return false;let v=null,vd=1100;for(const q of m.vend){const d=Math.hypot(q.x-b.x,q.y-b.y);if(d<vd){vd=d;v=q}}if(!v)return false;
+      go(v.fx??v.x,v.fy??v.y);b.state='Läuft zum Automaten · '+dead[0].name+' zurückkaufen';return true}}}
+  const cw=b.wp[b.cur];if(!cw||cw.id==='pistol'&&b.wp.length>1)return false;const want=vendPick(b,cw);if(!want)return false;let v=null,vd=1100;for(const q of m.vend){const d=Math.hypot((q.fx??q.x)-b.x,(q.fy??q.y)-b.y);if(d<vd){vd=d;v=q}}if(!v)return false;
   if(vd<24){b.ta=b.a=Math.atan2(v.y-b.y,v.x-b.x);b.bT=1.6;const a=ATTS[want];b.gold-=a[2];cw.att={...(cw.att||{}),[a[1]]:want};b.attBuys=(b.attBuys||0)+1;b.state='Kauft '+a[0];ev(m,'buy',b.x,b.y,300);v.used=m.t;b.due=true;if(a[1]==='mag')b.mags[b.cur]=Math.min(b.mags[b.cur],magOf(b,cw.id,cw));return true}
-  go(v.x,v.y);b.state='Läuft zum Automaten';return true}
+  go(v.fx??v.x,v.fy??v.y);b.state='Läuft zum Automaten';return true}
 function tryFire(m,b,foe,fd){const cw=b.wp[b.cur],w=b.W[cw.id];if(b.rel>0||b.cd>0||fd>w.range*(b.pose===1?1.1:1)*attF(cw,'range'))return;if(fd>=110&&(b.ads||0)<.7)return;
   if(b.mags[b.cur]<=0){let bi=-1,bs=0;b.wp.forEach((q,i)=>{if(i!==b.cur&&b.mags[i]>0){const v=expDps(b.W[q.id],fd)*rarM(q.id,q.rar);if(v>bs){bs=v;bi=i}}});
     if(bi>=0){b.cur=bi;b.cd=.35;b.sw=6}else b.rel=w.reload*b.sk.rel*attF(cw,'rel')*(m.trio&&mates(m,b).some(o=>o.alive&&!o.down&&o.tab==='tf_mun'&&d2(o,b)<260)?.8:1);return}
@@ -3735,7 +3737,7 @@ diffuseColor.rgb*=1.0-${strength}*(.55+.25*grain+.20*strata);`);
     {const vs=m.vend||[],bodyG=[0xc8372d,0x2f6fb5,0x2e8a4a].map(c=>merge([{g:new T.BoxGeometry(14,34,18),y:17,c},{g:new T.BoxGeometry(2,5,4),x:7.6,y:8,z:-4,c:0x15181c},{g:new T.BoxGeometry(15,2,19),y:1,c:0x23272d}])),glowG=merge([{g:new T.BoxGeometry(1,20,13),x:7.2,y:21,c:0x9fe8ff},{g:new T.BoxGeometry(1.2,4,13),x:7.3,y:33,c:0xffffff},{g:new T.BoxGeometry(1.4,2.6,2.6),x:7.6,y:12,z:5,c:0xffd34d}]);
       const bm=new T.MeshStandardMaterial({vertexColors:true,roughness:.55,metalness:.25}),gm=new T.MeshBasicMaterial({vertexColors:true,toneMapped:false});
       const ib=bodyG.map(g=>new T.InstancedMesh(g,bm,vs.length)),cnt=[0,0,0],ig=new T.InstancedMesh(glowG,gm,vs.length);
-      vs.forEach((v,k)=>{const h=height(m,v.x,v.y);dum.position.set(v.x,h,v.y);dum.rotation.set(0,-v.a,0);dum.scale.set(1,1,1);dum.updateMatrix();const t=(v.x|0)%3;ib[t].setMatrixAt(cnt[t]++,dum.matrix);ig.setMatrixAt(k,dum.matrix)});
+      vs.forEach((v,k)=>{const h=height(m,v.x,v.y);dum.position.set(v.x,h,v.y);dum.rotation.set(0,-v.a,0);dum.scale.setScalar(1.7);dum.updateMatrix();const t=(v.x|0)%3;ib[t].setMatrixAt(cnt[t]++,dum.matrix);ig.setMatrixAt(k,dum.matrix)});
       ib.forEach((o,t)=>{o.count=cnt[t];o.frustumCulled=false;o.castShadow=!mobileGraphics;world.add(o)});ig.count=vs.length;ig.frustumCulled=false;world.add(ig)}
     const Bm=m.B,W=m.W,C=W/2,isl=Bm.hm==='isl',keep=o=>{own.push(o);return o};
     maxH=Bm.hm==='smooth'?Bm.amp:Bm.hm==='ter'?Bm.lv*Bm.step:Bm.hm==='isl'?40:1;
@@ -4162,7 +4164,7 @@ document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementByI
 async function toggleOri(){const so=screen.orientation;if(!so||!so.lock){$('oriBtn').textContent='Drehen nicht möglich';return}
   const land=!(so.type||'').startsWith('landscape');try{if(!fsOn()){const d=document.documentElement,f=d.requestFullscreen||d.webkitRequestFullscreen;if(f)await f.call(d,{navigationUI:'hide'})}await so.lock(land?'landscape':'portrait');$('oriBtn').textContent=land?'🔄 Hoch':'🔄 Quer'}catch(e){$('oriBtn').textContent='Drehen gesperrt'}}
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('oriBtn');if(!b)return;if(!(screen.orientation&&screen.orientation.lock)){b.hidden=true;return}b.onclick=toggleOri});
-function startMatch(){$('match').classList.remove('details-open');$('hudDetails').setAttribute('aria-expanded','false');$('hudDetails').textContent='Ausrüstung anzeigen';const c=JSON.parse(JSON.stringify(S.cfg));c.land='any';cur=newMatch(c,{biome:window.SR_BIOME});P=cur.bots[0];spec=P;acc=0;endT=0;deadShown=false;heardT=0;cam.x=P.x;cam.y=P.y;cur.focus=cam;camI=0;camYaw=0;$('camBtn').textContent='📷 Vorschau';$('rotBtn').textContent='🧭 '+(S.cfg.camRot?'dreht':'fest');miniBase=mkMini(cur);
+function startMatch(){$('match').classList.remove('details-open');$('hudDetails').setAttribute('aria-expanded','false');$('hudDetails').textContent='Ausrüstung anzeigen';const c=JSON.parse(JSON.stringify(S.cfg));c.land='any';cur=newMatch(c,{biome:window.SR_BIOME});if(location.hash==='#vend'&&cur.vend&&cur.vend[0]){const v=cur.vend[0],P0=cur.bots.find(b=>b.isP);if(P0){P0.x=P0.px=v.fx+20;P0.y=P0.py=v.fy+20}}P=cur.bots[0];spec=P;acc=0;endT=0;deadShown=false;heardT=0;cam.x=P.x;cam.y=P.y;cur.focus=cam;camI=0;camYaw=0;$('camBtn').textContent='📷 Vorschau';$('rotBtn').textContent='🧭 '+(S.cfg.camRot?'dreht':'fest');miniBase=mkMini(cur);
   if(AU.on)auInit();lastK=0;$('toast').hidden=true;$('dead').hidden=true;$('feed').innerHTML='';$('hMap').textContent=cur.B.n+(cur.tod==='abend'?' · Abend':cur.tod==='nacht'?' · Nacht':'')+(cur.fxp&&cur.fxp.rain?' · Regen':'');setSpeed(1);show('match');
   if(!mainView&&!noGL){try{mainView=makeView($('cv'))}catch(e){mainView=null}if(!mainView){noGL=true;$('hMap').textContent='3D nicht verfügbar – im Safari-Browser öffnen'}}
   if(mainView){try{mainView.load(cur)}catch(e){mainView=null;noGL=true;$('hMap').textContent='3D-Fehler: '+e.message}}}
