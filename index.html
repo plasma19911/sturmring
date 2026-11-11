@@ -381,16 +381,16 @@ const rnd=Math.random,rr=(a,b)=>a+rnd()*(b-a),pick=a=>a[(rnd()*a.length)|0];
 const clamp=(v,a,b)=>v<a?a:v>b?b:v,d2=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 const WEAPONS={
-  pistol:{n:'Pistole',dmg:13,pel:1,rate:2.2,range:320,spread:.075,cl:1.1,fa:0.8,mag:12,reload:1.3},
-  rifle:{n:'Sturmgewehr',dmg:16,pel:1,rate:4.2,range:430,spread:.062,cl:1.05,fa:0.9,mag:25,reload:2.1,wt:12},
-  burst:{n:'Salvengewehr',dmg:20,pel:1,rate:3.2,range:470,spread:.05,cl:0.95,fa:1.05,mag:24,reload:2.2,wt:9},
-  smg:{n:'MP',dmg:10,pel:1,rate:8,range:270,spread:.13,cl:1.4,fa:0.65,mag:28,reload:1.8,wt:14},
-  shotgun:{n:'Pumpgun',dmg:10,pel:7,rate:1,range:160,spread:.18,cl:2.3,fa:0.5,mag:5,reload:2.4,wt:12},
-  dmr:{n:'Jagdgewehr',dmg:46,pel:1,rate:1.4,range:600,spread:.04,cl:0.7,fa:1.05,mag:10,reload:2.4,wt:9},
-  sniper:{n:'Scharfschütze',dmg:88,pel:1,rate:.6,range:720,spread:.03,cl:0.5,fa:1.1,mag:4,reload:2.8,wt:8},
-  lmg:{n:'Leichtes MG',dmg:15,pel:1,rate:6.5,range:400,spread:.1,cl:1,fa:0.9,mag:60,reload:3.6,wt:7},
-  autosg:{n:'Auto-Schrotflinte',dmg:8,pel:6,rate:2.1,range:170,spread:.2,cl:2.0,fa:0.5,mag:8,reload:2.8,wt:10},
-  revolver:{n:'Handkanone',dmg:42,pel:1,rate:1.1,range:400,spread:.04,cl:1.15,fa:0.85,mag:6,reload:2,wt:12}};
+  pistol:{n:'Pistole',cq:1,miss:.05,dmg:13,pel:1,rate:2.2,range:320,spread:.075,cl:1.1,fa:0.8,mag:12,reload:1.3},
+  rifle:{n:'Sturmgewehr',cq:1.05,miss:.05,dmg:16,pel:1,rate:4.2,range:430,spread:.062,cl:1.05,fa:0.9,mag:25,reload:2.1,wt:12},
+  burst:{n:'Salvengewehr',cq:1.2,miss:.05,dmg:20,pel:1,rate:3.2,range:470,spread:.05,cl:0.95,fa:1.05,mag:24,reload:2.2,wt:9},
+  smg:{n:'MP',cq:.85,miss:.04,dmg:10,pel:1,rate:8,range:270,spread:.125,cl:1.4,fa:0.65,mag:28,reload:1.8,wt:14},
+  shotgun:{n:'Pumpgun',cq:1,miss:0,dmg:10,pel:7,rate:1,range:160,spread:.18,cl:2.3,fa:0.5,mag:5,reload:2.4,wt:12},
+  dmr:{n:'Jagdgewehr',cq:2.2,miss:.09,dmg:46,pel:1,rate:1.4,range:600,spread:.04,cl:0.7,fa:1.05,mag:10,reload:2.4,wt:9},
+  sniper:{n:'Scharfschütze',cq:3.5,miss:.12,dmg:95,pel:1,rate:.6,range:720,spread:.03,cl:0.5,fa:1.1,mag:4,reload:2.8,wt:8},
+  lmg:{n:'Leichtes MG',cq:1.1,miss:.06,dmg:15,pel:1,rate:6.5,range:400,spread:.1,cl:1,fa:0.9,mag:60,reload:3.6,wt:7},
+  autosg:{n:'Auto-Schrotflinte',cq:1,miss:0,dmg:8,pel:6,rate:2.1,range:170,spread:.2,cl:2.0,fa:0.5,mag:8,reload:2.8,wt:10},
+  revolver:{n:'Handkanone',cq:1.15,miss:.07,dmg:42,pel:1,rate:1.1,range:400,spread:.04,cl:1.15,fa:0.85,mag:6,reload:2,wt:12}};
 const LOOTW=Object.keys(WEAPONS).filter(k=>k!=='pistol'),LOOTSUM=LOOTW.reduce((a,k)=>a+WEAPONS[k].wt,0);
 const DEFPRIO=['rifle','burst','dmr','smg','shotgun','lmg','sniper','autosg','revolver'],LONGPRIO=['sniper','dmr','burst','rifle','lmg','revolver','smg','shotgun','autosg'],CLOSEPRIO=['shotgun','autosg','smg','rifle','burst','lmg','revolver','dmr','sniper'];
 /* Weste: Anteil, den sie von Körpertreffern schluckt, und wie viel sie insgesamt aushält. Helm: Kopfschuss-Faktor statt 2 und Zahl der Kopftreffer bis er bricht. */
@@ -733,7 +733,7 @@ function tryFire(m,b,foe,fd){const cw=b.wp[b.cur],w=b.W[cw.id];if(b.rel>0||b.cd>
   if(w.splash){const err=(rnd()*2-1)*sp,ix=b.x+Math.cos(base+err)*fd,iy=b.y+Math.sin(base+err)*fd;
     if(vis){m.tracers.push({x1:b.x,y1:b.y,x2:ix,y2:iy,t:.2,big:true});m.fx.push({x:ix,y:iy,t:.45})}
     gNear(m.bg,ix,iy,w.splash+40,o=>{if(!o.alive)return;const d=Math.hypot(o.x-ix,o.y-iy);if(d<w.splash)hurt(m,o,w.dmg*mul*(1-d/w.splash*.6),b)})}
-  else for(let i=0;i<w.pel;i++){const err=(rnd()*2-1)*sp,hit=fd*Math.abs(Math.sin(err))<tr,l=hit?fd:w.range;
+  else for(let i=0;i<w.pel;i++){const err=(rnd()*2-1)*sp*(fd<150?(w.cq||1):1),hit=fd*Math.abs(Math.sin(err))<tr&&rnd()>=(w.miss||0),l=hit?fd:w.range;
     if(vis&&m.tracers.length<160&&!(b.isP&&(m.pfx==='wumms'||m.pfx==='blitz')&&m.ev.length<24&&m.ev.push({k:'wumms',x:b.x,y:b.y})&&false))m.tracers.push({x1:b.x,y1:b.y,x2:b.x+Math.cos(base+err)*l,y2:b.y+Math.sin(base+err)*l,t:b.isP&&m.pfx==='laser'?.3:w.range>=600?.22:.12,own:b.isP,wid:cw.id});
      if(!hit&&vis&&(m.imp||(m.imp=[])).length<36&&rnd()<.6){const an=base+err,rh=rayHit(m,b.x,b.y,an,l);const ix=rh?rh.x:b.x+Math.cos(an)*l*rr(.55,1),iy=rh?rh.y:b.y+Math.sin(an)*l*rr(.55,1);m.imp.push({x:ix,y:iy,h:rh?rr(8,34):0,k:impKind(m,rh&&rh.o,ix,iy),t:.15,id:m.impN=(m.impN||0)+1})}
     /* Kopfschuss: doppelter Schaden. Die Chance steigt mit dem Zielen-Skill, mit Präzisionsgewehren und aus der Hocke. */
