@@ -31,8 +31,8 @@ const instrumented = source.replace('return{load,render}}', 'return{load,render,
       const tod=gfx==='ultra'?'nacht':'tag';
       const page=await browser.newPage({viewport:{width:gfx==='low'?390:800,height:gfx==='low'?700:500},deviceScaleFactor:1,hasTouch:gfx==='low'});
       const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'||/unavailable/i.test(m.text()))errors.push(m.text())});
-      await page.route('**/*',r=>r.request().url()==='https://sturmring.test/'?r.fulfill({contentType:'text/html',body:instrumented}):r.fulfill({status:204,body:''}));
-      await page.goto('https://sturmring.test/');
+      await page.route('**/*',r=>r.request().url()==='http://sturmring.test/'?r.fulfill({contentType:'text/html',body:instrumented}):r.fulfill({status:204,body:''}));
+      await page.goto('http://sturmring.test/');
       const result=await page.evaluate(({gfx,biome,tod})=>window.__graphicsTest.run(gfx,biome,tod,biome==='industrie'||biome==='wald'),{gfx,biome,tod});
       await page.screenshot({path:`test-results/${gfx}-${biome}.png`});
       assert.deepEqual(errors,[],`${gfx}/${biome} browser errors`);assert.deepEqual(result.errors,[],`${gfx}/${biome} GL errors`);
