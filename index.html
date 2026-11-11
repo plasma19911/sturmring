@@ -370,8 +370,37 @@ body.inMatch .lobbyGear{display:none}
 .modeCard .opts{grid-template-columns:repeat(3,1fr)!important}.modeCard .opt{text-align:center}.modeCard .opt span{font-size:10px!important}
 details.lk{margin-top:6px}details.lk summary{cursor:pointer;font-size:11px;color:var(--muted);padding:4px 2px;list-style:none}details.lk summary::before{content:'▸ '}details.lk[open] summary::before{content:'▾ '}
 details.lk .opts{margin-top:6px}details.lk .opt{opacity:.75}
-@media(min-width:1100px){#lobbyBody{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important;align-items:start}#lobbyBody>.card{margin:0!important}}
+
 .prof{padding:8px 14px!important}
+</style>
+<style>
+/* ruhiges Hauptmenü: eine Spalte, Auswahl als Chips, Beschreibung nur für das Gewählte */
+#lobby .wrap,#lobby main,.lobby-inner{max-width:760px!important;margin-inline:auto!important}
+#lobbyBody{display:flex!important;flex-direction:column!important;gap:0!important;max-width:760px;margin:0 auto}
+#lobbyBody>.card{background:none!important;border:0!important;border-bottom:1px solid rgba(255,255,255,.07)!important;border-radius:0!important;box-shadow:none!important;padding:12px 4px!important;margin:0!important}
+#lobbyBody>.card h2{display:flex;justify-content:space-between;font-size:11px!important;letter-spacing:.08em;color:var(--muted)!important;margin:0 0 8px!important}
+#lobbyBody .opts{display:flex!important;flex-wrap:wrap!important;gap:6px!important;grid-template-columns:none!important}
+#lobbyBody .opt{width:auto!important;flex:0 0 auto;display:inline-flex!important;align-items:center;gap:6px;padding:6px 12px!important;border-radius:999px!important;min-height:32px!important;text-align:left}
+#lobbyBody .opt b{font-size:12.5px!important;font-weight:600}#lobbyBody .opt span{display:none!important}#lobbyBody .opt span.tx{display:inline!important}#lobbyBody .opt span.pr{display:inline!important;font-size:10px;opacity:.7;margin-left:6px}
+#lobbyBody .opt[aria-pressed="true"]{background:rgba(0,255,208,.12)!important;border-color:#00ffd0!important}
+#lobbyBody .opt.locked{opacity:.5}
+#lobbyBody .opt .sw,#lobbyBody .opt i.sw{width:14px;height:14px;border-radius:50%;flex:none}
+#lobbyBody .opt img,#lobbyBody .opt svg,#lobbyBody .opt canvas{max-width:28px;max-height:28px}
+.sel{margin:8px 2px 0;font-size:12px;color:#b9c6ce;line-height:1.4;min-height:1em}
+#lobbyBody .hint{font-size:11px!important;margin:6px 2px 0!important}
+#lobbyBody details.lk summary{font-size:11px}
+.modeCard .opts,#lobbyBody .modeCard .opts{display:grid!important;grid-template-columns:repeat(3,1fr)!important}.modeCard .opt{justify-content:center;border-radius:10px!important}
+.hero{height:clamp(84px,12vw,120px)!important}
+</style>
+<style>
+#lobbyBody{align-items:stretch!important;width:100%!important;max-width:760px!important;margin-inline:auto!important}
+#lobbyBody>.card{width:100%!important;box-sizing:border-box}
+.hero,.prof,.tabs{max-width:760px!important;width:100%!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box}
+.tabs{display:grid!important;grid-template-columns:repeat(5,1fr)!important}
+.hero .eyebrow{display:none!important}.hero{height:clamp(96px,14vw,150px)!important;padding:14px 18px!important;justify-content:flex-end}.hero p{display:none!important}
+#start,.startbar,.start-wrap{max-width:760px!important;margin-left:auto!important;margin-right:auto!important}
+#lobbyBody section.modeCard .opts{display:grid!important;grid-template-columns:repeat(3,1fr)!important}
+#lobbyBody section.modeCard .opt{justify-content:center}
 </style>
 <div id="gear" hidden><div class="gp"><div class="gh"><b>Einstellungen</b><button id="gearX" aria-label="Schließen">✕</button></div>
   <p class="gs">Im Spiel</p><div class="gg"><button id="camBtn" title="Kamera-Abstand">📷 weit</button><button id="rotBtn" title="Kamera dreht mit">🧭 dreht</button><button id="sndBtn" title="Ton">🔇</button><button id="fsBtn" title="Vollbild">⛶ Vollbild</button><button id="oriBtn" title="Bild drehen">🔄 Quer</button></div>
@@ -3801,7 +3830,7 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
         for(const s of g.children){const u=s.userData;s.position.set(Math.cos(u.a+age*.15)*u.r*k,u.s*.55+Math.sin(age+u.a)*3,Math.sin(u.a+age*.15)*u.r*k);s.scale.setScalar(Math.max(.01,u.s*k))}}}}
     let n=0;for(const t of m.tracers){if(n>=170)break;const WK={sniper:3.2,dmr:2.4,lmg:2.1,revolver:2.2,shotgun:1,autosg:1,smg:1.2,pistol:1.2},k=t.big?4.5:t.own?4:2.4+t.own&&m.pfx==='laser'?2.4:(WK[t.wid]||1.5),h1=hAt(t.x1,t.y1)+25,h2=hAt(t.x2,t.y2)+(t.big?6:25);
       dum.position.set(t.x1,h1,t.y1);dum.lookAt(t.x2,h2,t.y2);dum.scale.set(k,k,Math.hypot(t.x2-t.x1,t.y2-t.y1,h2-h1));dum.updateMatrix();trc.setColorAt(n,t.own?ownTC:t.wid==='sniper'||t.wid==='dmr'?snTC:t.wid==='lmg'?lmTC:t.wid==='shotgun'||t.wid==='autosg'?sgTC:defTC);trc.setMatrixAt(n++,dum.matrix)}
-    trc.count=n;trc.instanceMatrix.needsUpdate=true;trc.instanceColor.needsUpdate=true;ownTC.setHex(TRC[S.cfg.tracer]||TRC.std);tU.value=ts/1000;
+    trc.count=n;trc.instanceMatrix.needsUpdate=true;trc.instanceColor.needsUpdate=true;ownTC.setHex(TRC.std);tU.value=ts/1000;
     if(m.imp)for(const q of m.imp){if(seenImp.has(q.id))continue;seenImp.add(q.id);if(Math.abs(q.x-cx)<1400&&Math.abs(q.y-cy)<1400){burst(q.x,q.y,hAt(q.x,q.y)+q.h+1,q.k);if(q.k!=='water'&&q.k!=='snow'&&rnd()<.7)decal(q.x,q.y,hAt(q.x,q.y)+(q.h||0)+(q.h?0:.8),q.h>0,q.h>0?1.6:2.2,0)}}if(seenImp.size>400)seenImp.clear();
     {let k=0;for(let i=fxP.length-1;i>=0;i--){const p=fxP[i];p.t+=dt;if(p.t>=p.l){fxP.splice(i,1);continue}p.x+=p.vx*dt;p.y+=p.vy*dt;p.h+=p.vh*dt;p.vh-=p.q.g*dt;p.vx*=1-dt*2;p.vy*=1-dt*2;const gnd=hAt(p.x,p.y);if(p.h<gnd){p.h=gnd;p.vh*=-.25;p.vx*=.5;p.vy*=.5}
       const f=p.t/p.l,sz=p.q.grow?(1+f*2.2)*(1-f*.6):(1-f*.7);dum.position.set(p.x,p.h,p.y);dum.rotation.set(p.r+p.t*7,p.r*2+p.t*5,0);dum.scale.set(p.q.s[0]*sz*2,p.q.s[1]*sz*2,p.q.s[2]*sz*2);dum.updateMatrix();pM.setMatrixAt(k,dum.matrix);pM.setColorAt(k,tc.setHex(p.c));k++}
@@ -3890,11 +3919,11 @@ function renderLobby(){const c=S.cfg,need=xpNeed(S.level),free=ptsTotal()-ptsSpe
   h+=`<section class="card" data-t="karten"><h2>Karten <small>jede Runde zufällig</small></h2><div class="opts">`+Object.entries(BIOMES).map(([k,v])=>`<div class="opt"><b><i class="dot" style="background:${v.mini}"></i>${v.n}</b><span>${v.d}</span><em>${S.maps[k]?'Beste Platzierung: '+S.maps[k]+'.':'Noch nicht gespielt'}</em></div>`).join('')+`</div></section>`;
   h+=`<section class="card" data-t="look"><h2>Skin <small>${nSk} von ${Object.keys(SKINS).length}</small></h2><div class="opts">`+Object.entries(SKINS).filter(q=>!q[1].cost||S.bought.includes(q[0])).map(([k,v])=>{const lk=lockedSkin(k),buy=false;
     return `<button class="opt skin${lk&&!buy?' locked':''}" data-act="${buy?'buy':'skin'}" data-v="${k}" aria-pressed="${c.skin===k}" ${lk&&!buy?'aria-disabled="true"':''}><i class="sw" style="background:linear-gradient(${hex(v.head)} 0 38%,${hex(v.body)} 38%);box-shadow:inset 0 5px 0 ${hex(v.hc||v.head)}"></i><span class="tx"><b>${v.n}</b>${lk?`<span>${v.cost?(buy?'Kaufen für ':'')+v.cost+' Gold':cond(v.lock)}</span>`:''}</span></button>`}).join('')+`</div><p class="hint">Weitere Skins kannst du weiter unten mit Gold kaufen.</p></section>`;
-  {const item=(type,k,name,cost,sel,sw,req,desc)=>{const own=!cost||S.bought.includes(type+k),rl=!own&&req&&!S.achDone.includes(req),can=!rl&&S.gold>=cost,ok=own||can;return `<button class="opt skin${ok?'':' locked'}" data-act="shop" data-v="${type}:${k}" aria-pressed="${sel}" ${ok?'':'aria-disabled="true"'}>${sw}<span class="tx"><b>${name}</b>${desc?`<span>${desc}</span>`:''}${own?'':`<span>${rl?'Erfolg „'+achName(req)+'“ nötig · ':can?'Kaufen für ':''}${cost} Gold</span>`}</span></button>`};
+  {const item=(type,k,name,cost,sel,sw,req,desc)=>{const own=!cost||S.bought.includes(type+k),rl=!own&&req&&!S.achDone.includes(req),can=!rl&&S.gold>=cost,ok=own||can;return `<button class="opt skin${ok?'':' locked'}" data-act="shop" data-v="${type}:${k}" aria-pressed="${sel}" ${ok?'':'aria-disabled="true"'}>${sw}<span class="tx"><b>${name}</b>${desc?`<span>${desc}</span>`:''}${own?'':`<span class="pr">${rl?'Erfolg „'+achName(req)+'“ nötig · ':can?'Kaufen für ':''}${cost} Gold</span>`}</span></button>`};
     h+=`<section class="card" data-t="shop"><h2>Gold <small>${S.gold} auf dem Konto</small></h2><p class="hint">Gold gibt es für die Platzierung: Sieg 500, Top 3 200, Top 5 150, Top 10 100, Top 25 75, Top 100 50, Top 250 25, Top 500 10. Wer das Kopfgeld-Ziel erledigt, bekommt zusätzlich Kopfgeld. Erfolge bringen weiteres Gold.</p></section>`;
     h+=`<section class="card" data-t="look"><h2>Skins kaufen</h2><div class="opts">`+Object.entries(SKINS).filter(q=>q[1].cost).map(([k,v])=>item('',k,v.n,v.cost,c.skin===k,`<i class="sw" style="background:linear-gradient(${hex(v.head)} 0 38%,${hex(v.body)} 38%);box-shadow:inset 0 5px 0 ${hex(v.hc||v.head)}"></i>`)).join('')+`</div></section>`;
     h+=`<section class="card" data-t="look"><h2>Waffen-Skins</h2><div class="opts">`+Object.entries(WSK).map(([k,v])=>item('w_',k,v[0],v[1],c.wskin===k,`<i class="sw" style="background:${v[2]}"></i>`,v[3])).join('')+`</div></section>`;
-    h+=`<section class="card" data-t="look"><h2>Schuss-Effekte</h2><div class="opts">`+Object.entries(TRK).map(([k,v])=>item('t_',k,v[0],v[1],c.tracer===k,`<i class="sw" style="background:${v[2]}"></i>`,v[3])).join('')+`</div><p class="hint">Färbt die Leuchtspur der Schüsse deines Bots.</p></section>`;
+
     {const at=c.att||{},n=Object.values(at).reduce((a,x)=>a+x,0),o=WEAPONS[attW];
     h+=`<section class="card" data-t="shop"><h2>Waffenaufsätze <small>${n} von ${Object.keys(WEAPONS).length*8} Stufen</small></h2><div class="attw">`+Object.keys(WEAPONS).map(id=>{const q=Object.keys(ATT).reduce((a,k)=>a+(at[id+'_'+k]||0),0);return `<button data-act="attw" data-v="${id}" aria-pressed="${attW===id}" >${WEAPONS[id].n}${q?' · '+q:''}</button>`}).join('')+`</div><div class="opts">`+Object.entries(ATT).map(([k,a])=>{const L=at[attW+'_'+k]||0,mx=L>=2,cost=ATTCOST[L],can=!mx&&S.gold>=cost,
       val=l=>k==='m'?'+'+Math.max(l,Math.round(o.mag*a[2]*l)):a[4]+String(Math.abs(a[2]*l*100)).replace('.',',')+' %';
@@ -3915,7 +3944,7 @@ function renderLobby(){const c=S.cfg,need=xpNeed(S.level),free=ptsTotal()-ptsSpe
   {const done=S.achDone.length;h+=`<section class="card" data-t="erfolge"><h2>Erfolge <small>${done} von ${ACH.length}</small></h2>`+ACH.map(a=>{const v=a.f(S)||0,ok=S.achDone.includes(a.id);
       return `<div class="sk"><div class="t"><b>${ok?'✓ ':''}${a.name}</b><span>${a.desc} · +${fmt(a.xp)} EP${a.gold?' · +'+a.gold+' Gold':''}</span><div class="bar" style="margin-top:5px"><i style="width:${Math.min(100,v/a.goal*100)}%;${ok?'':'background:var(--line)'}"></i></div><span>${fmt(Math.min(v,a.goal))} / ${fmt(a.goal)}</span></div></div>`}).join('')+`</section>`}
   h+=`<section class="card" data-t="liste"><h2>Bestenliste <small>alle Spieler</small></h2><div id="lbBox" class="hint">${LB_URL?'Lädt …':'Die gemeinsame Bestenliste ist noch nicht verbunden.'}</div></section>`;
-  $('lobbyBody').innerHTML=h;{const L=$('lobbyBody'),ord=['Modus','Teamfähigkeit','Spielweise','Perks','Fähigkeit','Skin','Skins kaufen','Waffen-Skins','Schuss-Effekte','Schuss-Animationen','Fallschirme','Grabsteine'],key=el=>{const t=(el.querySelector('h2')||{}).firstChild;const n=t?t.textContent.trim():'';const i=ord.indexOf(n);return i<0?99:i};
+  $('lobbyBody').innerHTML=h;for(const card of $('lobbyBody').querySelectorAll('section.card')){const ps=[...card.querySelectorAll('.opt[aria-pressed="true"]')];if(!card.querySelector('.opt'))continue;const p=document.createElement('p');p.className='sel';p.textContent=ps.map(o=>{const b=o.querySelector('b'),sp=o.querySelector('span:not(.tx):not(.pr)');return (b?b.firstChild.textContent.trim():'')+(sp?': '+sp.textContent:'')}).join(' · ');if(p.textContent)card.querySelector('.opts').after(p)}{const L=$('lobbyBody'),ord=['Modus','Teamfähigkeit','Spielweise','Perks','Fähigkeit','Skin','Skins kaufen','Waffen-Skins','Schuss-Effekte','Schuss-Animationen','Fallschirme','Grabsteine'],key=el=>{const t=(el.querySelector('h2')||{}).firstChild;const n=t?t.textContent.trim():'';const i=ord.indexOf(n);return i<0?99:i};
     [...L.querySelectorAll('section.card[data-t]')].filter(e=>key(e)<99).sort((a,b)=>key(a)-key(b)).forEach(e=>L.appendChild(e));[...L.querySelectorAll('section.card[data-t]')].filter(e=>key(e)===99).forEach(e=>L.appendChild(e))}if(tab==='liste')lbLoad();for(const el of $('lobbyBody').querySelectorAll('[data-t]'))el.hidden=el.dataset.t!==tab}
 
 $('lobbyBody').addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||t.disabled||t.getAttribute('aria-disabled'))return;
@@ -4120,7 +4149,8 @@ idbGet().then(j=>{if(!j)return store();try{const o=JSON.parse(j);if(xpOf(o)>xpOf
 /* Zahnrad: Kamera, Ton, Vollbild, Drehen und alle Optionen an einem Ort */
 function gearRender(){const c=S.cfg,GL={low:['Grafik sparsam','Für schwächere Handys · läuft am flüssigsten'],high:['Grafik hoch','Standard · Schatten, dichtes Gras, Effekte'],ultra:['Grafik Ultra','Für PC und starke Handys · Bloom, Umgebungsverdeckung, Himmelsreflexionen']},gk=GL[c.gfx]?c.gfx:'high',O=[['gfx',gk!=='low',GL[gk][0],GL[gk][0],GL[gk][1]+' · tippen für nächste Stufe · ab der nächsten Runde'],['dmgNum',c.dmgNum!==false,'Schadenszahlen an','Schadenszahlen aus','Zahlen über getroffenen Gegnern'],['critFx',c.critFx!==false,'Kopfschuss-Effekt an','Kopfschuss-Effekt aus','Goldene Zahl mit Lichtring']];
   $('gearOpts').innerHTML=O.map(o=>`<button class="opt" data-o="${o[0]}" aria-pressed="${o[1]}"><b>${o[1]?o[2]:o[3]}</b><span>${o[4]} · tippen zum Umschalten</span></button>`).join('')+`<button class="opt" data-o="exp"><b>Spielstand sichern</b><span>Code kopieren, um alles auf ein anderes Gerät mitzunehmen</span></button><button class="opt" data-o="imp"><b>Spielstand laden</b><span>Code einfügen und Fortschritt übernehmen</span></button>`}
-document.addEventListener('click',e=>{const g=e.target.closest('[data-gear]');if(g){gearRender();$('gear').hidden=false;$('oriBtn').hidden=!(screen.orientation&&screen.orientation.lock);return}
+document.addEventListener('click',e=>{const lo=e.target.closest('#lobbyBody .opt.locked');if(lo){const card=lo.closest('section.card'),sel=card&&card.querySelector('.sel')||(()=>{const p=document.createElement('p');p.className='sel';card.querySelector('.opts').after(p);return p})(),sp=lo.querySelector('span:not(.tx)');if(sp)sel.textContent='🔒 '+lo.querySelector('b').firstChild.textContent.trim()+': '+sp.textContent}
+  const g=e.target.closest('[data-gear]');if(g){gearRender();$('gear').hidden=false;$('oriBtn').hidden=!(screen.orientation&&screen.orientation.lock);return}
   if(e.target.id==='gearX'||e.target.id==='gear'){$('gear').hidden=true;return}
   const o=e.target.closest('#gearOpts [data-o]');if(!o)return;const k=o.dataset.o,c=S.cfg;
   if(k==='exp')return expSave();if(k==='imp')return impSave();
