@@ -933,8 +933,12 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
         if(o.wp.length===1&&o.wp[0].id==='pistol'&&b.wp.length>=3){const wi=worst(b),wq=b.wp[wi];if(wq.id!=='pistol'){b.wp.splice(wi,1);b.mags.splice(wi,1);if(b.cur>=b.wp.length)b.cur=0;give({k:'w',id:wq.id,rar:wq.rar});break}}}
       const fighting=ms.find(o=>o.alive&&!o.down&&o.see&&o.see.alive&&d2(b,o)<750);
       const lead=m.bots.slice(b.team*3,b.team*3+3).find(o=>o.alive&&!o.down);
-      if(fighting&&equipped){b.priority='Team';teamDone=true;const t=fighting.see;b.lastSeen={x:t.x,y:t.y,t:m.t};go(t.x+(fighting.x-t.x)*.35,t.y+(fighting.y-t.y)*.35);b.sprint=b.sta>30;b.state='Hilft '+fighting.name}
-      else if(lead&&lead!==b&&d2(b,lead)>230){b.priority='Team';teamDone=true;const a=Math.atan2(b.y-lead.y,b.x-lead.x);go(lead.x+Math.cos(a)*90,lead.y+Math.sin(a)*90);b.sprint=d2(b,lead)>420&&b.sta>45;b.state='Folgt dem Team'}}}
+      if(fighting&&equipped){b.priority='Team';teamDone=true;const t=fighting.see;b.lastSeen={x:t.x,y:t.y,t:m.t};
+        /* flankieren: nicht hinter den Kameraden, sondern seitlich zum Gegner, damit er aus zwei Richtungen unter Feuer gerät */
+        const dx=fighting.x-t.x,dy=fighting.y-t.y,dl=Math.hypot(dx,dy)||1,side=(b.i%2?1:-1),rg=Math.min(b.W[b.wp[b.cur].id].range*.8,dl);
+        const fx=t.x+(dx/dl*Math.cos(1.1*side)-dy/dl*Math.sin(1.1*side))*rg,fy=t.y+(dy/dl*Math.cos(1.1*side)+dx/dl*Math.sin(1.1*side))*rg;
+        const ok=validGoal(m,fx,fy);if(ok){go(ok.x,ok.y);b.state='Flankiert für '+fighting.name}else{go(t.x+dx*.35,t.y+dy*.35);b.state='Hilft '+fighting.name}b.sprint=b.sta>30}
+      else if(lead&&lead!==b&&d2(b,lead)>(b.tg?520:400)){b.priority='Team';teamDone=true;const a=Math.atan2(b.y-lead.y,b.x-lead.x);go(lead.x+Math.cos(a)*220,lead.y+Math.sin(a)*220);b.sprint=d2(b,lead)>600&&b.sta>45;b.state='Folgt dem Team'}}}
   if(teamDone){}
   else if(dg){b.priority='Granate';b.healT=0;const d=Math.hypot(b.x-dg.x,b.y-dg.y)||1;let escape=null,score=-Infinity;const away=Math.atan2(b.y-dg.y,b.x-dg.x);for(const offset of[0,.6,-.6,1.2,-1.2,1.8,-1.8,Math.PI]){const a=away+offset,x=b.x+Math.cos(a)*160,y=b.y+Math.sin(a)*160;if(!walkClear(m,b.x,b.y,x,y))continue;const v=Math.hypot(x-dg.x,y-dg.y)-Math.abs(offset)*8;if(v>score){score=v;escape={x,y}}}if(escape)go(escape.x,escape.y);else go(b.x+Math.cos(away)*160,b.y+Math.sin(away)*160);b.sprint=b.urgent=true;b.state='Weicht Granate aus';b.fire=foe&&fd<120?foe:null}
   else if(zoneCritical){b.priority='Sichere Zone';b.healT=0;zone();b.sprint=b.urgent=true;b.state='Flieht vor dem Sturm';b.fire=foe}
