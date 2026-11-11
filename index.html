@@ -692,7 +692,7 @@ function newMatch(cfg,o){o=o||{};const W=o.W||32000,N=o.n||1000,id=BIOMES[o.biom
   if(cfg)m.bots.push(mkBot(m,0,'Dein Bot',true,cfg,cfg.skills,-1));
   while(m.bots.length<N){const e=randCfg(),k=ord[m.bots.length%1000];m.bots.push(mkBot(m,m.bots.length,PRE[k%25]+' '+SUF[(k/25)|0],false,e.cfg,e.pts,e.tier))}
   /* Trio: je drei Bots bilden ein Team, landen zusammen und spielen zusammen */
-  if((cfg&&cfg.mode==='trio')||o.trio){m.trio=true;for(let i=0;i<m.bots.length;i++){const b=m.bots[i];b.team=(i/3)|0;if(i%3){const L=m.bots[i-i%3];for(let k=0;k<14;k++){const a=rr(0,TAU),d=rr(40,95),x=L.x+Math.cos(a)*d,y=L.y+Math.sin(a)*d;if(freeSpot(m,x,y)){b.x=b.px=x;b.y=b.py=y;break}}}}
+  if((cfg&&cfg.mode==='trio')||o.trio){m.trio=true;for(let i=0;i<m.bots.length;i++){const b=m.bots[i];b.team=(i/3)|0;if(i%3){const L=m.bots[i-i%3];for(let k=0;k<14;k++){const a=rr(0,TAU)+(i%3)*2.1,d=rr(120,210),x=L.x+Math.cos(a)*d,y=L.y+Math.sin(a)*d;if(freeSpot(m,x,y)){b.x=b.px=x;b.y=b.py=y;break}}}}
     for(const b of m.bots)b.tab=b.isP?(cfg&&cfg.teamAb)||null:(b.tier>=2&&rnd()<.5?pick(['tf_sani','tf_zaeh','tf_vers','tf_kampf','tf_funk']):null);
     m.teamsAlive=Math.ceil(m.bots.length/3);m.teams=m.teamsAlive}
   nextZone(m);return m}
@@ -1038,8 +1038,8 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     if(m.t>b.banT){b.ban.clear();b.banT=m.t+30}
     /* Ziel nach Bedarf gewichten: Medikit bei wenig Leben, Schildtrank ohne Schild, Waffe ohne Waffe, bessere Kisten zuerst */
     if(!tg){const wM=b.hp<b.max*.6?3:b.med===0?1.6:1,wS=b.sh<50&&b.pot===0?2:1;
-      let i0=null,d0=1e9;gNear(m.lg,b.x,b.y,480,l=>{if(b.ban.has(l)||!want(b,l))return;const d=d2(b,l);if(d>480||Math.hypot(l.x-s.x,l.y-s.y)>=sr)return;const e=d/(l.k==='g'?1.3:l.k==='m'?wM:l.k==='s'?wS:(l.k==='a'&&!b.vest)||(l.k==='h'&&!b.helm)?5:l.k==='a'||l.k==='h'?2:l.k==='n'?1:equipped?1+l.rar*.25:3);if(e<d0){d0=e;i0=l}});
-      let c0=null,e0=1e9;gNear(m.cg,b.x,b.y,560,c=>{if(c.open||b.ban.has(c))return;const d=d2(b,c);if(kit&&c.q<2&&d>240)return;if(d>560||Math.hypot(c.x-s.x,c.y-s.y)>=sr)return;const e=d/((1+c.q*.5)*(equipped?1:1.8));if(e<e0){e0=e;c0=c}});
+      const claimed=m.trio?new Set(mates(m,b).map(o=>o.tg).filter(Boolean)):null;let i0=null,d0=1e9;gNear(m.lg,b.x,b.y,480,l=>{if(b.ban.has(l)||!want(b,l)||claimed&&claimed.has(l))return;const d=d2(b,l);if(d>480||Math.hypot(l.x-s.x,l.y-s.y)>=sr)return;const e=d/(l.k==='g'?1.3:l.k==='m'?wM:l.k==='s'?wS:(l.k==='a'&&!b.vest)||(l.k==='h'&&!b.helm)?5:l.k==='a'||l.k==='h'?2:l.k==='n'?1:equipped?1+l.rar*.25:3);if(e<d0){d0=e;i0=l}});
+      let c0=null,e0=1e9;gNear(m.cg,b.x,b.y,560,c=>{if(c.open||b.ban.has(c)||claimed&&claimed.has(c))return;const d=d2(b,c);if(kit&&c.q<2&&d>240)return;if(d>560||Math.hypot(c.x-s.x,c.y-s.y)>=sr)return;const e=d/((1+c.q*.5)*(equipped?1:1.8));if(e<e0){e0=e;c0=c}});
       tg=i0&&(!c0||d0<=e0+30)?i0:c0;
       if(!tg&&equipped&&P.conf<1.3)for(const q of m.drops)if(!q.open&&!b.ban.has(q)&&d2(b,q)<1500&&Math.hypot(q.x-s.x,q.y-s.y)<sr){tg=q;break}
       if(tg){b.tg=tg;b.tgT=m.t}}
