@@ -925,6 +925,13 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     if(engage&&m.t<b.calmT&&fd>w.range&&!attacked&&!endgame&&!weakFoe)engage=false;
     if(engage){if(m.t-b.engT>3)b.fightT=m.t;b.engT=m.t+2.2;b.lastFoe=foe;if(m.t-b.fightT>9&&b.style!=='rusher'&&!attacked&&fd>w.range){b.calmT=m.t+9;b.engT=-9}}}
   /* Trio-Verhalten: wiederbeleben, helfen, Ausrüstung teilen, zusammenbleiben. Kampf, Granaten und akute Sturmgefahr gehen vor. */
+  /* Hechtsprung: kostet die halbe Ausdauerleiste, bringt ihn schnell ein paar Meter weit und flach auf den Boden */
+  const canDive=!b.dive&&!b.down&&b.sta>=b.staMax*.5&&m.t>(b.diveT||0)&&b.act!=='revive';
+  const dive=(ang,why)=>{const L=78;for(const off of[0,.4,-.4,.8,-.8]){const a=ang+off,x=b.x+Math.cos(a)*L,y=b.y+Math.sin(a)*L;if(walkClear(m,b.x,b.y,x,y)){b.dive={vx:Math.cos(a)*L/.32,vy:Math.sin(a)*L/.32,t:.32};b.sta-=b.staMax*.5;b.diveT=m.t+5;b.state=why;b.go=false;b.fire=null;return true}}return false};
+  if(canDive){if(dg&&Math.hypot(b.x-dg.x,b.y-dg.y)<110&&dive(Math.atan2(b.y-dg.y,b.x-dg.x),'Hechtet weg von der Granate'))return;
+    if(foe&&foe.fire===b&&b.flash>.05&&fd>90){let best=null,bd=95;gNear(m.og,b.x,b.y,95,o=>{const q=coverPoint(o,foe.x,foe.y),d=Math.hypot(q.x-b.x,q.y-b.y);if(d>30&&d<bd&&freeSpot(m,q.x,q.y)&&!los(m,foe,{x:q.x,y:q.y,alive:true,pose:2},o.low)){bd=d;best=q}});
+      if(best&&dive(Math.atan2(best.y-b.y,best.x-b.x),'Hechtet in Deckung'))return;
+      const fw=foe.W[foe.wp[foe.cur].id];if(fw.dmg>=40&&rnd()<.35&&dive(Math.atan2(foe.y-b.y,foe.x-b.x)+(rnd()<.5?1.5:-1.5),'Hechtet zur Seite'))return}}
   let teamDone=false;
   if(m.trio&&!dg&&!zoneCritical){const ms=mates(m,b);
     const dn=ms.filter(o=>o.alive&&o.down).sort((p,q)=>d2(b,p)-d2(b,q))[0];
@@ -1071,10 +1078,12 @@ function think(m,b,dt,bi){if(m.t<DROP)return;
   if(b.rel>0&&(b.rel-=dt)<=0)b.mags[b.cur]=magOf(b,b.wp[b.cur].id);
   const s=m.storm;if((b.stT+=dt)>=.13){if(Math.hypot(b.x-s.x,b.y-s.y)>s.r){hurt(m,b,m.ph[s.ph].dps*b.stT*(b.perks.has('p_storm')?.5:1),null);if(!b.alive)return}b.stT=0}
   if(b.down){b.hp-=dt*(b.tab==='tf_zaeh'?.25:.5);if(b.hp<=0){die(m,b,b.downBy,false);return}
-    b.pose=2;b.fire=null;b.act='';b.sprint=false;b.state=b.rvBy?'Wird wiederbelebt':'Am Boden · '+Math.ceil(b.hp)+' Leben'+(m.t-b.downT<10?' · geschützt':'');
+    b.pose=2;b.fire=null;b.act='';b.sprint=false;b.see=null;b.ta=b.a;b.state=b.rvBy?'Wird wiederbelebt':'Am Boden · '+Math.ceil(b.hp)+' Leben'+(m.t-b.downT<10?' · geschützt':'');
     let nm=null,nd=1e9;for(const o of mates(m,b))if(o.alive&&!o.down){const d=d2(b,o);if(d<nd){nd=d;nm=o}}
     b.go=false;b.vx=b.vy=0}
   else if(b.due||(b.bT-=dt)<=0){b.due=false;b.bT=bi;const p0=b.pose;brain(m,b);if(p0===2&&b.pose!==2)b.up=.4}
+  if(b.dive){const q=b.dive;q.t-=dt;const nx=b.x+q.vx*dt,ny=b.y+q.vy*dt;if(walkClear(m,b.x,b.y,nx,ny)){b.x=nx;b.y=ny}else q.t=0;b.pose=2;b.fire=null;b.mv=true;b.a=b.ta=Math.atan2(q.vy,q.vx);
+    b.moveSpeed=Math.hypot(q.vx,q.vy);b.motionX=b.x;b.motionY=b.y;if(q.t<=0){b.dive=null;b.up=.4;b.due=true}return}
   b.mv=false;b.run=false;if(!b.go||b.act!==''){b.vx*=.6;b.vy*=.6}
   if(b.act==='revive'){const t=b.rvT;b.moveSpeed=0;b.motionX=b.x;b.motionY=b.y;
     if(!t||!t.alive||!t.down||d2(b,t)>34||b.flash>.1&&b.lastHit&&b.lastHit.alive){b.act='';if(t&&t.rvBy===b)t.rvBy=null;b.due=true}
@@ -1113,11 +1122,11 @@ function think(m,b,dt,bi){if(m.t<DROP)return;
   else if(b.jump>0)b.useT=.5;
   else if((b.useT-=dt)<=0)b.sta=Math.min(b.staMax,b.sta+10*(b.perks.has('p_sprint')?1.5:1)*dt);
   if(b.exh&&b.sta>=15)b.exh=false;
-  if(!b.fire&&b.act===''){const sv=b.see;if(sv&&sv.alive){if(!b.mv||!b.run)b.ta=Math.atan2(sv.y-b.y,sv.x-b.x)}else if(!b.mv)b.ta+=Math.cos(m.t*.9+b.i)*1.1*dt}
+  if(!b.down&&!b.fire&&b.act===''){const sv=b.see;if(sv&&sv.alive){if(!b.mv||!b.run)b.ta=Math.atan2(sv.y-b.y,sv.x-b.x)}else if(!b.mv)b.ta+=Math.cos(m.t*.9+b.i)*1.1*dt}
   const f=b.fire;if(f&&f.alive)b.ta=Math.atan2(f.y-b.y,f.x-b.x);
   /* Drehen braucht Zeit: höchstens 400° pro Sekunde, geschossen wird erst, wenn die Waffe auf das Ziel zeigt */
-  let da=b.ta-b.a;da=Math.atan2(Math.sin(da),Math.cos(da));{const mx=7*b.turnK*dt;b.a+=da>mx?mx:da<-mx?-mx:da}
-  if(f){if(!f.alive){b.fire=null;b.due=true}else if(Math.abs(Math.atan2(Math.sin(b.ta-b.a),Math.cos(b.ta-b.a)))<.22&&los(m,b,f,b.pose>0||f.pose>0)){const fd=d2(b,f);for(let k=0;k<3&&b.cd<=0&&f.alive;k++){const c0=b.cd;tryFire(m,b,f,fd);if(b.cd===c0)break}}}}
+  let da=b.down?0:b.ta-b.a;da=Math.atan2(Math.sin(da),Math.cos(da));{const mx=7*b.turnK*dt;b.a+=da>mx?mx:da<-mx?-mx:da}
+  if(f&&!b.down&&!b.dive){if(!f.alive){b.fire=null;b.due=true}else if(Math.abs(Math.atan2(Math.sin(b.ta-b.a),Math.cos(b.ta-b.a)))<.22&&los(m,b,f,b.pose>0||f.pose>0)){const fd=d2(b,f);for(let k=0;k<3&&b.cd<=0&&f.alive;k++){const c0=b.cd;tryFire(m,b,f,fd);if(b.cd===c0)break}}}}
 
 /* Bots weit weg von der Kamera rechnen nur jeden dritten Schritt mit dreifacher Schrittweite */
 function step(m){if(m.over)return;m.t+=DT;m.tick++;stormStep(m);
