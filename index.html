@@ -784,7 +784,7 @@ function tryFire(m,b,foe,fd){const cw=b.wp[b.cur],w=b.W[cw.id];if(b.rel>0||b.cd>
   let sp=w.spread*TUNE.spread*b.sk.aim*(b.run?2.2:b.mv?1.5:1)*(foe.mv?(foe.run?1.9:1.25):1)*(b.pose===2?.6:b.pose===1?.7:1)*(b.jump>0?2:1);
   let tr=R*(foe.pose===2?.55:foe.pose===1?1.08:1);if(foe.inCov&&Math.cos(Math.atan2(b.y-foe.y,b.x-foe.x)-foe.covA)>.5)tr*=.55;
   if(b.style==='ambush'&&!b.mv)sp*=.6;
-  if(b.perks.has('p_first')&&m.t-b.lastShotT>2)sp*=.15;
+  if(b.perks.has('p_first')&&m.t-b.lastShotT>2)sp*=.15;if(m.t<(b.comboT||0)&&foe===b.comboF)sp*=.6;
   const dh=height(m,b.x,b.y)-height(m,foe.x,foe.y);if(dh>18)sp*=b.perks.has('p_high')?.55:.75;else if(dh<-18)sp*=1.2;
   b.lastShotT=m.t;const base=Math.atan2(foe.y-b.y,foe.x-b.x),mul=rarM(cw.id,cw.rar)*fall(w,fd)*(b.perks.has('p_clutch')&&m.alive<=25?1.2:1)*(b.perks.has('p_rally')&&mates(m,b).some(o=>o.alive&&!o.down&&d2(o,b)<250)?1.1:1);
   const f=m.focus,vis=f&&Math.abs(b.x-f.x)<1500&&Math.abs(b.y-f.y)<1500;
@@ -856,7 +856,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
   const sight=reach*b.sk.sight*(m.trio&&(b.tab==='tf_funk'||mates(m,b).some(o=>o.alive&&o.tab==='tf_funk'))?1.15:1);b.sight=sight;
   let foe=null,fd=1e9,best=1e9,nSee=0;
   {const g=m.bg,cs=g.cs,n=g.n,x0=Math.max(0,((b.x-sight)/cs)|0),x1=Math.min(n-1,((b.x+sight)/cs)|0),y0=Math.max(0,((b.y-sight)/cs)|0),y1=Math.min(n-1,((b.y+sight)/cs)|0);
-    for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++){const a=g.c[cy*n+cx];for(let i=0;i<a.length;i++){const o=a[i];if(o===b||!o.alive||m.trio&&o.team===b.team)continue;const d=d2(b,o);const lh=o===b.lastHit&&m.t-b.lastHitT<3;
+    for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++){const a=g.c[cy*n+cx];for(let i=0;i<a.length;i++){const o=a[i];if(o===b||!o.alive||m.trio&&o.team===b.team||o.down&&m.t-o.downT<10)continue;const d=d2(b,o);const lh=o===b.lastHit&&m.t-b.lastHitT<3;
       /* Sichtkegel: nach vorn weit, rundum nur auf kurze Distanz. Wer trifft, verrät sich bis 560 weit. */
       if(o.smT>m.t&&d>80&&Math.hypot(o.x-o.smX,o.y-o.smY)<95)continue;
       if(d>(lh?Math.max(sight,560):sight*o.vis*(o.pose===1?.85:1)))continue;
@@ -864,7 +864,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
         /* außerhalb des Kegels hilft nur das Gehör: Schritte in der Nähe (Sprint weiter, Hocke lautlos) und Schüsse */
         if(Math.abs(da)>b.fov/2&&!((o.mv&&o.pose===0&&d<(o.run?230:130)*b.sk.sight*o.quiet)||(m.t-o.lastShotT<.8&&d<520)))continue}
       if(!los(m,b,o,o.pose>0))continue;nSee++;
-      const hf=Math.min(1,(o.hp+o.sh)/150),sc=d*(b.style==='hunter'?.3+.7*hf:.6+.4*hf)*(o===b.lastFoe?.58:1)*(lh?.3:1);if(sc<best){best=sc;foe=o;fd=d}}}}
+      const hf=Math.min(1,(o.hp+o.sh)/150),sc=d*(b.style==='hunter'?.3+.7*hf:.6+.4*hf)*(o===b.lastFoe?.58:1)*(lh?.3:1)*(o.down?12:o.act==='revive'?.45:1);if(sc<best){best=sc;foe=o;fd=d}}}}
   if(m.t<m.grace){foe=null;fd=1e9;nSee=0}
   b.see=foe;if(foe)b.lastSeen={x:foe.x,y:foe.y,t:m.t};
   /* ohne Gegner in Sicht: erst die Waffe in der Hand, dann reihum alle anderen nachladen */
@@ -883,7 +883,10 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     /* Festlegen statt Zappeln: innerhalb derselben Absicht bleibt ein Ziel mindestens 0,9 s bestehen, außer es ist erreicht oder nur leicht verschoben */
     if(b.lgT!=null&&b.lgP===b.priority&&b.lgTg===b.tg&&b.priority!=='Granate'&&m.t-b.lgT<1.1&&Math.hypot(x-b.lgx,y-b.lgy)>40&&Math.hypot(b.lgx-b.x,b.lgy-b.y)>18){x=b.lgx;y=b.lgy}else{b.lgx=x;b.lgy=y;b.lgT=m.t;b.lgP=b.priority;b.lgTg=b.tg}
     const p=validGoal(m,x,y);if(p){b.gx=p.x;b.gy=p.y;b.go=true}else{b.go=false;b.path=null;b.cover=b.spot=b.wpt=null;b.lgT=null}};
-  let dg=null;for(const q of m.gren)if(q.from!==b&&Math.hypot(q.x-b.x,q.y-b.y)<140&&(!dg||q.t<dg.t))dg=q;
+  let dg=null;for(const q of m.gren){if(q.from===b)continue;const dq=Math.hypot(q.x-b.x,q.y-b.y);if(dq>160)continue;
+    /* bemerkt wird sie im Sichtkegel oder ganz nah beim Aufschlag; wer gerade schießt, ist oft abgelenkt */
+    let da=Math.atan2(q.y-b.y,q.x-b.x)-b.a;da=Math.atan2(Math.sin(da),Math.cos(da));const busy=b.fire&&((b.i*7+q.id*13)%10)<5;
+    const seen=(Math.abs(da)<b.fov/2&&!busy)||(dq<50&&q.t<.2);if(seen&&(!dg||q.t<dg.t))dg=q}
   const zoneDistance=Math.max(0,dn-s.nr+60),zoneETA=zoneDistance/(85*b.sk.spd),zoneDeadline=s.shr?Math.max(0,ph.shrink-s.t+ph.wait):Math.max(0,ph.wait-s.t),zoneCritical=outside&&!stay;
   const safeHeal=!dg&&!zoneCritical&&!foe&&m.t-b.lastHitT>=5&&m.t-b.lastShotT>=5;
   /* Fähigkeit: der Bot zündet sie selbst, wenn es eng wird */
@@ -928,7 +931,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
   /* Hechtsprung: kostet die halbe Ausdauerleiste, bringt ihn schnell ein paar Meter weit und flach auf den Boden */
   const canDive=!b.dive&&!b.down&&b.sta>=b.staMax*.5&&m.t>(b.diveT||0)&&b.act!=='revive';
   const dive=(ang,why)=>{const L=78;for(const off of[0,.4,-.4,.8,-.8]){const a=ang+off,x=b.x+Math.cos(a)*L,y=b.y+Math.sin(a)*L;if(walkClear(m,b.x,b.y,x,y)){b.dive={vx:Math.cos(a)*L/.32,vy:Math.sin(a)*L/.32,t:.32};b.sta-=b.staMax*.5;b.diveT=m.t+5;b.state=why;b.go=false;b.fire=null;return true}}return false};
-  if(canDive){if(dg&&Math.hypot(b.x-dg.x,b.y-dg.y)<110&&dive(Math.atan2(b.y-dg.y,b.x-dg.x),'Hechtet weg von der Granate'))return;
+  if(canDive){if(dg&&Math.hypot(b.x-dg.x,b.y-dg.y)<135&&dive(Math.atan2(b.y-dg.y,b.x-dg.x),'Hechtet weg von der Granate'))return;
     if(foe&&foe.fire===b&&b.flash>.05&&fd>90){let best=null,bd=95;gNear(m.og,b.x,b.y,95,o=>{const q=coverPoint(o,foe.x,foe.y),d=Math.hypot(q.x-b.x,q.y-b.y);if(d>30&&d<bd&&freeSpot(m,q.x,q.y)&&!los(m,foe,{x:q.x,y:q.y,alive:true,pose:2},o.low)){bd=d;best=q}});
       if(best&&dive(Math.atan2(best.y-b.y,best.x-b.x),'Hechtet in Deckung'))return;
       const fw=foe.W[foe.wp[foe.cur].id];if(fw.dmg>=40&&rnd()<.35&&dive(Math.atan2(foe.y-b.y,foe.x-b.x)+(rnd()<.5?1.5:-1.5),'Hechtet zur Seite'))return}}
@@ -967,7 +970,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     b.fire=foe;b.sprint=false;b.urgent=true;}
   else if(engage){b.priority='Kampf';b.fire=foe;b.state='Kämpft';
     /* Granate: gegen Gegner, die stillstehen, hocken oder in Deckung sitzen */
-    if(b.gren>0&&m.t>b.grenT&&fd>110&&fd<340&&!foe.run&&(foe.inCov||!foe.mv||foe.pose===1)){b.gren--;b.grenT=m.t+7;m.gren.push({id:m.grenN++,x0:b.x,y0:b.y,x:foe.x+rr(-25,25),y:foe.y+rr(-25,25),t:.9,T:.9,from:b});ev(m,'throw',b.x,b.y,900);b.state='Wirft Granate'}
+    if(b.gren>0&&m.t>b.grenT&&fd>110&&fd<340&&!foe.run&&(foe.inCov||!foe.mv||foe.pose===1)){b.gren--;b.grenT=m.t+7;{const ck=rnd()<.7?rr(.42,.58):.9;m.gren.push({id:m.grenN++,x0:b.x,y0:b.y,x:foe.x+rr(-25,25),y:foe.y+rr(-25,25),t:ck,T:ck,from:b});b.comboT=m.t+ck+1.4;b.comboF=foe}ev(m,'throw',b.x,b.y,900);b.state='Wirft Granate'}
     const ux=(foe.x-b.x)/fd,uy=(foe.y-b.y)/fd;let cov=null;
     if(b.stance&&fd>(b.covO?75:110)&&b.style!=='rusher'){const cp=o=>{const q=coverPoint(o,foe.x,foe.y);return{...q,o,fo:Math.hypot(o.x-foe.x,o.y-foe.y)}};
       if(b.covO&&d2(b,b.covO)<120){const q=cp(b.covO);if(freeSpot(m,q.x,q.y))cov=q;}
@@ -1141,7 +1144,7 @@ function step(m){if(m.over)return;m.t+=DT;m.tick++;stormStep(m);
     if(!far&&f){const dx=b.x-f.x,dy=b.y-f.y;far=dx*dx+dy*dy>3240000}
     if(far){if(b.i%3===k3){think(m,b,DT*3,m.bi*DT*3);b.px=b.x;b.py=b.y}}else{b.px=b.x;b.py=b.y;think(m,b,DT,m.bi*DT)}}
   for(let i=m.gren.length-1;i>=0;i--){const q=m.gren[i];if((q.t-=DT)>0)continue;m.gren.splice(i,1);ev(m,'boom',q.x,q.y,1400);const fc=m.focus;if(fc&&Math.abs(q.x-fc.x)<1500&&Math.abs(q.y-fc.y)<1500)m.fx.push({x:q.x,y:q.y,t:.45});
-    gNear(m.bg,q.x,q.y,140,o=>{if(!o.alive)return;const d=Math.hypot(o.x-q.x,o.y-q.y);if(d<100)hurt(m,o,150*(1-d/100*.7),q.from,false,true)})}
+    gNear(m.bg,q.x,q.y,170,o=>{if(!o.alive)return;const d=Math.hypot(o.x-q.x,o.y-q.y);if(d<128)hurt(m,o,150*(1-d/128*.7),q.from,false,true)})}
   for(let i=m.tracers.length-1;i>=0;i--)if((m.tracers[i].t-=DT)<=0)m.tracers.splice(i,1);
   for(let i=m.fx.length-1;i>=0;i--)if((m.fx[i].t-=DT)<=0)m.fx.splice(i,1);
   for(let i=m.hits.length-1;i>=0;i--)if((m.hits[i].t-=DT)<=0)m.hits.splice(i,1);
