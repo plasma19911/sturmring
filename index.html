@@ -2814,7 +2814,7 @@ function newMatch(cfg,o){o=o||{};const tsz=(cfg&&cfg.mode==='trio')||o.trio?3:(c
     m.teamsAlive=Math.ceil(m.bots.length/m.tsz);m.teams=m.teamsAlive}
   nextZone(m);{m.vend=[];const rs=m.obs.filter(o=>o.k==='b'&&o.hw>30&&o.hh>30&&!o.rot2);for(let i=0;i<4000&&m.vend.length<250;i++){if(!rs.length)break;const q=rs[(rnd()*rs.length)|0],sd=rnd()<.5?1:-1,ax=rnd()<.5;let x,y,a;
     if(ax){x=q.x+sd*(q.hw+12.6);y=q.y+rr(-q.hh*.55,q.hh*.55);a=sd>0?0:Math.PI}else{y=q.y+sd*(q.hh+12.6);x=q.x+rr(-q.hw*.55,q.hw*.55);a=sd>0?Math.PI/2:-Math.PI/2}
-    const fx=x+Math.cos(a)*34,fy=y+Math.sin(a)*34;if(!freeSpot(m,fx,fy))continue;if(m.vend.some(v=>Math.hypot(v.x-x,v.y-y)<800))continue;m.vend.push({x,y,a,fx,fy})}}
+    const fx=x+Math.cos(a)*34,fy=y+Math.sin(a)*34;if(!freeSpot(m,fx,fy))continue;if(m.vend.some(v=>Math.hypot(v.x-x,v.y-y)<800))continue;if(m.chests.some(c=>Math.hypot(c.x-x,c.y-y)<48||Math.hypot(c.x-fx,c.y-fy)<36))continue;m.vend.push({x,y,a,fx,fy})}}
   return m}
 const prot=b=>b&&b.tab==='tf_eisern'?15:10;
 const teamOf=(m,b)=>m.bots.slice(b.team*m.tsz,b.team*m.tsz+m.tsz);
@@ -3305,7 +3305,7 @@ function think(m,b,dt,bi){if(m.t<DROP||m.t<(b.rsL||0))return;
 function step(m){if(m.over)return;m.t+=DT;m.tick++;stormStep(m);
   /* Versorgungskiste: landet regelmäßig in der nächsten Zone */
   if(m.N>100&&m.t>m.nextDrop){m.nextDrop=m.t+80;const s=m.storm;if(s.nr>300)for(let tr=0;tr<20;tr++){const a=rr(0,TAU),d=Math.sqrt(rnd())*s.nr*.8,x=s.nx+Math.cos(a)*d,y=s.ny+Math.sin(a)*d;if(!freeSpot(m,x,y))continue;
-      const c={x,y,q:3,open:false,prog:0,rot:rr(0,TAU),drop:true,land:m.t+14,pa:rr(0,TAU)};(m.inbound||(m.inbound=[])).push(c);m.feed.push({sys:'Versorgungsabwurf im Anflug',t:m.t,x,y,me:true});ev(m,'plane',x,y,1e9);break}}
+      if(m.vend&&m.vend.some(v=>Math.hypot(v.x-x,v.y-y)<60))continue;const c={x,y,q:3,open:false,prog:0,rot:rr(0,TAU),drop:true,land:m.t+14,pa:rr(0,TAU)};(m.inbound||(m.inbound=[])).push(c);m.feed.push({sys:'Versorgungsabwurf im Anflug',t:m.t,x,y,me:true});ev(m,'plane',x,y,1e9);break}}
   if(m.inbound&&m.inbound.length)for(let i=m.inbound.length-1;i>=0;i--){const c=m.inbound[i];if(m.t<c.land)continue;m.inbound.splice(i,1);m.chests.push(c);gAdd(m.cg,c);m.drops.push(c);m.feed.push({sys:'Versorgungskiste gelandet',t:m.t,x:c.x,y:c.y,me:true});ev(m,'drop',c.x,c.y,1e9)}
   /* Kopfgeld: wer die meisten Abschüsse hat, ist auf der Karte markiert */
   if(m.N>100&&m.tick%300===0){let bb=null,bk=2;for(const b of m.bots)if(b.alive&&b.kills>bk){bk=b.kills;bb=b}if(bb&&bb!==m.bounty){m.bounty=bb;m.feed.push({sys:`Kopfgeld auf ${bb.name} (${bb.kills} Kills)`,t:m.t,x:bb.x,y:bb.y,me:true})}}
