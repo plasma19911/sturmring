@@ -2471,11 +2471,11 @@ const WEAPONS={
   rifle:{n:'Sturmgewehr',cq:1.05,miss:.05,dmg:16,pel:1,rate:4.2,range:430,spread:.062,cl:1.05,fa:0.9,mag:25,reload:2.1,wt:12},
   burst:{n:'Salvengewehr',cq:1.2,miss:.05,dmg:20,pel:1,rate:3.2,range:470,spread:.05,cl:0.95,fa:1.05,mag:24,reload:2.2,wt:9},
   smg:{n:'MP',cq:.85,miss:.04,dmg:10,pel:1,rate:8,range:270,spread:.125,cl:1.4,fa:0.65,mag:28,reload:1.8,wt:14},
-  shotgun:{n:'Pumpgun',cq:1,miss:0,dmg:11,pel:7,rate:1,range:160,spread:.18,cl:2.3,fa:0.5,mag:5,reload:2.4,wt:12},
+  shotgun:{n:'Pumpgun',cq:1,miss:0,dmg:12,pel:7,rate:1,range:160,spread:.18,cl:2.3,fa:0.5,mag:5,reload:2.4,wt:12},
   dmr:{n:'Jagdgewehr',cq:2.2,miss:.09,dmg:46,pel:1,rate:1.4,range:600,spread:.04,cl:0.7,fa:1.05,mag:10,reload:2.4,wt:9},
   sniper:{n:'Scharfschütze',cq:3.5,miss:.12,dmg:95,pel:1,rate:.6,range:720,spread:.03,cl:0.5,fa:1.1,mag:4,reload:2.8,wt:8},
   lmg:{n:'Leichtes MG',cq:1.1,miss:.06,dmg:15,pel:1,rate:6.5,range:400,spread:.1,cl:1,fa:0.9,mag:60,reload:3.6,wt:7},
-  autosg:{n:'Auto-Schrotflinte',cq:1,miss:0,dmg:8,pel:6,rate:2.3,range:170,spread:.2,cl:2.0,fa:0.5,mag:8,reload:2.8,wt:10},
+  autosg:{n:'Auto-Schrotflinte',cq:1,miss:0,dmg:9,pel:6,rate:2.3,range:170,spread:.2,cl:2.0,fa:0.5,mag:8,reload:2.8,wt:10},
   revolver:{n:'Handkanone',cq:1.15,miss:.07,dmg:42,pel:1,rate:1.1,range:400,spread:.04,cl:1.15,fa:0.85,mag:6,reload:2,wt:12}};
 const LOOTW=Object.keys(WEAPONS).filter(k=>k!=='pistol'),LOOTSUM=LOOTW.reduce((a,k)=>a+WEAPONS[k].wt,0);
 const DEFPRIO=['rifle','burst','dmr','smg','shotgun','lmg','sniper','autosg','revolver'],LONGPRIO=['sniper','dmr','burst','rifle','lmg','revolver','smg','shotgun','autosg'],CLOSEPRIO=['shotgun','autosg','smg','rifle','burst','lmg','revolver','dmr','sniper'];
@@ -2850,7 +2850,7 @@ function tryFire(m,b,foe,fd){const cw=b.wp[b.cur],w=b.W[cw.id];if(b.rel>0||b.cd>
   let sp=w.spread*TUNE.spread*b.sk.aim*(b.run?2.2:b.mv?1.5:1)*(foe.mv?(foe.run?1.9:1.25):1)*(b.pose===2?.6:b.pose===1?.7:1)*(b.jump>0?2:1);
   let tr=R*(foe.pose===2?.55:foe.pose===1?1.08:1);if(foe.inCov&&Math.cos(Math.atan2(b.y-foe.y,b.x-foe.x)-foe.covA)>.5)tr*=.55;
   if(b.style==='ambush'&&!b.mv)sp*=.6;
-  if(b.perks.has('p_first')&&m.t-b.lastShotT>2)sp*=.15;sp*=1-.38*(b.ads||0);if(m.trio){if(b.perks.has('p_focus')&&mates(m,b).some(o=>o.fire===foe))sp*=.85;if(b.perks.has('p_triad'))sp*=1-.05*mates(m,b).filter(o=>o.alive&&!o.down&&d2(o,b)<300).length}if(m.t<(b.comboT||0)&&foe===b.comboF)sp*=.6;
+  if(b.perks.has('p_first')&&m.t-b.lastShotT>2)sp*=.15;sp*=1-.38*(b.ads||0);if(b.hold)sp*=.62;if(m.trio){if(b.perks.has('p_focus')&&mates(m,b).some(o=>o.fire===foe))sp*=.85;if(b.perks.has('p_triad'))sp*=1-.05*mates(m,b).filter(o=>o.alive&&!o.down&&d2(o,b)<300).length}if(m.t<(b.comboT||0)&&foe===b.comboF)sp*=.6;
   const dh=height(m,b.x,b.y)-height(m,foe.x,foe.y);if(dh>18)sp*=b.perks.has('p_high')?.55:.75;else if(dh<-18)sp*=1.2;
   b.lastShotT=m.t;const base=Math.atan2(foe.y-b.y,foe.x-b.x),mul=rarM(cw.id,cw.rar)*fall(w,fd)*(b.perks.has('p_clutch')&&m.alive<=25?1.2:1)*(b.perks.has('p_rally')&&mates(m,b).some(o=>o.alive&&!o.down&&d2(o,b)<250)?1.1:1)*(b.perks.has('p_duo')&&mates(m,b).some(o=>o.alive&&!o.down&&d2(o,b)<200)?1.08:1)*(b.perks.has('p_last')&&m.trio&&mates(m,b).every(o=>!o.alive||o.down)?1.15:1);
   const f=m.focus,vis=f&&Math.abs(b.x-f.x)<1500&&Math.abs(b.y-f.y)<1500;
@@ -3197,7 +3197,11 @@ function think(m,b,dt,bi){if(m.t<DROP)return;
   /* Drehen braucht Zeit: höchstens 400° pro Sekunde, geschossen wird erst, wenn die Waffe auf das Ziel zeigt */
   let da=b.down?0:b.ta-b.a;da=Math.atan2(Math.sin(da),Math.cos(da));{const mx=7*b.turnK*dt;b.a+=da>mx?mx:da<-mx?-mx:da}
   /* Anvisieren: ab mittlerer Distanz zieht der Bot die Waffe an die Wange (0,35 s), danach präziser; im Nahkampf Hüftfeuer ohne Verzögerung */
-  {const fdA=f&&f.alive?Math.hypot(f.x-b.x,f.y-b.y):0,want=fdA>=110&&!b.down&&!b.dive&&!b.run&&b.act==='';b.ads=clamp((b.ads||0)+(want?dt/.35:-dt/.2),0,1)}
+  {const fdA=f&&f.alive?Math.hypot(f.x-b.x,f.y-b.y):0,want=fdA>=110&&!b.down&&!b.dive&&!b.run&&b.act==='';b.ads=clamp((b.ads||0)+(want?dt/.35:-dt/.2),0,1);
+    /* Luft anhalten: voll angelegt auf größere Distanz, kostet Ausdauer, ruhigere Hand; nach höchstens 4 s muss er ausatmen */
+    const wid=b.wp[b.cur].id,far=fdA>=(wid==='sniper'||wid==='dmr'?200:300);
+    if(b.ads>=.95&&far&&b.sta>12&&!b.exh&&m.t>=(b.brCd||0)){b.hold=true;b.holdT=(b.holdT||0)+dt;b.sta-=12*dt;b.useT=.6;if(b.holdT>=4){b.hold=false;b.holdT=0;b.brCd=m.t+2}}
+    else{if(b.hold){b.brCd=m.t+1}b.hold=false;b.holdT=0}}
   if(f&&f.down&&m.t-f.downT<10){b.fire=null;b.due=true}
   else if(f&&!b.down&&!b.dive){if(!f.alive){b.fire=null;b.due=true}else if(Math.abs(Math.atan2(Math.sin(b.ta-b.a),Math.cos(b.ta-b.a)))<.22&&los(m,b,f,b.pose>0||f.pose>0)){const fd=d2(b,f);for(let k=0;k<3&&b.cd<=0&&f.alive&&!(f.down&&m.t-f.downT<10);k++){const c0=b.cd;tryFire(m,b,f,fd);if(b.cd===c0)break}}}}
 
@@ -3756,7 +3760,7 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
       if(b.run&&drop<=0&&(dustN+v.ph*10|0)%7===0&&dust.length<48)dust.push({x:X-Math.cos(b.a)*8+rr(-3,3),y:Y-Math.sin(b.a)*8+rr(-3,3),h:gh+2,t:0});
       const id=b.wp[b.cur].id,ws=b.isP?S.cfg.wskin:'std';if(v.gid!==id+ws){const gq=gunGeoOf(id,ws);v.gun.geometry=gq.geo;v.gid=id+ws;v.flash.position.set(gq.tip+4,.5,0)}
       v.vest.visible=b.vest>0;if(b.vest)v.vest.material=tierM[b.vest];v.helm.visible=b.helm>0;if(b.helm)v.helm.material=tierM[b.helm];
-      {const hk=b.flash>0?Math.sin(Math.min(1,b.flash/.15)*Math.PI*.5):0;v.model.rotation.z=hk*.3;v.model.position.x=-hk*3;v.lean=(v.lean||0)+((b.lean||0)*.34-(v.lean||0))*Math.min(1,dt*9);v.model.rotation.x=v.lean}const since=m.t-b.lastShotT;if(b.lastShotT!==v.shotSeen){v.shotSeen=b.lastShotT;const wid=b.wp[b.cur].id;if(since<.1&&wid!=='shotgun'&&wid!=='autosg'||since<.1&&rnd()<.6){const sa=b.a-Math.PI/2+rr(-.3,.3),sv=rr(55,85);if(fxP.length<PN)fxP.push({x:X+Math.cos(b.a)*6,y:Y+Math.sin(b.a)*6,h:gh+24,vx:Math.cos(sa)*sv,vy:Math.sin(sa)*sv,vh:rr(55,85),t:0,l:.9,q:SHELL,c:wid==='shotgun'||wid==='autosg'?0xb8342a:0xc9a24a,r:rnd()*6})}}{const ad=b.ads||0;v.hand.position.set(9-(since<.14?(1-since/.14)*(4.5-ad*2.5):0)+ad*1.5,30+ad*7,8-ad*5.5);v.gun.visible=true}v.hand.rotation.z=b.act==='heal'?-.85+Math.sin(m.t*3)*.08:b.act==='open'?-.45+Math.sin(m.t*7)*.18:b.rel>0?-.55+Math.sin(m.t*8)*.12:since<.14?(1-since/.14)*.18:0;
+      {const hk=b.flash>0?Math.sin(Math.min(1,b.flash/.15)*Math.PI*.5):0;v.model.rotation.z=hk*.3;v.model.position.x=-hk*3;v.lean=(v.lean||0)+((b.lean||0)*.34-(v.lean||0))*Math.min(1,dt*9);v.model.rotation.x=v.lean}const since=m.t-b.lastShotT;if(b.lastShotT!==v.shotSeen){v.shotSeen=b.lastShotT;const wid=b.wp[b.cur].id;if(since<.1&&wid!=='shotgun'&&wid!=='autosg'||since<.1&&rnd()<.6){const sa=b.a-Math.PI/2+rr(-.3,.3),sv=rr(55,85);if(fxP.length<PN)fxP.push({x:X+Math.cos(b.a)*6,y:Y+Math.sin(b.a)*6,h:gh+24,vx:Math.cos(sa)*sv,vy:Math.sin(sa)*sv,vh:rr(55,85),t:0,l:.9,q:SHELL,c:wid==='shotgun'||wid==='autosg'?0xb8342a:0xc9a24a,r:rnd()*6})}}{const ad=b.ads||0,sw=b.hold?0:ad*Math.sin(ts/260+b.i)*.6;v.hand.position.set(9-(since<.14?(1-since/.14)*(4.5-ad*2.5):0)+ad*1.5,30+ad*7+sw,8-ad*5.5);v.gun.visible=true}v.hand.rotation.z=b.act==='heal'?-.85+Math.sin(m.t*3)*.08:b.act==='open'?-.45+Math.sin(m.t*7)*.18:b.rel>0?-.55+Math.sin(m.t*8)*.12:since<.14?(1-since/.14)*.18:0;
       if(b.down){v.dn=Math.min(1,(v.dn||0)+dt*3);v.model.rotation.z=v.dn*1.52;v.model.rotation.x=0;v.model.position.y=v.dn*4;v.hand.rotation.z=.4}else v.dn=0;
       if(b.act==='revive'){const k=Math.max(0,Math.sin(ts/90));v.model.scale.y=1.04;v.model.position.y=-8+k*.6;v.model.rotation.z=-.42-k*.1;v.model.rotation.x=0;
         v.legs[0].rotation.z=-1.25;v.legs[1].rotation.z=-1.25;v.hand.position.set(15,20-k*3.2,0);v.hand.rotation.z=-1.45;v.gun.visible=false}
@@ -4064,7 +4068,7 @@ function hud(m){const s=m.storm,p=m.ph[s.ph],f=spec||P;
   if(P.kills>lastK){lastK=P.kills;const e=m.feed.slice().reverse().find(q=>q.ap);if(e){$('toast').innerHTML=`Eliminiert<small>${e.b} · ${e.w}</small>`;$('toast').hidden=false;toastT=performance.now()+2600}}
   if(toastT&&performance.now()>toastT){toastT=0;$('toast').hidden=true}
   $('feed').innerHTML=m.feed.filter(e=>e.t>m.t-7&&(e.me||(Math.abs(e.x-cam.x)<900&&Math.abs(e.y-cam.y)<900))).slice(-4).map(e=>e.sys?`<li class="me"><b>${e.sys}</b></li>`:`<li class="${e.me?'me':''}">${e.a?`<b class="${e.ap?'p':''}">${e.a}</b> › `:''}<b class="${e.bp?'p':''}">${e.b}</b> · ${e.w}</li>`).join('');
-  $('sName').textContent=f.isP?`${f.name} · Lvl ${f.lvl}`:`Zuschauen: ${f.name} (Lvl ${f.lvl})`;$('sState').textContent=f.alive?f.state+(f.jump>0?' · springt':f.run?' · sprintet':f.exh?' · außer Atem':'')+(Math.hypot(f.x-s.x,f.y-s.y)>s.r?' · im Sturm':''):'Eliminiert';$('sSt').style.width=f.sta/f.staMax*100+'%';
+  $('sName').textContent=f.isP?`${f.name} · Lvl ${f.lvl}`:`Zuschauen: ${f.name} (Lvl ${f.lvl})`;$('sState').textContent=f.alive?f.state+(f.jump>0?' · springt':f.run?' · sprintet':f.hold?' · hält die Luft an':f.ads>=.95?' · zielt':f.exh?' · außer Atem':'')+(Math.hypot(f.x-s.x,f.y-s.y)>s.r?' · im Sturm':''):'Eliminiert';$('sSt').style.width=f.sta/f.staMax*100+'%';
   $('sHp').style.width=f.hp/f.max*100+'%';$('sSh').style.width=Math.min(100,f.sh)+'%';
   const cell=(col,icon,name,sub,on)=>`<div class="${on?'on':''}" style="border-top-color:${col};background:linear-gradient(${col}33,#1b2530 70%)">${icon}<b>${name}</b>${sub}</div>`;
   const cells=f.wp.map((w,i)=>cell(RAR[w.rar].c,ICON[w.id],SHORT[w.id],f.rel>0&&i===f.cur?'lädt':f.mags[i]+' Schuss',i===f.cur));
