@@ -2793,7 +2793,7 @@ function newMatch(cfg,o){o=o||{};const tsz=(cfg&&cfg.mode==='trio')||o.trio?3:(c
     for(const b of m.bots)b.tab=b.isP?(cfg&&cfg.teamAb)||null:(b.tier>=2&&rnd()<.5?pick(['tf_sani','tf_zaeh','tf_vers','tf_kampf','tf_funk','tf_spaeh','tf_mun','tf_vorhut','tf_schild','tf_spreng','tf_arzt','tf_rueck','tf_samm','tf_mark','tf_eisern','tf_nebel','tf_blend','tf_gurt','tf_brille','tf_rett','tf_deck']):null);
     for(const b of m.bots){b.ttabs=new Set(teamOf(m,b).map(o=>o.tab).filter(Boolean));if(b.tab==='tf_spaeh')b.fov*=1.25;if(b.tab==='tf_spreng')b.gren=Math.max(b.gren,1);if(b.tab==='tf_nebel')b.smk=Math.max(b.smk,1);if(b.tab==='tf_blend')b.fls=Math.max(b.fls,1)}
     m.teamsAlive=Math.ceil(m.bots.length/m.tsz);m.teams=m.teamsAlive}
-  nextZone(m);{m.vend=[];const rs=(m.rooms||[]).slice();for(let i=0;i<400&&m.vend.length<100;i++){let x,y;if(rs.length&&rnd()<.75){const q=rs[(rnd()*rs.length)|0];const sd=rnd()<.5?1:-1;x=q.x+sd*(q.hw+22);y=q.y+rr(-q.hh*.6,q.hh*.6)}else{x=rr(200,m.W-200);y=rr(200,m.W-200)}if(!freeSpot(m,x,y))continue;if(m.vend.some(v=>Math.hypot(v.x-x,v.y-y)<1100))continue;m.vend.push({x,y,a:rr(0,TAU)})}}
+  nextZone(m);{m.vend=[];const rs=(m.rooms||[]).slice();for(let i=0;i<3000&&m.vend.length<250;i++){let x,y;if(rs.length&&rnd()<.75){const q=rs[(rnd()*rs.length)|0];const sd=rnd()<.5?1:-1;x=q.x+sd*(q.hw+22);y=q.y+rr(-q.hh*.6,q.hh*.6)}else{x=rr(200,m.W-200);y=rr(200,m.W-200)}if(!freeSpot(m,x,y))continue;if(m.vend.some(v=>Math.hypot(v.x-x,v.y-y)<800))continue;m.vend.push({x,y,a:rr(0,TAU)})}}
   return m}
 const prot=b=>b&&b.tab==='tf_eisern'?15:10;
 const teamOf=(m,b)=>m.bots.slice(b.team*m.tsz,b.team*m.tsz+m.tsz);
@@ -3736,7 +3736,7 @@ diffuseColor.rgb*=1.0-${strength}*(.55+.25*grain+.20*strata);`);
       const bm=new T.MeshStandardMaterial({vertexColors:true,roughness:.55,metalness:.25}),gm=new T.MeshBasicMaterial({vertexColors:true,toneMapped:false});
       const ib=bodyG.map(g=>new T.InstancedMesh(g,bm,vs.length)),cnt=[0,0,0],ig=new T.InstancedMesh(glowG,gm,vs.length);
       vs.forEach((v,k)=>{const h=height(m,v.x,v.y);dum.position.set(v.x,h,v.y);dum.rotation.set(0,-v.a,0);dum.scale.set(1,1,1);dum.updateMatrix();const t=(v.x|0)%3;ib[t].setMatrixAt(cnt[t]++,dum.matrix);ig.setMatrixAt(k,dum.matrix)});
-      ib.forEach((o,t)=>{o.count=cnt[t];o.castShadow=!mobileGraphics;world.add(o)});ig.count=vs.length;world.add(ig)}
+      ib.forEach((o,t)=>{o.count=cnt[t];o.frustumCulled=false;o.castShadow=!mobileGraphics;world.add(o)});ig.count=vs.length;ig.frustumCulled=false;world.add(ig)}
     const Bm=m.B,W=m.W,C=W/2,isl=Bm.hm==='isl',keep=o=>{own.push(o);return o};
     maxH=Bm.hm==='smooth'?Bm.amp:Bm.hm==='ter'?Bm.lv*Bm.step:Bm.hm==='isl'?40:1;
     /* Tageszeit: Abend färbt Licht und Himmel warm, Nacht dunkel und bläulich */
@@ -4281,6 +4281,7 @@ function drawMini(m,focus){const cv=$('mini'),[w,h,d]=fit(cv),g=cv.getContext('2
   g.fillStyle='rgba(122,46,234,.6)';g.beginPath();g.rect(0,0,w,h);g.arc(s.x*k,s.y*k,Math.max(.01,s.r*k),0,TAU);g.fill('evenodd');
   if(s.nr>0){g.strokeStyle='#fff';g.lineWidth=1;g.beginPath();g.arc(s.nx*k,s.ny*k,s.nr*k,0,TAU);g.stroke()}
   g.fillStyle='#ff9a7a';const bs=m.bots,z=m.alive>200?1:2;for(let i=0;i<bs.length;i++){const b=bs[i];if(b.alive&&!b.isP)g.fillRect(b.x*k-z/2,b.y*k-z/2,z,z)}
+  g.fillStyle='#ffd34d';for(const q of m.vend||[])g.fillRect(q.x*k-1,q.y*k-1,2.2,2.2);
   g.fillStyle='#ff3030';for(const q of m.drops)if(!q.open)g.fillRect(q.x*k-3,q.y*k-3,6,6);
   if(m.bounty&&m.bounty.alive){g.strokeStyle='#ffd34d';g.lineWidth=2;g.beginPath();g.arc(m.bounty.x*k,m.bounty.y*k,5,0,TAU);g.stroke()}
   if(focus){g.fillStyle=focus.isP?'#35e0c8':'#fff';g.strokeStyle='#0f151c';g.lineWidth=1.5;g.beginPath();g.arc(focus.x*k,focus.y*k,4.5,0,TAU);g.fill();g.stroke();g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=1;g.beginPath();g.arc(focus.x*k,focus.y*k,9,0,TAU);g.stroke()}}
