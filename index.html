@@ -2694,7 +2694,10 @@ function openChest(m,c,b){c.open=true;c.openT=m.t;ev(m,'chest',c.x,c.y,700);if(b
   
   for(const l of out)near(m,c,l)}
 
-const ABIL={adren:['Adrenalin',150,'#ff7a4a','Unter Beschuss 4 s lang 30 % schneller. Alle 40 s.'],schild:['Notschild',200,'#4aa8ff','Bei leerem Schild und wenig Leben sofort +40 Schild. Alle 60 s.']};
+const ABIL={adren:['Adrenalin',150,'#ff7a4a','Unter Beschuss 4 s lang 30 % schneller. Alle 40 s.'],schild:['Notschild',200,'#4aa8ff','Bei leerem Schild und wenig Leben sofort +40 Schild. Alle 60 s.'],
+  medi:['Feldsanitäter',200,'#ff5a6a','Unter 40 % Leben sofort +35 Leben. Alle 55 s.'],regen:['Regeneration',250,'#6aff7a','Unter Beschuss mit wenig Leben 6 s lang +5 Leben pro Sekunde. Alle 50 s.'],
+  fokus:['Fokus',250,'#ffe04a','Im Feuergefecht 5 s lang 40 % genauer. Alle 35 s.'],panzer:['Panzerhaut',300,'#9aa4ae','Unter Beschuss 5 s lang 40 % weniger Schaden. Alle 50 s.'],
+  tarn:['Tarnkappe',300,'#8a6aff','Unter Beschuss 3 s lang fast unsichtbar. Alle 45 s.'],wut:['Berserker',350,'#ff3030','Unter 30 % Leben 5 s lang 50 % schneller feuern. Alle 50 s.']};
 /* Waffenaufsätze: kleine Boni je Stufe. Gegner bekommen je nach Level eine abgespeckte Fassung. */
 const ATT={r:['Langer Lauf','range',.04,'Reichweite','+'],s:['Griff','spread',-.025,'Streuung','−'],m:['Großes Magazin','mag',.08,'Schuss im Magazin','+'],l:['Schnelllader','reload',-.05,'Nachladezeit','−']},ATTCOST=[75,150];
 function mkW(lv){const W={};for(const id in WEAPONS){const o=WEAPONS[id],w=Object.create(o);for(const k in ATT){const L=lv(id,k);if(L>0){const a=ATT[k];w[a[1]]=k==='m'?o.mag+Math.max(Math.floor(L),Math.round(o.mag*a[2]*L)):o[a[1]]*(1+a[2]*L)}}W[id]=w}return W}
@@ -2717,7 +2720,7 @@ function mkBot(m,i,name,isP,cfg,pts,tier){const W=m.W,C=W/2;
     perks:new Set(cfg.perks||[]),wp:[{id:'pistol',rar:0}],mags:[12],cur:0,rel:0,cd:0,med:0,pot:0,gold:0,gren:0,smk:0,fls:0,blindT:-9,blindM:'',smkT:-9,grenT:0,grenKills:0,vest:0,vestD:0,helm:0,helmD:0,hadV3:false,useK:'m',meds:0,healT:0,kills:0,dmg:0,stormDmg:0,chests:0,
     ab:null,abT:14,adrT:-9,smT:-9,smX:0,smY:0,wk:{},lvl:Object.values(pts||{}).reduce((a,x)=>a+(x||0),0),strafe:1,strafeT:0,slide:0,engT:-9,fightT:0,calmT:-9,retT:-9,cover:null,covT:0,lastFoe:null,tg:null,tgT:0,ban:new Set(),banT:30,spotT:0,lastHit:null,lastHitT:-9,lastShotT:-9,
     state:'Springt ab',mv:false,flash:0,place:0,act:'',go:false,gx:p.x,gy:p.y,fire:null,sprint:false,due:true,chest:null};
-  {const at=cfg.att||{},eL=1.5*Math.min(1,b.lvl/70);b.W=mkW(isP?(id,k)=>at[id+'_'+k]||0:()=>eL);b.mags=[b.W.pistol.mag]}b.ab=isP?(ABIL[cfg.abil]?cfg.abil:null):(tier>=3&&rnd()<.5?pick(['adren','schild']):null);b.hp=b.max;b.sta=b.staMax;b.gh=height(m,b.x,b.y);b.px=b.x;b.py=b.y;b.vis=b.perks.has('p_ghost')?.75:1;
+  {const at=cfg.att||{},eL=1.5*Math.min(1,b.lvl/70);b.W=mkW(isP?(id,k)=>at[id+'_'+k]||0:()=>eL);b.mags=[b.W.pistol.mag]}b.ab=isP?(ABIL[cfg.abil]?cfg.abil:null):(tier>=3&&rnd()<.5?pick(['adren','schild','medi','regen','fokus','panzer','tarn','wut']):null);b.hp=b.max;b.sta=b.staMax;b.gh=height(m,b.x,b.y);b.px=b.x;b.py=b.y;b.vis=b.perks.has('p_ghost')?.75:1;
   if(b.perks.has('p_gren'))b.gren=2;if(b.perks.has('p_vest')){b.vest=1;b.vestD=VEST[1].d}
   if(b.perks.has('p_loot')){const id=pick(['smg','shotgun','rifle']);b.wp=[{id,rar:0}];b.mags=[magOf(b,id)]}
   return b}
@@ -2809,7 +2812,8 @@ function newMatch(cfg,o){o=o||{};const tsz=(cfg&&cfg.mode==='trio')||o.trio?3:(c
   /* Trio: je drei Bots bilden ein Team, landen zusammen und spielen zusammen */
   if(m.tsz>1){m.trio=true;const Z=m.tsz;for(let i=0;i<m.bots.length;i++){const b=m.bots[i];b.team=(i/Z)|0;if(i%Z){const L=m.bots[i-i%Z];for(let k=0;k<14;k++){const a=rr(0,TAU)+(i%Z)*2.1,d=rr(120,210),x=L.x+Math.cos(a)*d,y=L.y+Math.sin(a)*d;if(freeSpot(m,x,y)){b.x=b.px=x;b.y=b.py=y;break}}}}
     for(const b of m.bots)if(!b.isP&&b.tier>=2&&rnd()<.4)b.perks.add(pick(Z===2?['p_duo','p_last','p_focus','p_rally']:['p_triad','p_squad','p_focus','p_rally','p_guard']));
-    for(const b of m.bots)b.tab=b.isP?(cfg&&cfg.teamAb)||null:(b.tier>=2&&rnd()<.5?pick(['tf_sani','tf_zaeh','tf_vers','tf_kampf','tf_funk','tf_spaeh','tf_mun','tf_vorhut','tf_schild','tf_spreng','tf_arzt','tf_rueck','tf_samm','tf_mark','tf_eisern','tf_nebel','tf_blend','tf_gurt','tf_brille','tf_rett','tf_deck']):null);
+    if(m.bots[0].isP)for(let i=1;i<Z;i++)m.bots[i].mateIdx=i;
+    for(const b of m.bots)b.tab=b.isP?(cfg&&cfg.teamAb)||null:b.mateIdx&&cfg&&cfg['mateAb'+b.mateIdx]?cfg['mateAb'+b.mateIdx]:(b.tier>=2&&rnd()<.5?pick(['tf_sani','tf_zaeh','tf_vers','tf_kampf','tf_funk','tf_spaeh','tf_mun','tf_vorhut','tf_schild','tf_spreng','tf_arzt','tf_rueck','tf_samm','tf_mark','tf_eisern','tf_nebel','tf_blend','tf_gurt','tf_brille','tf_rett','tf_deck']):null);
     for(const b of m.bots){b.ttabs=new Set(teamOf(m,b).map(o=>o.tab).filter(Boolean));if(b.tab==='tf_spaeh')b.fov*=1.25;if(b.tab==='tf_spreng')b.gren=Math.max(b.gren,1);if(b.tab==='tf_nebel')b.smk=Math.max(b.smk,1);if(b.tab==='tf_blend')b.fls=Math.max(b.fls,1)}
     m.teamsAlive=Math.ceil(m.bots.length/m.tsz);m.teams=m.teamsAlive}
   nextZone(m);{m.vend=[];const rs=m.obs.filter(o=>o.k==='b'&&o.hw>30&&o.hh>30&&!o.rot2);for(let i=0;i<4000&&m.vend.length<250;i++){if(!rs.length)break;const q=rs[(rnd()*rs.length)|0],sd=rnd()<.5?1:-1,ax=rnd()<.5;let x,y,a;
@@ -2829,7 +2833,7 @@ function stormStep(m){const s=m.storm;s.t+=DT;const p=m.ph[s.ph];if(s.t<p.wait)r
   const k=Math.min(1,(s.t-p.wait)/p.shrink);s.shr=true;s.x=s.cx+(s.nx-s.cx)*k;s.y=s.cy+(s.ny-s.cy)*k;s.r=s.cr+(s.nr-s.cr)*k;
   if(k>=1){if(s.ph<m.ph.length-1){s.ph++;nextZone(m)}else s.r=0}}
 
-function hurt(m,b,d,from,hs,gk){if(!b.alive||b.godP||m.t<(b.rsL||0))return;if(from&&from!==b&&m.trio&&from.team===b.team)return;if(b.down&&from&&m.t-b.downT<prot(b))return;
+function hurt(m,b,d,from,hs,gk){if(!b.alive||b.godP||m.t<(b.rsL||0))return;if(m.t<(b.armT||0))d*=.6;if(from&&from!==b&&m.trio&&from.team===b.team)return;if(b.down&&from&&m.t-b.downT<prot(b))return;
   if(from){(m.blood||(m.blood=[])).push({x:b.x,y:b.y,t:m.t});if(m.blood.length>80)m.blood.shift();d*=TUNE.dmg*b.tough*(b.act==='revive'&&b.perks.has('p_guard')?.75:1);if(m.trio&&from&&from.team!==b.team){if(b.markT>m.t&&from.team===b.markTeam)d*=1.08;if(from.tab==='tf_mark'){b.markT=m.t+4;b.markTeam=from.team}if(b.tab==='tf_rueck'&&mates(m,b).some(o=>o.fire===from))d*=.9}
   if(m.trio&&!b.down){const ms=mates(m,b);if(b.perks.has('p_duo')&&ms.some(o=>o.alive&&!o.down&&d2(o,b)<200))d*=.92;if(ms.some(o=>o.alive&&!o.down&&o.perks.has('p_squad')&&d2(o,b)<300))d*=.94}
     if(hs){d*=b.helm?HELM[b.helm].m:2;if(b.helm&&--b.helmD<=0){b.helm=0;ev(m,'break',b.x,b.y,500)}}
@@ -2921,10 +2925,10 @@ function tryFire(m,b,foe,fd){const cw=b.wp[b.cur],w=b.W[cw.id];if(b.rel>0||b.cd>
   if(b.mags[b.cur]<=0){let bi=-1,bs=0;b.wp.forEach((q,i)=>{if(i!==b.cur&&b.mags[i]>0){const v=expDps(b.W[q.id],fd)*rarM(q.id,q.rar);if(v>bs){bs=v;bi=i}}});
     if(bi>=0){b.cur=bi;b.cd=.35;b.sw=6}else b.rel=w.reload*b.sk.rel*attF(cw,'rel')*(m.trio&&mates(m,b).some(o=>o.alive&&!o.down&&o.tab==='tf_mun'&&d2(o,b)<260)?.8:1);return}
   if(w.splash&&fd<100)return;
-  b.mags[b.cur]--;b.cd=(b.cd>-.12?b.cd:0)+1/(w.rate*attF(cw,'rate')*(b.perks.has('p_cover')&&m.trio&&mates(m,b).some(o=>o.down&&o.rvBy)?1.2:1));
+  b.mags[b.cur]--;b.cd=(b.cd>-.12?b.cd:0)+1/(w.rate*attF(cw,'rate')*(m.t<(b.berT||0)?1.5:1)*(b.perks.has('p_cover')&&m.trio&&mates(m,b).some(o=>o.down&&o.rvBy)?1.2:1));
   let sp=w.spread*TUNE.spread*b.sk.aim*(b.run?2.2:b.mv?1.5:1)*(foe.mv?(foe.run?1.9:1.25):1)*(b.pose===2?.6:b.pose===1?.7:1)*(b.jump>0?2:1);
   let tr=R*(foe.pose===2?.55:foe.pose===1?1.08:1);if(foe.inCov&&Math.cos(Math.atan2(b.y-foe.y,b.x-foe.x)-foe.covA)>.5)tr*=.55;
-  if(b.style==='ambush'&&!b.mv)sp*=.6;if(m.t<b.blindT)sp*=7;sp*=attF(cw,'sp')*((b.ads||0)<.7?attF(cw,'hip'):1)*(b.mv?attF(cw,'mv'):1);if(b.tab==='tf_deck'&&m.trio&&mates(m,b).some(o=>o.act==='revive'&&d2(o,b)<300))sp*=.85;
+  if(b.style==='ambush'&&!b.mv)sp*=.6;if(m.t<b.blindT)sp*=7;if(m.t<(b.focT||0))sp*=.6;sp*=attF(cw,'sp')*((b.ads||0)<.7?attF(cw,'hip'):1)*(b.mv?attF(cw,'mv'):1);if(b.tab==='tf_deck'&&m.trio&&mates(m,b).some(o=>o.act==='revive'&&d2(o,b)<300))sp*=.85;
   if(b.perks.has('p_first')&&m.t-b.lastShotT>2)sp*=.15;sp*=1-.38*(b.ads||0);if(b.hold)sp*=.62;if(m.trio){if(b.perks.has('p_focus')&&mates(m,b).some(o=>o.fire===foe))sp*=.85;if(b.perks.has('p_triad'))sp*=1-.05*mates(m,b).filter(o=>o.alive&&!o.down&&d2(o,b)<300).length}if(m.t<(b.comboT||0)&&foe===b.comboF)sp*=.6;
   const dh=height(m,b.x,b.y)-height(m,foe.x,foe.y);if(dh>18)sp*=b.perks.has('p_high')?.55:.75;else if(dh<-18)sp*=1.2;
   b.lastShotT=m.t;const base=Math.atan2(foe.y-b.y,foe.x-b.x),mul=rarM(cw.id,cw.rar)*fall(w,fd)*(b.perks.has('p_clutch')&&m.alive<=25?1.2:1)*(b.perks.has('p_rally')&&mates(m,b).some(o=>o.alive&&!o.down&&d2(o,b)<250)?1.1:1)*(b.perks.has('p_duo')&&mates(m,b).some(o=>o.alive&&!o.down&&d2(o,b)<200)?1.08:1)*(b.perks.has('p_last')&&m.trio&&mates(m,b).every(o=>!o.alive||o.down)?1.15:1);
@@ -3005,7 +3009,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++){const a=g.c[cy*n+cx];for(let i=0;i<a.length;i++){const o=a[i];if(o===b||!o.alive||m.trio&&o.team===b.team||o.down&&m.t-o.downT<prot(o))continue;const d=d2(b,o);const lh=o===b.lastHit&&m.t-b.lastHitT<3;
       /* Sichtkegel: nach vorn weit, rundum nur auf kurze Distanz. Wer trifft, verrät sich bis 560 weit. */
       if(o.smT>m.t&&d>80&&Math.hypot(o.x-o.smX,o.y-o.smY)<95)continue;if(d>60&&m.smokes&&m.smokes.length&&smokeBlock(m,b,o))continue;if(m.t<b.blindT&&d>40)continue;
-      if(d>(lh?Math.max(sight,560):sight*o.vis*(o.pose===1?.85:1)))continue;
+      if(d>(lh?Math.max(sight,560):sight*o.vis*(m.t<(o.camT||0)?.2:1)*(o.pose===1?.85:1)))continue;
       if(d>110&&!lh){let da=Math.atan2(o.y-b.y,o.x-b.x)-b.a;da=Math.atan2(Math.sin(da),Math.cos(da));
         /* außerhalb des Kegels hilft nur das Gehör: Schritte in der Nähe (Sprint weiter, Hocke lautlos) und Schüsse */
         if(Math.abs(da)>b.fov/2&&!((o.mv&&o.pose===0&&d<(o.run?230:130)*b.sk.sight*o.quiet)||(m.t-o.lastShotT<.8&&d<520)))continue}
@@ -3045,8 +3049,15 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
   if(b.ab&&m.t>=b.abT&&m.t-b.lastHitT<1.5){let used='';
     if(b.ab==='schild'){if(b.sh<=5&&b.hp<b.max*.55){b.sh=Math.min(100,b.sh+40);b.abT=m.t+60;used='Notschild'}}
     else if(b.ab==='adren'){if(b.hp<b.max*.65||(foe&&fd>240)){b.adrT=m.t+4;b.abT=m.t+40;used='Adrenalin'}}
+    else if(b.ab==='medi'){if(b.hp<b.max*.4){b.hp=Math.min(b.max,b.hp+35);b.abT=m.t+55;used='Feldsanitäter'}}
+    else if(b.ab==='regen'){if(b.hp<b.max*.6){b.regT=m.t+6;b.abT=m.t+50;used='Regeneration'}}
+    else if(b.ab==='fokus'){if(foe){b.focT=m.t+5;b.abT=m.t+35;used='Fokus'}}
+    else if(b.ab==='panzer'){b.armT=m.t+5;b.abT=m.t+50;used='Panzerhaut'}
+    else if(b.ab==='tarn'){if(b.hp<b.max*.7){b.camT=m.t+3;b.abT=m.t+45;used='Tarnkappe'}}
+    else if(b.ab==='wut'){if(b.hp<b.max*.3){b.berT=m.t+5;b.abT=m.t+50;used='Berserker'}}
     else if(b.ab==='rauch'){if(b.hp<b.max*.5){b.smT=m.t+5;b.smX=b.x;b.smY=b.y;m.smokes.push({x:b.x,y:b.y,t:m.t});b.abT=m.t+45;used='Rauchwand'}}
     if(used&&b.isP)m.feed.push({sys:`Dein Bot zündet ${used}`,t:m.t,x:b.x,y:b.y,me:true})}
+  if(m.t<(b.regT||0)&&!b.down)b.hp=Math.min(b.max,b.hp+5*(m.t-(b.regL||m.t)));b.regL=m.t;
   if(b.healT>0){if(!safeHeal)b.healT=0;else{b.priority='Heilen';b.act='heal';b.state=b.useK==='s'?'Trinkt Schildtrank':'Heilt';return}}
   /* Leben und Schild zählen gleich: es wird aufgefüllt, was prozentual weiter fehlt */
   {const calm=(!foe||fd>340)&&m.t-b.lastHitT>.8,hpN=1-b.hp/b.max,shN=1-Math.min(100,b.sh)/100,canM=b.med>0&&hpN>0,canS=b.pot>0&&shN>0,
@@ -4162,6 +4173,7 @@ function renderLobby(){const c=S.cfg,need=xpNeed(S.level),free=ptsTotal()-ptsSpe
     h+=`<section class="card" data-t="opt"><h2>Anzeige <small>kostenlos</small></h2>`+pair('gfx',c.gfx!=='low',['Grafik hoch','Echte Schatten, dichtes Gras, feineres Gelände'],['Grafik sparsam','Für schwächere Handys, läuft flüssiger'])+pair('dmgNum',c.dmgNum!==false,['Schadenszahlen an','Zahlen steigen über getroffenen Gegnern auf'],['Schadenszahlen aus','Keine Zahlen im Bild'])+`<div class="opts"><button class="opt" data-act="exp"><b>Spielstand sichern</b><span>Kopiert einen Code, mit dem du alles auf ein anderes Gerät mitnimmst</span></button><button class="opt" data-act="imp"><b>Spielstand laden</b><span>Code einfügen und Fortschritt übernehmen</span></button></div>`+pair('critFx',c.critFx!==false,['Kopfschuss-Effekt an','Große goldene Zahl mit Lichtring'],['Kopfschuss-Effekt aus','Kopfschüsse sehen aus wie normale Treffer'])+`</section>`}
   {const qs=questsToday();h+=`<section class="card" data-t="bot"><h2>Tagesaufgaben <small>${qs.l.filter(q=>q.done).length} von 3</small></h2><div style="display:grid;gap:6px">${qs.l.map(q=>{const Q=QUESTS.find(x=>x[0]===q.id)||QUESTS[0],pc=Math.round(q.p/Q[2]*100);return`<div style="display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;font-size:13px;${q.done?'opacity:.6':''}"><div>${q.done?'✓ ':''}${Q[1]}</div><div style="color:#ffd77a;font-weight:700">${Q[3]} Gold</div><div style="grid-column:1/3;height:5px;border-radius:3px;background:#ffffff14;overflow:hidden"><div style="height:100%;width:${pc}%;background:${q.done?'#74d66b':'#00ffd0'}"></div></div></div>`}).join('')}</div></section>`}
   h+=`<section class="card modeCard" data-t="bot"><h2>Modus</h2><div class="opts">${[['solo','Solo','Jeder gegen jeden · 1000 Bots'],['duo','Duo','Du und ein Partner · 500 Teams'],['trio','Trio','Du und zwei Kameraden · 333 Teams']].map(q=>`<button class="opt" data-act="mode" data-v="${q[0]}" aria-pressed="${(c.mode||'solo')===q[0]}"><b>${q[1]}</b><span>${q[2]}</span></button>`).join('')}</div></section>`;
+  if((c.mode||'solo')!=='solo'){const own=UNLOCKS.filter(u=>u.type==='team'&&has(u.id)),nM=c.mode==='duo'?1:2;for(let k=1;k<=nM;k++){const cur=c['mateAb'+k]||'';h+=`<section class="card" data-t="bot"><h2>Teamfähigkeit Kamerad ${k} <small>${own.length?'frei wählbar':'erst freischalten'}</small></h2><div class="opts"><button class="opt" data-act="mateab" data-v="${k}:" aria-pressed="${!cur}"><b>Zufällig</b><span>Der Kamerad wählt selbst</span></button>${own.map(u=>`<button class="opt" data-act="mateab" data-v="${k}:${u.id}" aria-pressed="${cur===u.id}"><b>${u.name}</b><span>${u.desc}</span></button>`).join('')}</div></section>`}}
   if((c.mode||'solo')!=='solo')h+=`<section class="card" data-t="bot"><h2>Teamfähigkeit <small>eine aktiv</small></h2><div class="opts">${(()=>{const L=UNLOCKS.filter(u=>u.type==='team'),btn=u=>{const lk=!has(u.id);return `<button class="opt${lk?' locked':''}" data-act="teamab" data-v="${u.id}" aria-pressed="${c.teamAb===u.id}"><b>${u.name}${lk&&u.cost?` <em class="buy">${u.cost} Gold</em>`:''}</b><span>${lk?u.cond+(u.cost?' · oder kaufen':''):u.desc}</span></button>`};const op=L.filter(u=>has(u.id)),cl=L.filter(u=>!has(u.id));return (op.length?op.map(btn).join(''):'<p class="hint">Noch keine freigeschaltet.</p>')+(cl.length?`</div><details class="lk"><summary>Gesperrt · ${cl.length}</summary><div class="opts">${cl.map(btn).join('')}</div></details><div class="opts">`:'')})()}</div></section>`;
   h+=`<section class="card" data-t="bot"><h2>Spielweise</h2><div class="opts">`+Object.entries(STYLES).map(([k,v])=>{const lk=v.lock&&!has(v.lock);
     return `<button class="opt${lk?' locked':''}" data-act="style" data-v="${k}" aria-pressed="${c.style===k}" ${lk?'aria-disabled="true"':''}><b>${v.n}</b><span>${lk?cond(v.lock):v.d}</span></button>`}).join('')+`</div></section>`;
@@ -4172,7 +4184,7 @@ function renderLobby(){const c=S.cfg,need=xpNeed(S.level),free=ptsTotal()-ptsSpe
   {const done=S.achDone.length;h+=`<section class="card" data-t="erfolge"><h2>Erfolge <small>${done} von ${ACH.length}</small></h2>`+ACH.map(a=>{const v=a.f(S)||0,ok=S.achDone.includes(a.id);
       return `<div class="sk"><div class="t"><b>${ok?'✓ ':''}${a.name}</b><span>${a.desc} · +${fmt(a.xp)} EP${a.gold?' · +'+a.gold+' Gold':''}</span><div class="bar" style="margin-top:5px"><i style="width:${Math.min(100,v/a.goal*100)}%;${ok?'':'background:var(--line)'}"></i></div><span>${fmt(Math.min(v,a.goal))} / ${fmt(a.goal)}</span></div></div>`}).join('')+`</section>`}
   h+=`<section class="card" data-t="liste"><h2>Bestenliste <small>alle Spieler</small></h2><div id="lbBox" class="hint">${LB_URL?'Lädt …':'Die gemeinsame Bestenliste ist noch nicht verbunden.'}</div></section>`;
-  $('lobbyBody').innerHTML=h;for(const card of $('lobbyBody').querySelectorAll('section.card')){const ps=[...card.querySelectorAll('.opt[aria-pressed="true"]')];if(!card.querySelector('.opt'))continue;const p=document.createElement('p');p.className='sel';p.textContent=ps.map(o=>{const b=o.querySelector('b'),sp=o.querySelector('span:not(.tx):not(.pr)');return (b?b.firstChild.textContent.trim():'')+(sp?': '+sp.textContent:'')}).join(' · ');if(p.textContent)card.querySelector('.opts').after(p)}{const L=$('lobbyBody'),ord=['Modus','Teamfähigkeit','Spielweise','Perks','Fähigkeit','Skin','Skins kaufen','Waffen-Skins','Schuss-Effekte','Schuss-Animationen','Fallschirme','Grabsteine'],key=el=>{const t=(el.querySelector('h2')||{}).firstChild;const n=t?t.textContent.trim():'';const i=ord.indexOf(n);return i<0?99:i};
+  $('lobbyBody').innerHTML=h;for(const card of $('lobbyBody').querySelectorAll('section.card')){const ps=[...card.querySelectorAll('.opt[aria-pressed="true"]')];if(!card.querySelector('.opt'))continue;const p=document.createElement('p');p.className='sel';p.textContent=ps.map(o=>{const b=o.querySelector('b'),sp=o.querySelector('span:not(.tx):not(.pr)');return (b?b.firstChild.textContent.trim():'')+(sp?': '+sp.textContent:'')}).join(' · ');if(p.textContent)card.querySelector('.opts').after(p)}{const L=$('lobbyBody'),ord=['Modus','Teamfähigkeit','Teamfähigkeit Kamerad 1','Teamfähigkeit Kamerad 2','Spielweise','Perks','Fähigkeit','Skin','Skins kaufen','Waffen-Skins','Schuss-Effekte','Schuss-Animationen','Fallschirme','Grabsteine'],key=el=>{const t=(el.querySelector('h2')||{}).firstChild;const n=t?t.textContent.trim():'';const i=ord.indexOf(n);return i<0?99:i};
     [...L.querySelectorAll('section.card[data-t]')].filter(e=>key(e)<99).sort((a,b)=>key(a)-key(b)).forEach(e=>L.appendChild(e));[...L.querySelectorAll('section.card[data-t]')].filter(e=>key(e)===99).forEach(e=>L.appendChild(e))}if(tab==='liste')lbLoad();for(const el of $('lobbyBody').querySelectorAll('[data-t]'))el.hidden=el.dataset.t!==tab}
 
 $('lobbyBody').addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||t.disabled||t.getAttribute('aria-disabled'))return;
@@ -4183,6 +4195,7 @@ $('lobbyBody').addEventListener('click',e=>{const t=e.target.closest('[data-act]
   if(a==='style')c.style=v;else if(a==='land')c.land=v;else if(a==='early')c.early=v==='1';else if(a==='high')c.high=v==='1';else if(a==='prep')c.prep=v==='1';else if(a==='gfx'){const g=v==='1'?'high':'low';if(c.gfx===g||(!c.gfx&&g==='high'))return;c.gfx=g;store();location.reload();return}else if(a==='dmgNum')c.dmgNum=v==='1';else if(a==='critFx')c.critFx=v==='1';
   else if(a==='attw'){attW=v;renderLobby();return}
   else if(a==='att'){c.att=c.att||{};const L=c.att[v]||0,cost=ATTCOST[L];if(L>=2||S.gold<cost)return;S.gold-=cost;c.att[v]=L+1}
+  else if(a==='mateab'){const[k,id]=v.split(':');c['mateAb'+k]=id||null;store();renderLobby();return}
   else if(a==='shop'){const[ty,k]=v.split(':'),it=shopOf(ty,k),cost=it.cost,own=!cost||S.bought.includes(ty+k);if(!own){if(it.req&&!S.achDone.includes(it.req))return;if(S.gold<cost)return;S.gold-=cost;S.bought.push(ty+k)}if(ty==='w_')c.wskin=k;else if(ty==='t_')c.tracer=k;else if(ty==='c_')c.chute=k;else if(ty==='f_')c.shotfx=k;else if(ty==='a_')c.abil=k;else if(ty==='g_')c.grave=k;else{c.skin=k;demo=null}}else if(a==='mode')swapMode(v);else if(a==='teamab'){if(!has(v)){const u=UNLOCKS.find(q=>q.id===v);if(u&&u.cost&&S.gold>=u.cost&&confirm(`${u.name} für ${u.cost} Gold kaufen?`)){S.gold-=u.cost;S.unlocked.push(v);c.teamAb=v}}else c.teamAb=c.teamAb===v?null:v}else if(a==='stance')c.stance=v==='1';else if(a==='loot')c.loot=v==='1'?'all':'min';else if(a==='skin'){c.skin=v;demo=null}
   else if(a==='sk+'){if(ptsTotal()-ptsSpent()>0&&c.skills[v]<8)c.skills[v]++}
   else if(a==='sk-'){if(c.skills[v]>0)c.skills[v]--}
