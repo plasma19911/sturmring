@@ -382,7 +382,7 @@ const WEAPONS={
 const LOOTW=Object.keys(WEAPONS).filter(k=>k!=='pistol'),LOOTSUM=LOOTW.reduce((a,k)=>a+WEAPONS[k].wt,0);
 const DEFPRIO=['rifle','burst','dmr','smg','shotgun','lmg','sniper','autosg','revolver'],LONGPRIO=['sniper','dmr','burst','rifle','lmg','revolver','smg','shotgun','autosg'],CLOSEPRIO=['shotgun','autosg','smg','rifle','burst','lmg','revolver','dmr','sniper'];
 /* Weste: Anteil, den sie von Körpertreffern schluckt, und wie viel sie insgesamt aushält. Helm: Kopfschuss-Faktor statt 2 und Zahl der Kopftreffer bis er bricht. */
-const VEST=[null,{r:.12,d:60},{r:.24,d:120},{r:.36,d:180}],HELM=[null,{m:1.7,d:2},{m:1.4,d:4},{m:1.1,d:6}];
+const VEST=[null,{r:.12,d:40},{r:.24,d:80},{r:.36,d:120}],HELM=[null,{m:1.7,d:2},{m:1.4,d:4},{m:1.1,d:6}];
 const RAR=[{n:'Gewöhnlich',c:'#9aa5ad'},{n:'Ungewöhnlich',c:'#74d66b'},{n:'Selten',c:'#4aa8ff'},{n:'Episch',c:'#b46bff'},{n:'Legendär',c:'#ffb224'}];
 /* jede Seltenheitsstufe gibt +2 Schaden pro Schuss (bei Schrot auf die Kugeln verteilt) */
 const rarM=(id,rar)=>1+2*rar/(WEAPONS[id].dmg*WEAPONS[id].pel);
@@ -1696,7 +1696,7 @@ function hud(m){const s=m.storm,p=m.ph[s.ph],f=spec||P;
   $('hZone').textContent=s.r<=.5?'Zone geschlossen':s.shr?`Zone ${s.ph+1} von ${m.ph.length} schrumpft`:`Zone ${s.ph+1} von ${m.ph.length} schrumpft in ${Math.ceil(p.wait-s.t)} s`;
   $('hZoneBar').style.width=(s.r<=.5?0:s.shr?clamp(1-(s.t-p.wait)/p.shrink,0,1):clamp(1-s.t/p.wait,0,1))*100+'%';
   $('sVals').innerHTML=`<span>Leben <b>${Math.ceil(f.hp)}</b> / ${f.max}</span><span>Schild <b>${Math.round(f.sh)}</b></span><span>Ausdauer <b>${Math.round(f.sta/f.staMax*100)} %</b></span>`;
-  $('sArm').innerHTML=`<span>Weste <b>${f.vest?'T'+f.vest:'–'}</b>${f.vest?' ('+Math.ceil(f.vestD)+')':''}</span><span>Helm <b>${f.helm?'T'+f.helm:'–'}</b>${f.helm?' ('+f.helmD+'×)':''}</span><span>Gold <b>${f.gold}</b></span>`;
+  $('sArm').innerHTML=`<span>Weste <b>${f.vest?'T'+f.vest:'–'}</b>${f.vest?` <i style="font-style:normal;color:${f.vestD/VEST[f.vest].d<.3?'#ff7a5c':'inherit'}">${Math.ceil(f.vestD/VEST[f.vest].d*100)} %</i>`:''}</span><span>Helm <b>${f.helm?'T'+f.helm:'–'}</b>${f.helm?' ('+f.helmD+'×)':''}</span><span>Gold <b>${f.gold}</b></span>`;
   if(P.kills>lastK){lastK=P.kills;const e=m.feed.slice().reverse().find(q=>q.ap);if(e){$('toast').innerHTML=`Eliminiert<small>${e.b} · ${e.w}</small>`;$('toast').hidden=false;toastT=performance.now()+2600}}
   if(toastT&&performance.now()>toastT){toastT=0;$('toast').hidden=true}
   $('feed').innerHTML=m.feed.filter(e=>e.t>m.t-7&&(e.me||(Math.abs(e.x-cam.x)<900&&Math.abs(e.y-cam.y)<900))).slice(-4).map(e=>e.sys?`<li class="me"><b>${e.sys}</b></li>`:`<li class="${e.me?'me':''}">${e.a?`<b class="${e.ap?'p':''}">${e.a}</b> › `:''}<b class="${e.bp?'p':''}">${e.b}</b> · ${e.w}</li>`).join('');
