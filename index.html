@@ -86,7 +86,7 @@ input[type=range]{width:100%;accent-color:var(--amber);height:28px}
 .go.ghost{background:var(--panel2);color:var(--fg);border:1px solid var(--line)}
 
 #match{position:fixed;inset:0;background:#a9cbd9;z-index:20;touch-action:none}
-#cv{position:absolute;inset:0;width:100%;height:100%;display:block;filter:saturate(.74) contrast(1.14) brightness(.97) sepia(.06)}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;filter:saturate(.82) contrast(1.14) brightness(.97) sepia(.04)}
 #grain{position:absolute;inset:-50%;pointer-events:none;opacity:.07;mix-blend-mode:overlay;animation:grn .5s steps(4) infinite}
 @keyframes grn{0%{transform:translate(0,0)}25%{transform:translate(-7%,4%)}50%{transform:translate(5%,-6%)}75%{transform:translate(-3%,-3%)}}
 #vign{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 50%,rgba(6,9,12,.45) 100%),linear-gradient(rgba(60,80,95,.07),rgba(60,80,95,.07))}
@@ -345,9 +345,9 @@ body.inMatch .lobbyGear{display:none}
 </style>
 <style>
 #teamBox{width:112px;display:flex;flex-direction:column;gap:4px;pointer-events:none}
-.tm{background:rgba(10,15,20,.55);border-radius:7px;padding:3px 5px 4px;border-left:2px solid #35e0c8}
+.tm{background:rgba(10,15,20,.55);border-radius:7px;padding:3px 5px 4px;border-left:2px solid #00ffd0}
 .tm.dn{border-left-color:#ff4a3c}.tm.out{opacity:.45}
-.tn{display:flex;align-items:center;gap:3px;font-size:9px;line-height:1.2;color:#35e0c8;white-space:nowrap;overflow:hidden}
+.tn{display:flex;align-items:center;gap:3px;font-size:9px;line-height:1.2;color:#00ffd0;white-space:nowrap;overflow:hidden}
 .tn b{overflow:hidden;text-overflow:ellipsis;font-weight:600;flex:1;min-width:0}.tn em{font-style:normal;color:#9fb0ba;font-size:8px}
 .tn i{font-style:normal;font-size:8px}.tn .td{color:#ff6a5a}.tn .tr{color:#74d66b}.tn .tx{color:#9aa}
 .tb{height:3px;background:rgba(255,255,255,.12);border-radius:2px;margin-top:2px;overflow:hidden}.tb u{display:block;height:100%;background:#74d66b}.tb.s{height:2px;margin-top:1px}.tb.s u{background:#4aa8ff}
@@ -1354,6 +1354,7 @@ function makeView(cv){
   const dustM=new T.InstancedMesh(new T.IcosahedronGeometry(1,0),new T.MeshBasicMaterial({color:0xd9cdb4,transparent:true,opacity:.42,depthWrite:false}),48);dustM.frustumCulled=false;dustM.count=0;scene.add(dustM);const dust=[];let dustN=0;
   /* Einschlag- und Sterbe-Partikel: Farbe je Material, eigene Flugbahn mit Schwerkraft */
   const PN=mobileGraphics?140:260,pM=new T.InstancedMesh(new T.BoxGeometry(1,1,1),new T.MeshBasicMaterial({color:0xffffff}),PN);pM.frustumCulled=false;pM.count=0;pM.setColorAt(0,tc.setHex(0xffffff));scene.add(pM);const fxP=[],seenImp=new Set();
+  const TEAMC=['#ff1f1f','#1f6bff','#00e03c','#ffd000','#ff7a00','#b52bff','#ff1fa8','#00d8ff','#9dff00','#ffffff','#7a3cff','#ff4f00'];
   const MAT={wood:{c:[0x8a5a2b,0xb07a42,0x5e3c1c],n:6,v:70,up:60,s:[1.2,.5,.5],g:260,l:.6},stone:{c:[0x9a9a96,0x7c7c78,0xc0bdb4],n:7,v:45,up:35,s:[1.4,1.4,1.4],g:120,l:.7,grow:1},crystal:{c:[0xd08cff,0x9b5cff,0xffffff],n:6,v:70,up:60,s:[.9,.9,.9],g:200,l:.5},
     metal:{c:[0xfff4a0,0xffc04a,0xffffff],n:7,v:150,up:70,s:[.45,.45,2.2],g:380,l:.32},dirt:{c:[0x6b4a2c,0x8a6a44,0x4c3a24],n:5,v:35,up:55,s:[1.2,1.2,1.2],g:240,l:.55,grow:1},
     sand:{c:[0xe2c48a,0xd2ae6e,0xf0d8a4],n:6,v:40,up:45,s:[1.1,1.1,1.1],g:160,l:.65,grow:1},snow:{c:[0xffffff,0xe8f0ff,0xd8e4f4],n:7,v:35,up:55,s:[1.2,1.2,1.2],g:150,l:.7,grow:1},
@@ -1416,7 +1417,7 @@ function makeView(cv){
   function bindBot(v,b){{const cq=b.isP?CHU[S.cfg.chute]||CHU.std:CHU.std;v.glider.geometry=chG[cq[3]];v.glider.material=chM(cq)}const sk=SKINS[b.skin]||SKINS.rekrut;v.body.geometry=v.sil.geometry=v.ol.geometry=skinGeo(b.skin);v.ol.material=b.isP?olMe:olM;v.ol.visible=true;v.sil.material=b.isP?silMe:silFoe;v.sil.visible=false;v.mat.transparent=!!sk.ghost;v.mat.opacity=sk.ghost?.62:1;v.mat.needsUpdate=true;v.dead=-1;v.gid='';v.k1=v.k2=0;v.gait=v.ph;v.animSpeed=0;v.face=b.a;v.lastAnimT=null;
     v.model.rotation.set(0,0,0);v.model.position.y=0;v.model.scale.y=1.04;v.bar.visible=v.sh.visible=v.label.visible=true;v.ring.visible=v.mark.visible=b.isP;v.ally=!!(M&&M.trio&&!b.isP&&M.bots[0]&&M.bots[0].isP&&b.team===M.bots[0].team);
     const c=v.lc.getContext('2d');c.clearRect(0,0,256,64);c.textAlign='center';c.lineJoin='round';c.lineWidth=5;c.strokeStyle='rgba(8,12,16,.85)';
-    c.font='600 22px Barlow,system-ui,sans-serif';{const TCOL=['#ff8a5c','#ffd24a','#b98cff','#ff6fae','#9be15d','#5cc8ff','#ffa94d','#e0e6ea','#c3f04a','#ff5a5a','#7ae0c0','#d79bff'];c.fillStyle=b.isP||v.ally?'#35e0c8':M&&M.trio?TCOL[b.team%TCOL.length]:'#ffffff'}c.strokeText(b.name,128,24);c.fillText(b.name,128,24);
+    c.font='600 22px Barlow,system-ui,sans-serif';{c.fillStyle=b.isP||v.ally?'#00ffd0':M&&M.trio?TEAMC[b.team%TEAMC.length]:'#ffffff';if(M&&M.trio){c.lineWidth=7;c.strokeStyle='rgba(0,0,0,.95)'}}c.strokeText(b.name,128,24);c.fillText(b.name,128,24);
     {const t='LVL '+b.lvl;c.font='700 26px Barlow,system-ui,sans-serif';c.fillStyle=b.tier>=0?TIERS[b.tier].c:'#35e0c8';c.strokeText(t,128,54);c.fillText(t,128,54)}
     v.tex.needsUpdate=true}
   /* Seltenheit auf einen Blick: farbiger Bodenschein, Lichtsäule ab Ungewöhnlich, farbiger Umriss ab Selten */
