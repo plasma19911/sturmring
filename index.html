@@ -4226,7 +4226,8 @@ function hud(m){const s=m.storm,p=m.ph[s.ph],f=spec||P;
   const cells=f.wp.map((w,i)=>cell(RAR[w.rar].c,ICON[w.id],SHORT[w.id],f.rel>0&&i===f.cur?'lädt':f.mags[i]+' Schuss',i===f.cur));
   if(f.med>0)cells.push(cell('#74d66b',ICON.med,'Medikit','×'+f.med));if(f.pot>0)cells.push(cell('#4aa8ff',ICON.pot,'Schild','×'+f.pot));
   while(cells.length<5)cells.push('<div><svg viewBox="0 0 48 22"></svg><b>&nbsp;</b>leer</div>');
-  cells.push(f.gren>0?cell('#8a9a5a',ICON.gren,'Granate','×'+f.gren+' / 2').replace('<div class=""','<div class="g"'):`<div class="g" style="opacity:.55">${ICON.gren}<b>Granate</b>× 0 / 2</div>`);for(const[k,c,n]of[['smk','#b8c0c6','Rauch'],['fls','#ffe9a0','Blend']]){const v=f[k]||0;cells.push(v>0?cell(c,ICON[k],n,'×'+v+' / 2').replace('<div class=""','<div class="g"'):`<div class="g" style="opacity:.55">${ICON[k]}<b>${n}</b>× 0 / 2</div>`)}
+  {const g=f.gren||0,k=f.smk||0,l=f.fls||0,cap=f.tab==='tf_gurt'?3:2,sp=(c,v,ic)=>`<span style="color:${v?c:'#5b6670'};white-space:nowrap"><small style="opacity:.7;font-size:8px">${ic}</small>${v}</span>`;
+    cells.push(`<div class="g" style="border-top-color:#8a9a5a;${g+k+l?'':'opacity:.55'}">${ICON.gren}<b>Granaten</b><span class="gq" style="display:flex;justify-content:center;gap:3px;font-size:11px;font-weight:700">${sp('#b5c48a',g,'S')}${sp('#c9d0d6',k,'R')}${sp('#ffe9a0',l,'B')}</span></div>`)}
   $('sInv').innerHTML=cells.join('')}
 
 function newDemo(){demo=newMatch(null,{n:36,W:3000});const b=demo.bots[0];b.skin=S.cfg.skin;b.isP=true;b.name='Dein Bot';b.tier=-1;demoSpec=b;dcam.x=b.x;dcam.y=b.y;demo.focus=dcam;
