@@ -324,6 +324,8 @@ button{touch-action:manipulation}button:focus-visible,input:focus-visible{outlin
 .rs-row b{display:block;font-size:17px}.rs-row span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .rs-new{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}.rs-new li.more{background:none;border:0;color:var(--muted);padding:2px 10px}.rs-new li{font-size:12.5px;padding:6px 10px;border-radius:9px;background:rgba(255,194,51,.09);border:1px solid rgba(255,194,51,.25)}
 .rs-det summary{cursor:pointer;font-size:13px;color:var(--muted);padding:4px 0}.rs-det .kf{margin-top:6px}
+.rs-h{margin:6px 0 0;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.rs .kf{max-height:none}
 .rs-btn{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:4px}.rs-btn .go{min-height:48px}
 </style>
 <div id="app">
@@ -1710,8 +1712,8 @@ function finish(){if(mode!=='match')return;auStop();const win=P.place===1,m=cur,
     <h2 class="${win?'win':''}">${win?'Sieg':'Platz '+r.place}<small> / ${N}</small></h2>
     <p class="hint">${win?'Dein Bot hat alle überlebt.':P.killer?`Eliminiert von ${P.killer.name} (Lvl ${P.killer.lvl}) · ${WEAPONS[P.killW].n}`:P.selfK?'Eigene Rakete':'Im Sturm gestorben'}</p>
     <div class="rs-row"><div><b>${r.kills}</b><span>Kills</span></div><div><b>${r.dmg}</b><span>Schaden</span></div><div><b>${mm}:${ss}</b><span>Überlebt</span></div><div><b>+${sum}</b><span>EP</span></div><div><b>+${kept}</b><span>Gold</span></div></div>
-    ${news.length?`<ul class="rs-new">${news.slice(0,3).map(n=>`<li>${n}</li>`).join('')}${news.length>3?`<li class="more">+ ${news.length-3} weitere Freischaltungen</li>`:''}</ul>`:''}
-    ${kl.length?`<details class="rs-det"><summary>Killfeed (${kl.length})</summary><ul class="kf">${kl.map(k=>{const t=Math.floor(k.t/60)+':'+String(Math.floor(k.t%60)).padStart(2,'0');return `<li><time>${t}</time><span class="kw">${ICON[k.w]||ICON.pistol}</span><span class="kn"><b>${k.n}</b><small>${k.w==='gren'?'Granate':WEAPONS[k.w]?WEAPONS[k.w].n:''}${k.hs?' · Kopfschuss':''}</small></span><i style="color:${k.tier>=0?TIERS[k.tier].c:'#35e0c8'}">Lvl ${k.l}</i></li>`}).join('')}</ul></details>`:''}
+    ${news.length?`<h3 class="rs-h">Neu freigeschaltet</h3><ul class="rs-new">${news.map(n=>`<li>${n}</li>`).join('')}</ul>`:''}
+    ${kl.length||P.killer?`<h3 class="rs-h">Killfeed · ${kl.length} Eliminierungen</h3><ul class="kf">${kl.map(k=>{const t=Math.floor(k.t/60)+':'+String(Math.floor(k.t%60)).padStart(2,'0');return `<li><time>${t}</time><span class="kw">${ICON[k.w]||ICON.pistol}</span><span class="kn"><b>${k.n}</b><small>${k.w==='gren'?'Granate':WEAPONS[k.w]?WEAPONS[k.w].n:''}${k.hs?' · Kopfschuss':''}</small></span><i style="color:${k.tier>=0?TIERS[k.tier].c:'#35e0c8'}">Lvl ${k.l}</i></li>`}).join('')}${P.killer?`<li class="dead"><time>${mm}:${ss}</time><span class="kw">${ICON[P.killW]||ICON.pistol}</span><span class="kn"><b>${P.killer.name}</b><small>hat dich eliminiert · ${WEAPONS[P.killW].n}</small></span><i style="color:${TIERS[P.killer.tier]?TIERS[P.killer.tier].c:'#fff'}">Lvl ${P.killer.lvl}</i></li>`:''}</ul>`:''}
     <div class="rs-btn"><button class="go" id="again">Nochmal</button><button class="go ghost" id="back">Bot anpassen</button></div></div>`;
   cur=null;demo=null;renderLobby();show('result');
   $('again').addEventListener('click',begin);$('back').addEventListener('click',()=>{show('lobby');if(still)staticDemo()})}
