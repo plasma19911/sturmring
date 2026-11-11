@@ -3404,8 +3404,8 @@ function makeView(cv){
   try{ren=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'})}catch(e){return null}
   const T=THREE;const prMax=Math.min(S.cfg.gfx==='low'?1.5:3,window.devicePixelRatio||1);let prCur=prMax,prEma=1/60,prLast=0,prT=0;ren.setPixelRatio(prCur);
   /* Automatische Leistungsanpassung: misst die echte Bildzeit und senkt oder hebt die Auflösung in kleinen Schritten */
-  const perfTick=now=>{if(prLast){const d=Math.min(.2,(now-prLast)/1000);prEma+=(d-prEma)*.08}prLast=now;if(now-prT<1500)return;prT=now;
-    let n=prCur;if(prEma>1/42)n=Math.max(Math.min(1,prMax),prCur-(prEma>1/28?.5:.25));else if(prEma<1/56&&prCur<prMax)n=Math.min(prMax,prCur+.25);
+  let prGood=0,prUpT=0;const perfTick=now=>{if(prLast){const d=Math.min(.2,(now-prLast)/1000);prEma+=(d-prEma)*.08}prLast=now;if(now-prT<1500)return;prT=now;
+    let n=prCur;if(prEma>1/42)n=Math.max(Math.min(1,prMax),prCur-(prEma>1/28?.5:.25));else if(prEma<1/56&&prCur<prMax&&++prGood>=6&&now-(prUpT||0)>30000){n=Math.min(prMax,prCur+.25);prUpT=now}if(prEma>=1/56)prGood=0;
     if(n!==prCur){prCur=n;ren.setPixelRatio(prCur);cw=-1}};
   ren.outputEncoding=T.sRGBEncoding;ren.toneMapping=T.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;
   const touchDev=matchMedia('(pointer:coarse)').matches,mobileGraphics=S.cfg.gfx==='low',grassCount=mobileGraphics?760:touchDev?2000:2600;
@@ -3417,7 +3417,7 @@ function makeView(cv){
   const ultra=S.cfg.gfx==='ultra'&&!!THREE.EffectComposer;let composer=null,envI=.45,envSet=0;
   const scene=new T.Scene();for(const light of actionLights)scene.add(light);scene.fog=new T.Fog(0xa9cbd9,700,3200);
   const cam=new T.PerspectiveCamera(42,1,5,12000);
-  if(ultra){try{const hdr=new T.WebGLRenderTarget(1,1,{type:ren.capabilities.isWebGL2&&ren.extensions.has('EXT_color_buffer_float')?T.HalfFloatType:T.UnsignedByteType,format:T.RGBAFormat});composer=new THREE.EffectComposer(ren,hdr);composer.addPass(new THREE.RenderPass(scene,cam));
+  if(ultra){try{const hdr=new T.WebGLRenderTarget(1,1,{type:!touchDev&&ren.capabilities.isWebGL2&&ren.extensions.has('EXT_color_buffer_float')?T.HalfFloatType:T.UnsignedByteType,format:T.RGBAFormat});composer=new THREE.EffectComposer(ren,hdr);composer.addPass(new THREE.RenderPass(scene,cam));
       const sao=new THREE.SAOPass(scene,cam,false,true);Object.assign(sao.params,{saoBias:.5,saoIntensity:.045,saoScale:900,saoKernelRadius:22,saoMinResolution:0,saoBlur:true,saoBlurRadius:6,saoBlurStdDev:4,saoBlurDepthCutoff:.01});composer.addPass(sao);
       composer.addPass(new THREE.UnrealBloomPass(new T.Vector2(512,512),.24,.45,.92));{const tm=new THREE.ShaderPass({uniforms:{tDiffuse:{value:null},exposure:{value:1.05}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
         fragmentShader:'uniform sampler2D tDiffuse;uniform float exposure;varying vec2 vUv;vec3 aces(vec3 x){return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}void main(){vec4 c=texture2D(tDiffuse,vUv);vec3 m=aces(c.rgb*exposure);gl_FragColor=vec4(pow(m,vec3(1./2.2)),c.a);}'});
