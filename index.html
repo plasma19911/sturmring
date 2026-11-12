@@ -3289,10 +3289,14 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     else{if(b.cover&&d2(b,b.cover)>14)go(b.cover.x,b.cover.y);else b.pose=1;b.state='Wartet, bis der Rauch sich lichtet'}}
   else if(!foe&&m.t<b.engT&&b.lastFoe&&b.lastFoe.alive&&(b.style==='rusher'||b.style==='hunter'||((b.lastFoe.hp+b.lastFoe.sh<55||b.lastFoe.act==='heal'&&b.lastFoe.hp+b.lastFoe.sh<95)&&b.hp+b.sh>b.lastFoe.hp+b.lastFoe.sh+20&&hpF>.35))){const lf=b.lastFoe,wk=lf.hp+lf.sh<95&&!smokeBlock(m,b,lf);if(wk&&b.lastSeen&&m.t-b.lastSeen.t<4&&d2(b,lf)>20){go(lf.x,lf.y);b.sprint=true;b.ta=Math.atan2(lf.y-b.y,lf.x-b.x);b.state='Stürmt hinter die Deckung'}else if(b.lastSeen&&m.t-b.lastSeen.t<3&&d2(b,b.lastSeen)>24){go(b.lastSeen.x,b.lastSeen.y);b.sprint=true;b.state='Sucht letzte Sichtposition'}else{b.engT=-9;b.state='Sucht Gegner'}}
   else if(!foe&&equipped&&m.t<b.engT-1.2&&b.lastFoe&&b.lastFoe.alive){if(b.lastSeen)b.ta=Math.atan2(b.lastSeen.y-b.y,b.lastSeen.x-b.x);b.state='Kämpft'}
-  else if(attacked&&!foe){const h=b.lastHit,d=d2(b,h)||1;
-    /* unsichtbarer Schütze: nur wer fit ist und hinreichen kann, geht auf ihn zu, alle anderen suchen Deckung */
-    if(equipped&&P.conf<=1&&hpF>.6&&d<maxR+150){go(b.x+(h.x-b.x)/d*200,b.y+(h.y-b.y)/d*200);b.sprint=true;b.state='Sucht den Schützen'}
-    else{b.rfx=h.x;b.rfy=h.y;b.retT=m.t+3;b.cover=null;b.due=true;b.state='Geht in Deckung'}}
+  else if((attacked||m.t<(b.fleeT||0)&&b.fleeFrom)&&!foe){const h=attacked?b.lastHit:b.fleeFrom,d=Math.hypot(b.x-h.x,b.y-h.y)||1;
+    /* unsichtbarer Schütze: nur wer fit ist und ihn in Sicht- und Schussweite bekommen kann, geht auf ihn zu; alle anderen rennen von ihm weg hinter die nächste Deckung */
+    if(attacked&&equipped&&P.conf<=1&&hpF>.6&&d<Math.min(maxR+150,reach*1.25)){go(b.x+(h.x-b.x)/d*200,b.y+(h.y-b.y)/d*200);b.sprint=true;b.state='Sucht den Schützen'}
+    else{if(attacked){b.fleeT=m.t+4;b.fleeFrom={x:h.x,y:h.y,alive:true,pose:0}}const ax=(b.x-h.x)/d,ay=(b.y-h.y)/d,sh={x:h.x,y:h.y,alive:true,pose:0};let c=b.fleeC&&m.t<b.fleeC.until?b.fleeC:null;
+      if(!c){let bs=-1e9;gNear(m.og,b.x,b.y,320,o=>{if(o.low)return;const q=coverPoint(o,h.x,h.y),dx=q.x-b.x,dy=q.y-b.y,dd=Math.hypot(dx,dy);if(dd>320||!freeSpot(m,q.x,q.y))return;const v=(dx*ax+dy*ay)*.7-dd;if(v>bs&&!los(m,sh,{x:q.x,y:q.y,alive:true,pose:1},false)){bs=v;c={x:q.x,y:q.y,until:m.t+4}}});b.fleeC=c}
+      if(c){if(d2(b,c)>16){go(c.x,c.y);b.sprint=true;b.state='Rennt in Deckung'}else{b.pose=1;b.inCov=true;b.covA=Math.atan2(h.y-b.y,h.x-b.x);b.ta=b.covA;b.state='Hält Deckung'}}
+      else{const sg=(((m.t*1.2)|0)+b.i)%2?1:-1,p=validGoal(m,b.x+(ax-ay*sg*.45)*240,b.y+(ay+ax*sg*.45)*240);if(p)go(p.x,p.y);b.sprint=true;b.state='Flieht aus dem Beschuss'}
+      b.urgent=true}}
   else if(false){zone();b.sprint=s.shr;b.state='Läuft zur Zone'}
   else{const real=b.wp.filter(q=>q.id!=='pistol').length,kit=b.loot==='min'?real>=2:real>=3&&b.med>=2&&b.pot>=1,sr=Math.max(0,s.r-55);
     /* einmal gewähltes Ziel wird behalten, bis es erledigt, weg oder nach 10 s unerreichbar ist */
