@@ -3716,7 +3716,7 @@ function makeView(cv){
   const LEGUP=6,wallR=new Map(),_Z=new T.Matrix4().makeScale(0,0,0);let wallSeen=0;const _S=new T.Vector3(),_T=new T.Vector3(),_E=new T.Vector3(),_U=new T.Vector3(),_P=new T.Vector3(),_Y=new T.Vector3(0,1,0),_Q=new T.Quaternion();
   function segTo(mesh,a,b){_U.subVectors(b,a);const L=_U.length()||.001;mesh.position.copy(a);_Q.setFromUnitVectors(_Y,_U.multiplyScalar(1/L));mesh.quaternion.copy(_Q);mesh.scale.set(1,L,1)}
   function ikArm(A,sx,sy,sz,tx,ty,tz,sd){const la=7.4,lb=7;_S.set(sx,sy,sz);_T.set(tx,ty,tz);_U.subVectors(_T,_S);let d=_U.length();const dm=la+lb-.05;if(d>dm){_U.multiplyScalar(dm/d);_T.copy(_S).add(_U);d=dm}d=Math.max(d,.5);_U.normalize();
-    const x=(la*la-lb*lb+d*d)/(2*d),h=Math.sqrt(Math.max(0,la*la-x*x));_P.set(-.4,-1,sd*.55);_P.addScaledVector(_U,-_P.dot(_U)).normalize();_E.copy(_S).addScaledVector(_U,x).addScaledVector(_P,h);
+    const x=(la*la-lb*lb+d*d)/(2*d),h=Math.sqrt(Math.max(0,la*la-x*x));_P.set(-.2,-.8,sd*.85);_P.addScaledVector(_U,-_P.dot(_U)).normalize();_E.copy(_S).addScaledVector(_U,x).addScaledVector(_P,h);
     segTo(A.u,_S,_E);segTo(A.f,_E,_T);A.e.position.copy(_E);A.h.position.copy(_T)}
   const botP=mkPool(40,()=>{const g=new T.Group(),model=new T.Group();g.add(model);model.scale.set(.88,1.04,.86);const mat=mobileGraphics?new T.MeshLambertMaterial({vertexColors:true}):new T.MeshStandardMaterial({vertexColors:true,roughness:.94,metalness:0});
     /* Tarnmuster auf Rumpf und Armen: unregelmäßige Flecken in drei Helligkeiten, Kopf bleibt frei */
@@ -4467,18 +4467,33 @@ function newDemo(){demo=newMatch(null,{n:36,W:3000});const b=demo.bots[0];b.skin
   if(demoView)demoView.load(demo)}
 function staticDemo(){newDemo();for(let i=0;i<300;i++)step(demo);const b=demo.bots[0].alive?demo.bots[0]:demo.bots.find(o=>o.alive);requestAnimationFrame(t=>demoView&&demoView.render(demo,b.x,b.y,DCAM,t,.016,1,b))}
 
+/* Testansicht für Animationen: Adresse mit #anim=NAME,ANSICHT (z. B. #anim=kneel,side) hält den eigenen Bot in einer Pose fest; #end zeigt sofort den Endscreen */
+let dbgCam=null,dbgPos=null;
+function dbgHook(){const hs=location.hash.slice(1);if(hs==='end'){if(cur.t>4&&!cur.over&&!dbgPos){dbgPos=1;P.kills=3;P.hs=1;P.place=8;P.alive=false;cur.over=true}return}
+  if(!hs.startsWith('anim='))return;for(let i=0;i<140&&cur.t<3.4;i++)step(cur);const[st,view]=hs.slice(5).split(','),t=cur.t;if(!dbgPos||dbgPos===1)dbgPos={x:P.x,y:P.y};
+  dbgCam=view==='far'?{h:120,b:200}:{h:58,b:118};spec=P;P.alive=true;P.godP=true;P.hp=P.max;P.x=P.px=dbgPos.x;P.y=P.py=dbgPos.y;P.vx=P.vy=0;P.go=false;P.fire=null;P.see=null;P.act='';P.rel=0;P.pose=0;P.down=false;P.blindT=-9;P.moveSpeed=0;P.run=false;P.ads=0;P.dive=null;P.healT=0;
+  P.a=P.ta=view==='side'?0:view==='back'?-Math.PI/2:view==='34'?Math.PI/4:Math.PI/2;
+  for(const o of cur.bots)if(o!==P&&o.alive&&Math.hypot(o.x-P.x,o.y-P.y)<500){o.x=o.px=P.x+900;o.fire=null}
+  const cyc=(n,on)=>t%n<on;
+  if(st==='walk'){P.moveSpeed=95;P.mvAng=P.a}else if(st==='run'){P.moveSpeed=160;P.mvAng=P.a;P.run=true}else if(st==='back'){P.moveSpeed=90;P.mvAng=P.a+Math.PI}else if(st==='strafe'){P.moveSpeed=90;P.mvAng=P.a+Math.PI/2}
+  else if(st==='kneel'){P.pose=1}else if(st==='kneelfire'){P.pose=1;P.ads=1;if(cyc(.5,.1))P.lastShotT=t}else if(st==='aim'){P.ads=1}else if(st==='fire'){P.ads=1;P.lastShotT=t}
+  else if(st==='revive'){P.act='revive'}else if(st==='down'){P.down=true;P.downT=t}
+  else if(st==='blind1'){P.blindT=t+1;P.blindM='spray'}else if(st==='blind2'){P.blindT=t+1;P.blindM='run';P.moveSpeed=90;P.mvAng=P.a}else if(st==='blind3'){P.blindT=t+1;P.blindM='crouch';P.pose=1}
+  else if(st==='reload'){P.rel=cyc(2,1.6)?1.6-(t%2):0}else if(st==='heal'){P.act='heal';P.healT=1;P.useK='m'}else if(st==='potion'){P.act='heal';P.healT=1;P.useK='s'}else if(st==='pizza'){P.act='heal';P.healT=1;P.useK='z'}
+  else if(st==='buy'){if(Math.floor(t/2.2)!==dbgPos.k){dbgPos.k=Math.floor(t/2.2);P.attBuys=(P.attBuys||0)+1}}else if(st==='pump'){if(Math.floor(t/2)!==dbgPos.k){dbgPos.k=Math.floor(t/2);P.kills++}}
+  else if(st==='hit'){if(cyc(1,.1)){P.lastHitT=t;P.flash=.15}}else if(st==='vest'){P.vest=cyc(3,1.5)?1:0}else if(st==='helm'){P.helm=cyc(3,1.5)?1:0}else if(st==='open'){P.act='open';P.chest=P.chest||{open:false,prog:0}}}
 function frame(ts){requestAnimationFrame(frame);const dt=Math.min(.05,(ts-last)/1000||0);last=ts;
   if(mode==='match'&&cur){const t0=performance.now();
-    acc+=dt*speed;let n=0;while(acc>=DT&&n<12&&!cur.over&&performance.now()-t0<22){step(cur);acc-=DT;n++;}if(acc>DT*3)acc=0;const al=clamp(acc/DT,0,1);
+    acc+=dt*speed;let n=0;while(acc>=DT&&n<12&&!cur.over&&performance.now()-t0<22){step(cur);acc-=DT;n++;}if(acc>DT*3)acc=0;const al=clamp(acc/DT,0,1);if(location.hash.length>1)dbgHook();
     if(!P.alive&&!deadShown){deadShown=true;spec=P.killer&&P.killer.alive?P.killer:null;if(cur.trio){const mt=teamOf(cur,P).find(o=>o.alive);if(mt)spec=mt}
       $('deadH').textContent=cur.trio&&!P.place?'Eliminiert – dein Team kämpft weiter':'Platz '+P.place+' von '+(cur.trio?cur.teams+' Teams':cur.N);$('deadP').textContent=P.killer?`Eliminiert von ${P.killer.name} (Lvl ${P.killer.lvl}) mit ${WEAPONS[P.killW].n}`:P.selfK?'Von der eigenen Rakete erwischt':'Im Sturm gestorben';$('dead').hidden=false}
     /* Team-Modus: liegt man am Boden oder ist raus, schaut die Kamera einem stehenden Kameraden zu; steht man wieder, zurück zu sich */
     if(cur.trio){const up=teamOf(cur,P).filter(o=>o.alive&&!o.down&&!o.isP);if(P.alive&&!P.down)spec=P;else if(!spec||spec===P||!spec.alive||spec.down||spec.team!==P.team){if(up.length)spec=up[0];else if(P.alive)spec=P}}
     if(!spec||!spec.alive){if(spec&&spec.killer&&spec.killer.alive)spec=spec.killer;else{let bd=1e9,nb=null;for(const b of cur.bots)if(b.alive){const d=Math.hypot(b.x-cam.x,b.y-cam.y);if(d<bd){bd=d;nb=b}}spec=nb||cur.winner||P}}
     /* Kamera dreht auf Wunsch langsam hinter den Bot, sonst bleibt Norden oben */
-    {let tg=S.cfg.camRot&&spec?Math.atan2(-Math.cos(spec.a),-Math.sin(spec.a)):0,dq=tg-camYaw;dq=Math.atan2(Math.sin(dq),Math.cos(dq));camYaw+=dq*(1-Math.exp(-dt*(S.cfg.camRot?1.1:3)))}
+    {let tg=S.cfg.camRot&&spec&&!dbgCam?Math.atan2(-Math.cos(spec.a),-Math.sin(spec.a)):0,dq=tg-camYaw;dq=Math.atan2(Math.sin(dq),Math.cos(dq));camYaw+=dq*(1-Math.exp(-dt*(S.cfg.camRot?1.1:3)))}
     const kf=1-Math.pow(.0001,dt);cam.x+=(spec.px+(spec.x-spec.px)*al-cam.x)*kf;cam.y+=(spec.py+(spec.y-spec.py)*al-cam.y)*kf;
-    if(mainView)mainView.render(cur,cam.x,cam.y,CAMS[camI],ts,dt*Math.min(speed,3),al,spec,camYaw);{const st=cur.storm,vc=!P.alive?'':cur.t<(spec.blindT||-9)?'flash':P.flash>0?'hit':Math.hypot(P.x-st.x,P.y-st.y)>st.r?'storm':'';if(vc!==vigC){vigC=vc;$('vig').className=vc;$('cv').classList.toggle('inStorm',vc==='storm')}}
+    if(mainView)mainView.render(cur,cam.x,cam.y,dbgCam||CAMS[camI],ts,dt*Math.min(speed,3),al,spec,camYaw);{const st=cur.storm,vc=!P.alive?'':cur.t<(spec.blindT||-9)?'flash':P.flash>0?'hit':Math.hypot(P.x-st.x,P.y-st.y)>st.r?'storm':'';if(vc!==vigC){vigC=vc;$('vig').className=vc;$('cv').classList.toggle('inStorm',vc==='storm')}}
     hudN++;if(hudN%8===0)hud(cur);if(hudN%24===4)drawMini(cur,spec);sounds(cur,ts);
     if(cur.over){if(!endT&&P.place===1&&AU.on&&AU.ctx)for(let i=0;i<3;i++){auTone(.4,110+i*30,50,.3,0,i*.22);auNoise(.2,.12,1600,0,0,i*.22)}if(!endT)endT=ts;else if(ts-endT>2600)finish()}}
   else if(mode==='lobby'&&!still&&!document.hidden&&!noGL){
