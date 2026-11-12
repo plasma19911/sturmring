@@ -3,12 +3,12 @@ const fs = require('node:fs');
 const assert = require('node:assert/strict');
 const { chromium } = require('playwright');
 const source = fs.readFileSync('index.html', 'utf8');
-const hook = `window.__graphicsTest={biomes:Object.keys(BIOMES),run(gfx,biome,tod,rain,skin){
+const hook = `window.__graphicsTest={biomes:Object.keys(BIOMES),run(gfx,biome,tod,rain,skin,expression){
   S=defSave();S.cfg.gfx=gfx;const cv=document.createElement('canvas');cv.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;z-index:9999';document.body.appendChild(cv);
   const m=newMatch(null,{n:16,W:3000,biome});m.tod=tod;if(rain)m.fxp={rain:1,c:0xa8c8ff,vy:-520};
   if(skin){m.bots[0].skin=skin;m.bots[0].a=Math.PI/2;m.t=DROP+1;}
   const view=makeView(cv);if(!view)throw Error('WebGL unavailable');view.load(m);
-  const b=m.bots[0];m.focus={x:b.x,y:b.y};
+  const b=m.bots[0];if(expression){b.lastHitT=-99;b.lastShotT=-99;b.fire=false;b.act='';b.down=false;b.rel=0;if(expression==='hurt')b.lastHitT=m.t-.1;if(expression==='shoot')b.lastShotT=m.t-.05;if(expression==='revive'||expression==='heal')b.act=expression;if(expression==='down')b.down=true;if(expression==='reload')b.rel=1;}m.focus={x:b.x,y:b.y};
   if(!skin)for(let i=0;i<90;i++)step(m);
   // Include an explosion to exercise the fixed pool of dynamic point lights.
   if(!skin)m.fx.push({x:b.x+35,y:b.y,t:.35});
@@ -16,11 +16,11 @@ const hook = `window.__graphicsTest={biomes:Object.keys(BIOMES),run(gfx,biome,to
   const gl=view.renderer.getContext();const pixels=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
   let min=765,max=0;for(let i=0;i<pixels.length;i+=4){const v=pixels[i]+pixels[i+1]+pixels[i+2];min=Math.min(min,v);max=Math.max(max,v)}
   const errors=[];for(let i=0;i<8;i++){const e=gl.getError();if(!e)break;errors.push(e)}
-  return{errors,min,max,calls:view.renderer.info.render.calls,triangles:view.renderer.info.render.triangles,postprocessing:!!view.composer};
+  return{expression:view.expressionOf(b,m.t),errors,min,max,calls:view.renderer.info.render.calls,triangles:view.renderer.info.render.triangles,postprocessing:!!view.composer};
 }};`;
 assert(source.includes('return{load,render}}'));
 assert(source.includes('renderLobby(); if(still)staticDemo();\nrequestAnimationFrame(frame);'));
-const instrumented = source.replace('return{load,render}}', 'return{load,render,renderer:ren,composer}}')
+const instrumented = source.replace('return{load,render}}', 'return{load,render,renderer:ren,composer,expressionOf}}')
   .replace('renderLobby(); if(still)staticDemo();\nrequestAnimationFrame(frame);', hook);
 (async () => {
   fs.mkdirSync('test-results', {recursive:true});
@@ -42,14 +42,14 @@ const instrumented = source.replace('return{load,render}}', 'return{load,render,
       results.push({gfx,biome,tod,...result});console.log(JSON.stringify(results.at(-1)));await page.close();
     }
     // Close views of different headgear use the actual game model and camera.
-    for(const skin of ['rekrut','wald','arktis','nachtjaeger','marsi','koenig']){
+    for(const [skin,expression] of [['rekrut','idle'],['wald','shoot'],['arktis','hurt'],['nachtjaeger','revive'],['marsi','down'],['koenig','reload'],['rekrut','heal']]){
       const page=await browser.newPage({viewport:{width:800,height:700}}),errors=[];
       page.on('pageerror',e=>errors.push(e.message));
       await page.route('**/*',r=>r.request().url()==='http://sturmring.test/'?r.fulfill({contentType:'text/html',body:instrumented}):r.fulfill({status:204,body:''}));
       await page.goto('http://sturmring.test/');
-      const result=await page.evaluate(skin=>window.__graphicsTest.run('high','wiese','tag',false,skin),skin);
-      assert.deepEqual(errors,[]);assert.deepEqual(result.errors,[]);
-      await page.screenshot({path:`test-results/model-${skin}.png`});await page.close();
+      const result=await page.evaluate(({skin,expression})=>window.__graphicsTest.run('high','wiese','tag',false,skin,expression),{skin,expression});
+      assert.deepEqual(errors,[]);assert.deepEqual(result.errors,[]);assert.equal(result.expression,expression);
+      await page.screenshot({path:`test-results/model-${skin}-${expression}.png`});await page.close();
     }
   } finally {fs.writeFileSync('test-results/graphics.json',JSON.stringify(results,null,2));await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
