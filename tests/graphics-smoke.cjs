@@ -6,7 +6,7 @@ const source = fs.readFileSync('index.html', 'utf8');
 const hook = `window.__graphicsTest={biomes:Object.keys(BIOMES),run(gfx,biome,tod,rain,skin){
   S=defSave();S.cfg.gfx=gfx;const cv=document.createElement('canvas');cv.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;z-index:9999';document.body.appendChild(cv);
   const m=newMatch(null,{n:16,W:3000,biome});m.tod=tod;if(rain)m.fxp={rain:1,c:0xa8c8ff,vy:-520};
-  if(skin){m.bots[0].skin=skin;m.bots[0].x=1500;m.bots[0].y=1500;}
+  if(skin){m.bots[0].skin=skin;m.bots[0].a=Math.PI/2;m.t=DROP+1;}
   const view=makeView(cv);if(!view)throw Error('WebGL unavailable');view.load(m);
   const b=m.bots[0];m.focus={x:b.x,y:b.y};
   if(!skin)for(let i=0;i<90;i++)step(m);
