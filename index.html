@@ -2613,7 +2613,18 @@ function gDel(g,o){const a=g.c[gi(g,o.x,o.y)],i=a.indexOf(o);if(i>=0)a.splice(i,
 function cellOf(m,x,y){if(x<0||y<0||x>=m.W||y>=m.W)return 0;const g=m.ig;return g.a[((y/24)|0)*g.n+((x/24)|0)]}
 const isLand=(m,x,y)=>!m.ig||cellOf(m,x,y)!==0;
 function noise(m,x,y){let n=0;for(const w of m.hs)n+=Math.sin(x*w.ax+y*w.ay+w.p)*w.a;return clamp(.5+n*.5,0,.999)}
-function height(m,x,y){const B=m.B;if(B.hm==='flat')return 0;
+/* Seen: flache Mulden im Gelände, Wasser steht knapp unter dem Ufer */
+function height(m,x,y){const h=height0(m,x,y),L=m.lkg;if(!L)return h;const a=L.c[gi(L,x,y)];if(!a||!a.length)return h;
+  for(let i=0;i<a.length;i++){const q=a[i],d=Math.hypot(x-q.x,y-q.y);if(d>=q.r+90)continue;if(d<q.r){const u=d/q.r;return q.L-q.dp*(1-u*u)}const t=(d-q.r)/90;return q.L+(h-q.L)*t*t*(3-2*t)}return h}
+function inLake(m,x,y){const L=m.lkg;if(!L)return null;const a=L.c[gi(L,x,y)];if(!a)return null;for(let i=0;i<a.length;i++){const q=a[i];if(Math.hypot(x-q.x,y-q.y)<q.r*.9)return q}return null}
+function genLakes(m){if(m.B.hm==='isl')return;const W=m.W,want=Math.round(W*W/1.1e7),lakes=[];
+  for(let tr=0;tr<want*220&&lakes.length<want;tr++){const r=rr(80,230),x=rr(r+300,W-r-300),y=rr(r+300,W-r-300);if(lakes.some(q=>Math.hypot(q.x-x,q.y-y)<q.r+r+260))continue;
+    let bad=false;gNear(m.og,x,y,r+320,o=>{if(bad)return;const dx=Math.max(0,Math.abs(o.x-x)-(o.hw||o.r||0)),dy=Math.max(0,Math.abs(o.y-y)-(o.hh||o.r||0));if(Math.hypot(dx,dy)<r+110)bad=true});if(bad)continue;
+    if(m.chests.some(c=>Math.hypot(c.x-x,c.y-y)<r+45)||(m.vend||[]).some(v=>Math.hypot(v.x-x,v.y-y)<r+130))continue;
+    let mn=height0(m,x,y),mx=mn;for(let k=0;k<8;k++){const a=k*Math.PI/4,hh=height0(m,x+Math.cos(a)*r,y+Math.sin(a)*r);mn=Math.min(mn,hh);mx=Math.max(mx,hh)}if(mx-mn>26)continue;
+    lakes.push({x,y,r,L:mn-1,dp:13})}
+  m.lakes=lakes;if(!lakes.length)return;m.lkg=mkGrid(W,500);for(const q of lakes){const g=m.lkg,R2=q.r+95,x0=Math.max(0,Math.floor((q.x-R2)/g.cs)),x1=Math.min(g.n-1,Math.floor((q.x+R2)/g.cs)),y0=Math.max(0,Math.floor((q.y-R2)/g.cs)),y1=Math.min(g.n-1,Math.floor((q.y+R2)/g.cs));for(let j=y0;j<=y1;j++)for(let i=x0;i<=x1;i++)g.c[j*g.n+i].push(q)}}
+function height0(m,x,y){const B=m.B;if(B.hm==='flat')return 0;
   if(B.hm==='isl'){const c=cellOf(m,x,y);if(c===0)return -30;if(c<0)return 12;const I=m.isl[c-1];return 3+clamp((I.r-Math.hypot(x-I.x,y-I.y))/90,0,1)*(10+noise(m,x,y)*26)}
   const n=noise(m,x,y);if(B.hm==='smooth')return n*B.amp;
   const t=n*B.lv,f=Math.floor(t),k=clamp((t-f-.3)/.4,0,1);return(f+k*k*(3-2*k))*B.step}
@@ -2676,7 +2687,7 @@ const blocked=(o,x,y,pad)=>o.k==='b'?Math.abs(x-o.x)<o.hw+pad&&Math.abs(y-o.y)<o
 function rayDist(m,x,y,ang,max,low){const cx=Math.cos(ang),sy=Math.sin(ang);for(let d=14;d<max;d+=14){const px=x+cx*d,py=y+sy*d;if(px<0||py<0||px>=m.W||py>=m.W)return d;const a=m.og.c[gi(m.og,px,py)];for(let i=0;i<a.length;i++){const o=a[i];if(o.low&&!low)continue;if(blocked(o,px,py,0))return d}}return max}
 function rayHit(m,x,y,ang,max){const cx=Math.cos(ang),sy=Math.sin(ang);for(let d=14;d<max;d+=14){const px=x+cx*d,py=y+sy*d;if(px<0||py<0||px>=m.W||py>=m.W)return null;const a=m.og.c[gi(m.og,px,py)];for(let i=0;i<a.length;i++){const o=a[i];if(blocked(o,px,py,0))return{x:px,y:py,o}}}return null}
 function impKind(m,o,x,y){if(o){if(o.k==='t')return'wood';if(o.k==='r')return m.B.crystal?'crystal':'stone';if(o.kind==='car'||o.kind==='cont')return'metal';return'stone'}
-  if(m.ig&&cellOf(m,x,y)===0)return'water';return m.B.snow?'snow':m.biome==='wueste'?'sand':'dirt'}
+  if(m.ig&&cellOf(m,x,y)===0||m.lkg&&inLake(m,x,y))return'water';return m.B.snow?'snow':m.biome==='wueste'?'sand':'dirt'}
 function freeSpot(m,x,y){if(x<30||y<30||x>m.W-30||y>m.W-30)return false;if(m.ig&&cellOf(m,x,y)<=0)return false;
   const a=m.og.c[gi(m.og,x,y)];for(let i=0;i<a.length;i++)if(blocked(a[i],x,y,R+5))return false;return true}
 /* flat=1: gleichmäßig über die Fläche verteilt statt zur Mitte hin verdichtet */
@@ -2689,11 +2700,11 @@ function rollW(rar){const r=rar||0,f=k=>{const c=WCLS[k]??1;return WEAPONS[k].wt
 function lootAdd(m,l){l.t0=m.t;gAdd(m.lg,l)}
 function near(m,c,l){l.x=c.x;l.y=c.y;for(let i=0;i<10;i++){const a=rr(0,TAU),d=rr(24,40),x=c.x+Math.cos(a)*d,y=c.y+Math.sin(a)*d;if(freeSpot(m,x,y)){l.x=x;l.y=y;break}}lootAdd(m,l);return l}
 function openChest(m,c,b){c.open=true;c.openT=m.t;ev(m,'chest',c.x,c.y,700);if(b)b.chests++;const z=rnd(),out=[{k:'g',n:1+Math.floor(rnd()*10)}],q=c.q;
-  if(q===3){for(const l of[rollW(4),rollW(rnd()<.5?3:4),{k:'a',t:3},{k:'h',t:3},{k:'m'},{k:'m'},{k:'s'},{k:'s'},{k:'n'},{k:'k'},{k:'f'}])near(m,c,l);return}
+  if(q===3){for(const l of[rollW(4),rollW(rnd()<.5?3:4),{k:'a',t:3},{k:'h',t:3},{k:'m'},{k:'m'},{k:'s'},{k:'s'},{k:rnd()<.5?'n':rnd()<.5?'k':'f'}])near(m,c,l);return}
   if(q===0){const y=rnd();if(y<.6)out.push(rollW(z<.6?0:z<.9?1:2));else if(y<.7)out.push({k:'m'});else out.push({k:'s'});if(rnd()<.18)out.push({k:rnd()<.3?'m':'s'});if(rnd()<.2)out.push({k:rnd()<.42?'a':'h',t:1})}
   else if(q===1){out.push(rollW(z<.4?1:z<.82?2:z<.97?3:4),{k:rnd()<.3?'m':'s'});if(rnd()<.5)out.push({k:rnd()<.4?'a':'h',t:rnd()<.7?1:2});if(rnd()<.18)out.push({k:'h',t:rnd()<.7?1:2})}
   else{out.push(rollW(z<.35?2:z<.85?3:4),{k:'m'},{k:'s'});out.push({k:'a',t:rnd()<.7?2:3});if(rnd()<.75)out.push({k:'h',t:rnd()<.7?2:3});if(rnd()<.3)out.push(rollW(rnd()<.6?1:2))}
-  if(rnd()<[.22,.45,.75][q])out.push({k:'n'});if(rnd()<[.04,.1,.22][q])out.push({k:'B'});if(rnd()<[.04,.1,.22][q])out.push({k:'P'});if(rnd()<[.06,.12,.2][q])out.push({k:'r'});if(rnd()<[.05,.08,.12][q])out.push({k:'z'});if(rnd()<[.18,.35,.6][q])out.push({k:'k'});if(rnd()<[.16,.32,.55][q])out.push({k:'f'});
+  if(rnd()<[.08,.18,.32][q])out.push({k:'n'});if(rnd()<[.04,.1,.22][q])out.push({k:'B'});if(rnd()<[.04,.1,.22][q])out.push({k:'P'});if(rnd()<[.06,.12,.2][q])out.push({k:'r'});if(rnd()<[.05,.08,.12][q])out.push({k:'z'});if(rnd()<[.06,.13,.24][q])out.push({k:'k'});if(rnd()<[.05,.11,.2][q])out.push({k:'f'});
   
   for(const l of out)near(m,c,l)}
 
@@ -2724,7 +2735,7 @@ function mkBot(m,i,name,isP,cfg,pts,tier){const W=m.W,C=W/2;
     ab:null,abT:14,adrT:-9,smT:-9,smX:0,smY:0,wk:{},lvl:Object.values(pts||{}).reduce((a,x)=>a+(x||0),0),strafe:1,strafeT:0,slide:0,engT:-9,fightT:0,calmT:-9,retT:-9,cover:null,covT:0,lastFoe:null,tg:null,tgT:0,ban:new Set(),banT:30,spotT:0,lastHit:null,lastHitT:-9,lastShotT:-9,
     state:'Springt ab',mv:false,flash:0,place:0,act:'',go:false,gx:p.x,gy:p.y,fire:null,sprint:false,due:true,chest:null};
   {const at=cfg.att||{},eL=1.5*Math.min(1,b.lvl/70);b.W=mkW(isP?(id,k)=>at[id+'_'+k]||0:()=>eL);b.mags=[b.W.pistol.mag]}b.ab=isP?(ABIL[cfg.abil]?cfg.abil:null):(tier>=3&&rnd()<.5?pick(['adren','schild','medi','regen','fokus','panzer','tarn','wut']):null);b.hp=b.max;b.sta=b.staMax;b.gh=height(m,b.x,b.y);b.px=b.x;b.py=b.y;b.vis=b.perks.has('p_ghost')?.75:1;
-  if(b.perks.has('p_gren'))b.gren=2;if(b.perks.has('p_vest')){b.vest=1;b.vestD=VEST[1].d}
+  if(b.perks.has('p_gren'))b.gren=1;if(b.perks.has('p_vest')){b.vest=1;b.vestD=VEST[1].d}
   if(b.perks.has('p_loot')){const id=pick(['smg','shotgun','rifle']);b.wp=[{id,rar:0}];b.mags=[magOf(b,id)]}
   return b}
 function randCfg(){let q=rnd()*100,tier=0;for(let i=0;i<TIERS.length;i++){if((q-=TIERS[i].w)<=0){tier=i;break}}
@@ -2796,7 +2807,7 @@ function gen(m){const W=m.W,B=m.B,A=W*W/1e6*.5,houses=[];
        /* jede zweite Haus- oder Ruinenkiste bekommt eine Nachbarkiste am selben Gebäude */
        if(c.grp&&rnd()<.5){const mate=m.chests.find(d=>d!==c&&d.grp===c.grp&&!out.includes(d)&&Math.hypot(d.x-c.x,d.y-c.y)>=40);if(mate&&out.length<keep){out.push(mate);gAdd(sg,mate);nh++}}}}}
    m.chests=out;m.cg=mkGrid(W,560);for(const c of m.chests)gAdd(m.cg,c)}
-  for(let i=0,nL=Math.max(m.N*.6,A*3);i<nL;i++){const p=spotIn(m,C,C,0,W*.49),q=rnd(),l=q<.4?rollW(rnd()<.65?0:rnd()<.72?1:2):q<.51?{k:'m'}:q<.8?{k:'s'}:q<.86?{k:'n'}:q<.9?{k:rnd()<.5?'k':'f'}:{k:rnd()<.4?'a':'h',t:1};l.x=p.x;l.y=p.y;lootAdd(m,l)}}
+  for(let i=0,nL=Math.max(m.N*.6,A*3);i<nL;i++){const p=spotIn(m,C,C,0,W*.49),q=rnd(),l=q<.4?rollW(rnd()<.65?0:rnd()<.72?1:2):q<.51?{k:'m'}:q<.8?{k:'s'}:q<.825?{k:'n'}:q<.845?{k:rnd()<.5?'k':'f'}:{k:rnd()<.4?'a':'h',t:1};l.x=p.x;l.y=p.y;lootAdd(m,l)}}
 
 function newMatch(cfg,o){o=o||{};const tsz=(cfg&&cfg.mode==='trio')||o.trio?3:(cfg&&cfg.mode==='duo')||o.duo?2:1,trioMode=tsz>1;const W=o.W||32000,N=Math.floor((o.n||1000)/tsz)*tsz,id=BIOMES[o.biome]?o.biome:pick(Object.keys(BIOMES)),B=BIOMES[id];
   const m={tsz,trioMode,W,N,biome:id,B,t:0,tick:0,bots:[],obs:[],tracers:[],fx:[],hits:[],ev:[],dn:[],gren:[],feed:[],noise:[],graves:[],smokes:[],over:false,alive:N,winner:null,focus:null,pv:null,pvN:0,grenN:0,drops:[],nextDrop:60,bounty:null,tod:N>100?pick(['tag','tag','abend','nacht']):'tag',fxp:B.fxp||(N>100&&!B.dark&&id!=='wueste'&&rnd()<.25?{c:0xa8c8ff,vy:-520,rain:1}:null),grace:DROP,bi:6,pfx:cfg&&cfg.shotfx||'std',coarse:false,ig:null};
@@ -2822,6 +2833,7 @@ function newMatch(cfg,o){o=o||{};const tsz=(cfg&&cfg.mode==='trio')||o.trio?3:(c
   nextZone(m);{m.vend=[];const rs=m.obs.filter(o=>o.k==='b'&&o.hw>30&&o.hh>30&&!o.rot2);for(let i=0;i<4000&&m.vend.length<250;i++){if(!rs.length)break;const q=rs[(rnd()*rs.length)|0],sd=rnd()<.5?1:-1,ax=rnd()<.5;let x,y,a;
     if(ax){x=q.x+sd*(q.hw+12.6);y=q.y+rr(-q.hh*.55,q.hh*.55);a=sd>0?0:Math.PI}else{y=q.y+sd*(q.hh+12.6);x=q.x+rr(-q.hw*.55,q.hw*.55);a=sd>0?Math.PI/2:-Math.PI/2}
     const fx=x+Math.cos(a)*34,fy=y+Math.sin(a)*34;if(!freeSpot(m,fx,fy))continue;if(m.vend.some(v=>Math.hypot(v.x-x,v.y-y)<800))continue;if(m.chests.some(c=>Math.hypot(c.x-x,c.y-y)<48||Math.hypot(c.x-fx,c.y-fy)<36))continue;m.vend.push({x,y,a,fx,fy})}}
+  genLakes(m);
   return m}
 const prot=b=>b&&b.tab==='tf_eisern'?15:10;
 const teamOf=(m,b)=>m.bots.slice(b.team*m.tsz,b.team*m.tsz+m.tsz);
@@ -2877,7 +2889,7 @@ const vVal=(t,d)=>t?VEST[t].r*(d??VEST[t].d):0,hVal=(t,d)=>t?(2-HELM[t].m)*(d??H
 function want(b,l){if(l.k==='g')return true;
   /* Rüstung: ohne Rüstung immer; sonst nur, wenn der Fund mit seiner Restfestigkeit spürbar mehr schützt als das Getragene */
   if(l.k==='a')return!b.vest||vVal(l.t,l.d)>vVal(b.vest,b.vestD)*1.15;if(l.k==='h')return!b.helm||hVal(l.t,l.d)>hVal(b.helm,b.helmD)*1.15;
-  {const cap=b.tab==='tf_gurt'?3:2;if(l.k==='n')return b.gren<cap;if(l.k==='k')return b.smk<cap;if(l.k==='f')return b.fls<cap-1}if(l.k==='B')return (b.bmed||0)<1;if(l.k==='P')return (b.bpot||0)<1;if(l.k==='r')return (b.rpot||0)<2;if(l.k==='z')return (b.pz||0)<=0;if(l.k==='m')return b.med<3&&(b.med>0||used(b)<5||b.wp.length>2);if(l.k==='s')return b.pot<3&&(b.pot>0||used(b)<5||b.wp.length>2);
+  {const cap=b.tab==='tf_gurt'?2:1;if(l.k==='n')return b.gren<cap;if(l.k==='k')return b.smk<cap;if(l.k==='f')return b.fls<cap}{const hpP=b.med+2*(b.bmed||0)+(b.rpot||0),shP=b.pot+2*(b.bpot||0),pz=(b.pz||0)>0;if(l.k==='z')return !pz&&hpP+shP===0;if(l.k==='B'||l.k==='P'||l.k==='r'||l.k==='m'||l.k==='s'){if(pz)return false;if(l.k==='B')return hpP===0;if(l.k==='P')return shP===0;if(l.k==='r')return hpP<2;if(l.k==='m')return hpP<2&&(b.med>0||used(b)<5||b.wp.length>2);return shP<2&&(b.pot>0||used(b)<5||b.wp.length>2)}}
   const same=b.wp.find(w=>w.id===l.id);if(same)return l.rar>same.rar;
   if(b.wp.some(w=>w.id==='pistol')||used(b)<5)return true;
   return val(b,b.wp[worst(b)])>val(b,l)}
@@ -2917,7 +2929,7 @@ const ATTSLOTS=['laser','optic','grip','mag','muzzle'];
 function attF(cw,k){let f=1;if(cw&&cw.att)for(const sl in cw.att){const a=ATTS[cw.att[sl]];if(a&&a[3][k])f*=a[3][k]}return f}
 function attMerge(a,b){const o={...(a||{})};if(b)for(const sl in b){const cur=ATTS[o[sl]],nw=ATTS[b[sl]];if(!cur||nw&&nw[2]>cur[2])o[sl]=b[sl]}return o}
 function vendPick(b,cw){let best=null,bv=0;for(const id in ATTS){const a=ATTS[id];if(a[2]>b.gold)continue;const cur=cw.att&&ATTS[cw.att[a[1]]];if(cur&&cur[2]>=a[2])continue;const v=a[2]-(cur?cur[2]:0)+(cur?0:30);if(v>bv){bv=v;best=id}}return best}
-function respawnMate(m,o,x,y){o.alive=true;o.down=false;o.hp=o.max;o.sh=0;o.wp=[{id:'pistol',rar:0}];o.mags=[magOf(o,'pistol')];o.cur=0;o.rel=0;o.cd=0;o.med=0;o.pot=0;o.gren=0;o.smk=0;o.fls=0;o.vest=0;o.vestD=0;o.helm=0;o.helmD=0;o.gold=0;o.place=0;o.x=o.px=x;o.y=o.py=y;o.rsL=m.t+10;o.rsPend=false;o.act='';o.fire=null;o.go=false;o.path=null;o.bleed=0;o.rvBy=null;o.state='Fallschirm';o.respawns=(o.respawns||0)+1;m.alive++;m.feed.push({sys:o.name+' wurde zurückgekauft und springt ab',t:m.t,x,y,me:o.isP||teamOf(m,o).some(q=>q.isP)})}
+function respawnMate(m,o,x,y){o.alive=true;o.down=false;o.hp=o.max;o.sh=0;o.wp=[{id:'pistol',rar:0}];o.mags=[magOf(o,'pistol')];o.cur=0;o.rel=0;o.cd=0;o.med=0;o.pot=0;o.bmed=0;o.bpot=0;o.rpot=0;o.pz=0;o.gren=0;o.smk=0;o.fls=0;o.vest=0;o.vestD=0;o.helm=0;o.helmD=0;o.gold=0;o.place=0;o.x=o.px=x;o.y=o.py=y;o.rsL=m.t+10;o.rsPend=false;o.act='';o.fire=null;o.go=false;o.path=null;o.bleed=0;o.rvBy=null;o.state='Fallschirm';o.respawns=(o.respawns||0)+1;m.alive++;m.feed.push({sys:o.name+' wurde zurückgekauft und springt ab',t:m.t,x,y,me:o.isP||teamOf(m,o).some(q=>q.isP)})}
 function vendPickM(m,b,s,maxD){if(b.vendV&&m.t<b.vendT&&m.vend.includes(b.vendV))return b.vendV;let v=null,vd=maxD;for(const q of m.vend){const qx=q.fx??q.x,qy=q.fy??q.y;if(s&&s.nr>0&&Math.hypot(qx-s.nx,qy-s.ny)>s.nr-40)continue;const d=Math.hypot(qx-b.x,qy-b.y);if(d<vd){vd=d;v=q}}if(v){b.vendV=v;b.vendT=m.t+25}return v}
 function vendGo(m,b,go,s){
   if(m.trio&&b.gold>=50){const dead=mates(m,b).filter(o=>!o.alive&&!o.rsPend);if(dead.length){const v=vendPickM(m,b,s,1600),vd=v?Math.hypot((v.fx??v.x)-b.x,(v.fy??v.y)-b.y):1e9;
@@ -3276,7 +3288,7 @@ function think(m,b,dt,bi){if(m.t<DROP||m.t<(b.rsL||0))return;
   if(b.act==='heal'){b.moveSpeed=0;b.motionX=b.x;b.motionY=b.y;b.sta=Math.min(b.staMax,b.sta+15*dt);if((b.healT-=dt)<=0){if(b.useK==='B'){b.hp=b.max;b.bmed--}else if(b.useK==='P'){b.sh=100;b.bpot--}else if(b.useK==='r'){b.regT=m.t+15;b.regL=m.t;b.rpot--}else if(b.useK==='z'){b.hp=Math.min(b.max,b.hp+25);b.sh=Math.min(100,b.sh+25);b.pz--}else if(b.useK==='s'){b.sh=Math.min(100,b.sh+(b.perks.has('p_shield')?75:50));b.pot--}else{b.hp=Math.min(b.max,b.hp+b.healAmt);b.med--;b.meds++}ev(m,b.useK==='s'||b.useK==='P'?'shield':'heal',b.x,b.y,200);b.act='';b.due=true}return}
   if(b.act==='open'){const c=b.chest;if(c.open){b.act='';b.due=true}else if((c.prog+=dt)>=(b.perks.has('p_scav')?.4:.8)*b.lootK*(b.tab==='tf_samm'?.7:1)){openChest(m,c,b);b.act='';b.due=true}}
   else if(b.go&&b.up<=0){const dx=b.gx-b.x,dy=b.gy-b.y,l=Math.hypot(dx,dy);
-    if(l>2){let sp=108*b.sk.spd*(m.t<b.adrT?1.3:1)*(b.perks.has('p_rescue')&&b.state.startsWith('Läuft zu ')?1.3:1)*(b.ttabs&&b.ttabs.has('tf_vorhut')?1.06:1)*(b.tab==='tf_rett'&&b.state.startsWith('Läuft zu ')?1.2:1);if(b.pose===1)sp*=.55;else if(b.pose===2)sp*=.25;else if(b.sprint&&!b.exh&&b.sta>0){sp*=1.5;b.run=true}if(b.jump>0)sp*=1.15;
+    if(l>2){const lk=m.lkg?inLake(m,b.x,b.y):null;b.wade=lk?lk.L-2.5:0;let sp=(lk?.6:1)*108*b.sk.spd*(m.t<b.adrT?1.3:1)*(b.perks.has('p_rescue')&&b.state.startsWith('Läuft zu ')?1.3:1)*(b.ttabs&&b.ttabs.has('tf_vorhut')?1.06:1)*(b.tab==='tf_rett'&&b.state.startsWith('Läuft zu ')?1.2:1);if(b.pose===1)sp*=.55;else if(b.pose===2)sp*=.25;else if(b.sprint&&!b.exh&&b.sta>0){sp*=1.5;b.run=true}if(b.jump>0)sp*=1.15;
       let ux=dx/l,uy=dy/l;if(b.detT>0){b.detT-=dt;const q=Math.hypot(b.dx,b.dy)||1;ux=b.dx/q;uy=b.dy/q}
       /* Ausweichen in jedem Schritt: liegt die Kante eines Hindernisses dicht voraus, wird seitlich daran vorbeigelenkt */
       if(l>40&&b.jump<=0&&!(b.path&&b.path.length)){const arr=m.og.c[gi(m.og,b.x,b.y)],canJ=b.pose===0&&b.sta>=12;let ax=0,ay=0;
@@ -3369,7 +3381,7 @@ const UNLOCKS=[
   {id:'p_high',type:'perk',name:'Adlerauge',desc:'Der Höhenvorteil beim Zielen ist fast doppelt so stark',cond:'Top 125 im Eisland',test:r=>r.place<=125&&r.biome==='eis'},
   {id:'p_second',type:'perk',name:'Zweite Luft',desc:'Überlebt einmal pro Runde einen tödlichen Treffer mit 30 Leben',cond:'Erreiche die Top 25',test:r=>r.place<=25},
   {id:'p_clutch',type:'perk',name:'Zähes Ende',desc:'+20 % Schaden, sobald nur noch 25 leben',cond:'Erreiche die Top 12',test:r=>r.place<=12},
-  {id:'p_gren',type:'perk',name:'Grenadier',desc:'Startet mit 2 Granaten',cond:'2 Granaten-Kills in einer Runde',test:r=>r.grenKills>=2},
+  {id:'p_gren',type:'perk',name:'Grenadier',desc:'Startet mit einer Splittergranate',cond:'2 Granaten-Kills in einer Runde',test:r=>r.grenKills>=2},
   {id:'p_vest',type:'perk',name:'Gepanzert',desc:'Startet mit einer Weste Tier 1',cond:'Erreiche die Top 75',test:r=>r.place<=75},
   {id:'p_helm',type:'perk',name:'Dickkopf',desc:'Helme halten doppelt so viele Kopftreffer aus',cond:'10 Kopfschüsse in einer Runde',test:r=>r.hs>=10},
   {id:'p_gold',type:'perk',name:'Goldnase',desc:'Kopfgeld bringt 20 statt 10 Gold',cond:'Insgesamt 600 Gold sichern',test:(r,s)=>(s.goldTotal||0)>=600},
@@ -3409,7 +3421,7 @@ const UNLOCKS=[
   {id:'tf_nebel',mode:'team',cost:350,type:'team',name:'Nebelwerfer',desc:'Startet mit einer Rauchgranate, Rauch hält 50 % länger',cond:'Erreiche im Team-Modus die Top 100',test:r=>r.trio&&r.place<=100},
 {id:'tf_blend',mode:'team',cost:400,type:'team',name:'Blendexperte',desc:'Startet mit einer Blendgranate, Blendung hält 40 % länger',cond:'5 Kills in einer Team-Runde',test:r=>r.trio&&r.kills>=5},
 {id:'tf_deck',mode:'team',cost:450,type:'team',name:'Deckungsfeuer',desc:'Schießt 15 % genauer, solange ein Kamerad in der Nähe wiederbelebt',cond:'Belebe 2 Kameraden in einer Runde wieder',test:r=>r.revs>=2},
-{id:'tf_gurt',mode:'team',type:'team',name:'Großer Gürtel',desc:'Trägt 3 statt 2 von jeder Granatenart',cond:'Gewinne eine Team-Runde',test:r=>r.trio&&r.win},
+{id:'tf_gurt',mode:'team',type:'team',name:'Großer Gürtel',desc:'Trägt 2 statt 1 von jeder Granatenart',cond:'Gewinne eine Team-Runde',test:r=>r.trio&&r.win},
 {id:'tf_brille',mode:'team',type:'team',name:'Schutzbrille',desc:'Blendgranaten wirken nur halb so lang',cond:'Überlebe 10 Minuten in einer Team-Runde',test:r=>r.trio&&r.time>=600},
 {id:'tf_rett',mode:'team',type:'team',name:'Rettungssprint',desc:'Läuft 20 % schneller zu Kameraden am Boden',cond:'Werde in einer Runde dreimal wiederbelebt',test:r=>r.revived>=3},
 {id:'tf_eisern',mode:'team',type:'team',name:'Eiserner Wille',desc:'Am Boden 15 statt 10 Sekunden vor Waffen geschützt',cond:'Werde in einer Runde zweimal wiederbelebt',test:r=>r.revived>=2},
@@ -3711,7 +3723,7 @@ function makeView(cv){
   const silMe=new T.MeshBasicMaterial({color:0x35e0c8,depthFunc:T.GreaterDepth,depthWrite:false,fog:false}),silFoe=new T.MeshBasicMaterial({color:0xff5a3c,depthFunc:T.GreaterDepth,depthWrite:false,fog:false});
   const olM=new T.ShaderMaterial({side:T.BackSide,uniforms:{c:{value:new T.Color(0x0a0e12)}},vertexShader:'void main(){vec4 p=vec4(position,1.0);vec3 n=normal;\n#ifdef USE_INSTANCING\np=instanceMatrix*p;n=mat3(instanceMatrix)*n;\n#endif\nvec4 mv=modelViewMatrix*p;mv.xyz+=normalize(normalMatrix*n)*clamp(-mv.z*.00045,.18,.65);gl_Position=projectionMatrix*mv;}',fragmentShader:'uniform vec3 c;void main(){gl_FragColor=vec4(c,1.0);}'}),olMe=olM.clone();olMe.uniforms={c:{value:new T.Color(0x0a0e12)}};
   const olLeg=new T.Mesh(legGeo,olM);
-  const _PM=new T.Matrix4(),_FR=new T.Frustum(),_BX=new T.Box3();
+  const _PM=new T.Matrix4(),_FR=new T.Frustum(),_BX=new T.Box3();let tileT=0;
   const pebG=new T.OctahedronGeometry(1,0),pebM=new T.MeshLambertMaterial({color:0xffffff}),leafG=new T.PlaneGeometry(1,1).rotateX(-Math.PI/2),leafM=new T.MeshLambertMaterial({color:0xffffff,side:T.DoubleSide});
   const LEGUP=6,wallR=new Map(),_Z=new T.Matrix4().makeScale(0,0,0);let wallSeen=0;const _S=new T.Vector3(),_T=new T.Vector3(),_E=new T.Vector3(),_U=new T.Vector3(),_P=new T.Vector3(),_Y=new T.Vector3(0,1,0),_Q=new T.Quaternion();
   function segTo(mesh,a,b){_U.subVectors(b,a);const L=_U.length()||.001;mesh.position.copy(a);_Q.setFromUnitVectors(_Y,_U.multiplyScalar(1/L));mesh.quaternion.copy(_Q);mesh.scale.set(1,L,1)}
@@ -3757,7 +3769,7 @@ function makeView(cv){
   function bindChest(r,c){r.base.geometry=r.bo.geometry=chBase[c.q];r.lm.geometry=r.lo.geometry=chLid[c.q];r.g.rotation.y=c.rot;r.g.position.set(c.x,height(M,c.x,c.y),c.y);r.g.scale.setScalar(1)}
   let decor=null,decK='',decCol=[];const hsh=(i,j,k)=>{const v=Math.sin(i*127.1+j*311.7+k*74.7)*43758.5453;return v-Math.floor(v)};
   let bloodPools=null,bloodDrops=null;
-  let world=null,own=[],graves=null,gravesP=null,gravePN=0,baseF=42,graveN=0,zoneKey=-1,zring=null,cw=0,ch=0,M=null,vy=0,maxH=1,parts=null,motes=null,water=null;
+  let world=null,own=[],graves=null,gravesP=null,gravePN=0,baseF=42,graveN=0,zoneKey=-1,zring=null,cw=0,ch=0,M=null,vy=0,maxH=1,parts=null,motes=null,water=null,lakeM=null;
   const cand=[],byD=(a,b)=>a._d-b._d;
   function nearList(g,cx,cy,r,max,flt){cand.length=0;const r2=r*r;gNear(g,cx,cy,r,o=>{const d=(o.x-cx)*(o.x-cx)+(o.y-cy)*(o.y-cy);if(d<r2&&(!flt||flt(o))){o._d=d;cand.push(o)}});cand.sort(byD);if(cand.length>max)cand.length=max;return cand}
   function ringGeo(cx,cy,r){const n=clamp(Math.round(r/14),96,1200),p=new Float32Array((n+1)*6),ix=[];for(let i=0;i<=n;i++){const a=i/n*TAU,c=Math.cos(a),s=Math.sin(a),h=Math.max(1,height(M,clamp(cx+c*r,0,M.W-1),clamp(cy+s*r,0,M.W-1)))+3,o=i*6;
@@ -3844,6 +3856,8 @@ ${mode==='metal'?`float cor=.5+.5*sin(u*1.7);diffuseColor.rgb*=(.88+.12*cor*vert
       sh.fragmentShader=sh.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
 float wetPatch=uWet*smoothstep(.1,.75,sin(vWXZ.x*.031+sin(vWXZ.y*.019)*2.)*sin(vWXZ.y*.027+sin(vWXZ.x*.023)));
 roughnessFactor=mix(roughnessFactor,.2,wetPatch);`)};
+    if(m.lakes&&m.lakes.length){const lm=keep(mobileGraphics?new T.MeshLambertMaterial({color:Bm.dark?0x5a2ab8:Bm.snow?0x8fc4dc:0x2f6f8a,transparent:true,opacity:.8}):new T.MeshStandardMaterial({color:Bm.dark?0x5a2ab8:Bm.snow?0x8fc4dc:0x2f6f8a,roughness:.12,metalness:.35,transparent:true,opacity:.78})),lg=keep(new T.CircleGeometry(1,touchDev?20:32).rotateX(-Math.PI/2));
+      lakeM=lm;for(const q of m.lakes){const o=new T.Mesh(lg,lm);o.position.set(q.x,q.L-2.5,q.y);o.scale.set(q.r+3,1,q.r+3);o.receiveShadow=!mobileGraphics;o.renderOrder=1;world.add(o)}}else lakeM=null;
     water=null;if(isl){const wm=keep(new T.MeshStandardMaterial({color:0x285b68,roughness:.23,metalness:.28,transparent:true,opacity:.88}));
       wm.onBeforeCompile=sh=>{sh.uniforms.uWaterTime=tU;sh.vertexShader='varying vec2 vWater;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvWater=position.xz;');sh.fragmentShader='varying vec2 vWater;uniform float uWaterTime;\n'+sh.fragmentShader.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
 vec3 waveN=normalize(vec3(.14*cos(vWater.x*.035+uWaterTime*1.2)+.06*cos(vWater.y*.09-uWaterTime*1.7),1.,.12*sin(vWater.y*.043-uWaterTime)+.04*sin(vWater.x*.11+uWaterTime*1.5)));
@@ -4030,7 +4044,7 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
       v.k1=0;v.k2+=((b.pose===2?1:0)-v.k2)*blend;const turn=Math.atan2(Math.sin(b.a-v.face),Math.cos(b.a-v.face));v.face=b.fire?b.a:v.face+turn*blend;
       v.g.position.set(X,y,Y);v.model.scale.y=1.04*(1-.32*v.k1);v.model.position.y=(7-LEGUP)*v.k2;v.model.rotation.set(clamp(turn,-.12,.12)*clamp(v.animSpeed/110,0,1),-v.face,(walk?-.07*clamp(v.animSpeed/110,0,1.5):0)-1.42*v.k2+(b.jump>0?.25:0));v.bar.quaternion.copy(q);
       v.bar.position.y=64-14*v.k1-34*v.k2;v.label.position.y=88-14*v.k1-34*v.k2;
-      const sw=walk?Math.sin(ph)*clamp(v.animSpeed/125,0,.78)*(1-v.k1*.45)*(b.jump>0?.25:1):0;v.legs[0].rotation.z=sw;v.legs[1].rotation.z=-sw;{/* Hüfte zeigt in die Laufrichtung, Oberkörper bleibt aufs Ziel gerichtet; rückwärts läuft der Schritt andersherum */
+      const sw=walk?Math.sin(ph)*clamp(v.animSpeed/125,0,.78)*(1-v.k1*.45)*(b.jump>0?.25:1):0;if(b.wade&&walk&&rnd()<.1)burst(X,Y,b.wade+1,'water',.5);v.legs[0].rotation.z=sw;v.legs[1].rotation.z=-sw;{/* Hüfte zeigt in die Laufrichtung, Oberkörper bleibt aufs Ziel gerichtet; rückwärts läuft der Schritt andersherum */
         let rel=0,back=false;if(walk&&b.mvAng!=null){rel=Math.atan2(Math.sin(b.mvAng-v.face),Math.cos(b.mvAng-v.face));if(Math.abs(rel)>1.75){back=true;rel=Math.atan2(Math.sin(rel+Math.PI),Math.cos(rel+Math.PI))}}
         rel=clamp(rel,-1.1,1.1);v.py=(v.py||0)+(rel-(v.py||0))*Math.min(1,dt*8);v.pelvis.rotation.y=-v.py;if(back){v.legs[0].rotation.z=-sw;v.legs[1].rotation.z=sw}
         /* Auf der Stelle drehen: kleine Trippelschritte */const tr=Math.abs(Math.atan2(Math.sin(b.a-(v.pf??b.a)),Math.cos(b.a-(v.pf??b.a))))/Math.max(dt,.001);v.pf=b.a;v.tq=(v.tq||0)+(Math.min(1,tr/2.5)-(v.tq||0))*Math.min(1,dt*6);
@@ -4159,12 +4173,14 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
       const fl=boltT>0?(Math.sin(boltT*60)>-.3?boltT/.32:0):0;bolt.material.opacity=fl;boltG.material.opacity=fl*.35;wall.material.opacity=Math.min(1,wall.material.opacity+fl*.4);bolt.visible=boltG.visible=fl>0;boltL.intensity=fl*6;
       {const ca=Math.atan2(cy-s.y,cx-s.x);stormPts.visible=r>1&&dE<1600;if(stormPts.visible){for(let i=0;i<SPN;i++){const p=spD[i];p.a+=p.v*dt*.6;if(p.a>.6)p.a-=1.2;p.h=(p.h+dt*(40+p.v*600))%420;const an=ca+p.a,rr2=r+p.r+Math.sin(ts/600+p.s)*20;spA[i*3]=s.x+Math.cos(an)*rr2;spA[i*3+2]=s.y+Math.sin(an)*rr2;spA[i*3+1]=hAt(clamp(spA[i*3],0,M.W-1),clamp(spA[i*3+2],0,M.W-1))+p.h}spG.attributes.position.needsUpdate=true}}}
     stU.value.set(s.x,s.y,s.r);
-    {const vr=touchDev?.74:1,i0=Math.floor((cx-(rot?3900:3300)*vr)/TS),i1=Math.floor((cx+(rot?3900:3300)*vr)/TS),j0=Math.floor((cy-3900*vr)/TS),j1=Math.floor((cy+(rot?3900:1900)*vr)/TS);let budget=tiles.size?1:99;for(const t of tiles.values())t.vis=false;
-      for(let tj=j0;tj<=j1;tj++)for(let ti=i0;ti<=i1;ti++){if(ti<0||tj<0||ti*TS>=W||tj*TS>=W)continue;const k=ti+'_'+tj;let t=tiles.get(k);if(!t){if(budget<=0)continue;budget--;t=buildTile(ti,tj);tiles.set(k,t)}t.vis=true}
-      _PM.multiplyMatrices(cam.projectionMatrix,cam.matrixWorldInverse);_FR.setFromProjectionMatrix(_PM);for(const[k,t]of tiles){if(t.vis){_BX.min.set(t.x-TS/2-160,-400,t.y-TS/2-160);_BX.max.set(t.x+TS/2+160,1000,t.y+TS/2+160);t.g.visible=_FR.intersectsBox(_BX)}else t.g.visible=false;if(!t.vis&&tiles.size>40&&(Math.abs(t.x-cx)>8000||Math.abs(t.y-cy)>8000)){world.remove(t.g);t.own.forEach(o=>o.dispose());tiles.delete(k)}}}
+    {const vr=touchDev?.74:1,i0=Math.floor((cx-(rot?3900:3300)*vr)/TS),i1=Math.floor((cx+(rot?3900:3300)*vr)/TS),j0=Math.floor((cy-3900*vr)/TS),j1=Math.floor((cy+(rot?3900:1900)*vr)/TS);let budget=tiles.size?(ts-tileT>170?1:0):99;for(const t of tiles.values())t.vis=false;
+      for(let tj=j0;tj<=j1;tj++)for(let ti=i0;ti<=i1;ti++){if(ti<0||tj<0||ti*TS>=W||tj*TS>=W)continue;const k=ti+'_'+tj;let t=tiles.get(k);if(!t){if(budget<=0)continue;budget--;t=buildTile(ti,tj);tileT=ts;tiles.set(k,t)}t.vis=true}
+      /* Kartenstücke am Rand schon vorab bauen, eines nach dem anderen und mit Pause dazwischen, damit es beim Laufen nicht hakt */
+      if(budget>0&&tiles.size&&ts-tileT>420){pre:for(let tj=j0-1;tj<=j1+1;tj++)for(let ti=i0-1;ti<=i1+1;ti++){if(ti<0||tj<0||ti*TS>=W||tj*TS>=W)continue;const k=ti+'_'+tj;if(!tiles.has(k)){const t=buildTile(ti,tj);t.vis=false;t.g.visible=false;tiles.set(k,t);tileT=ts;break pre}}}
+      _PM.multiplyMatrices(cam.projectionMatrix,cam.matrixWorldInverse);_FR.setFromProjectionMatrix(_PM);for(const[k,t]of tiles){if(t.vis){_BX.min.set(t.x-TS/2-160,-400,t.y-TS/2-160);_BX.max.set(t.x+TS/2+160,1000,t.y+TS/2+160);t.g.visible=_FR.intersectsBox(_BX)}else t.g.visible=false;if(!t.vis&&tiles.size>56&&(Math.abs(t.x-cx)>8000||Math.abs(t.y-cy)>8000)){world.remove(t.g);t.own.forEach(o=>o.dispose());tiles.delete(k)}}}
     {const dk=!!m.B.dark||m.tod==='nacht';for(const c of clouds){const u=c.userData;let x=((u.ox+ts*.012)%7000+7000)%7000-3500;c.position.set(cx+x,vy+u.h,cy+u.oz);c.material.opacity=dk?.18:m.tod==='abend'?.6:.75;c.material.color.setHex(m.tod==='abend'?0xffc8a0:dk?0x8090b0:0xffffff)}
       sunGlow.visible=!dk;sunGlow.position.set(cx+1800,vy+1500,cy-3200);sunGlow.material.color.setHex(m.tod==='abend'?0xff9a50:0xfff2c8)}
-    if(water)water.material.opacity=.8+Math.sin(ts/900)*.04;
+    if(water)water.material.opacity=.8+Math.sin(ts/900)*.04;if(lakeM)lakeM.opacity=.76+Math.sin(ts/1100)*.04;
     if(decor){const ci=Math.floor(cx/46),cj=Math.floor(cy/46),key=ci+'_'+cj;if(key!==decK){decK=key;let dn=0;const peb=decor.userData.peb;
         for(let j=cj-24;j<=cj+20&&dn<grassCount;j++)for(let i=ci-19;i<=ci+19&&dn<grassCount;i++){if(hsh(i,j,0)>(mobileGraphics?.34:.72))continue;const x=(i+hsh(i,j,1))*46,y=(j+hsh(i,j,2))*46;if(x<5||y<5||x>W-5||y>W-5)continue;const gh=height(m,x,y);if(m.ig&&gh<9)continue;
           const q=hsh(i,j,3),sc=peb?2.5+q*4.5:1.6+q*1.8;dum.position.set(x,gh+(peb?sc*.3:0),y);dum.rotation.set(0,q*6.3,peb?0:(q-.5)*.5);dum.scale.set(sc,peb?sc*.6:6+q*9,sc);dum.updateMatrix();decor.setMatrixAt(dn,dum.matrix);decor.setColorAt(dn,decCol[(hsh(i,j,4)*hsh(i,j,4)*decCol.length)|0]);dn++}
@@ -4312,7 +4328,7 @@ document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementByI
 async function toggleOri(){const so=screen.orientation;if(!so||!so.lock){$('oriBtn').textContent='Drehen nicht möglich';return}
   const land=!(so.type||'').startsWith('landscape');try{if(!fsOn()){const d=document.documentElement,f=d.requestFullscreen||d.webkitRequestFullscreen;if(f)await f.call(d,{navigationUI:'hide'})}await so.lock(land?'landscape':'portrait');$('oriBtn').textContent=land?'🔄 Hoch':'🔄 Quer'}catch(e){$('oriBtn').textContent='Drehen gesperrt'}}
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('oriBtn');if(!b)return;if(!(screen.orientation&&screen.orientation.lock)){b.hidden=true;return}b.onclick=toggleOri});
-function startMatch(){$('match').classList.remove('details-open');$('hudDetails').setAttribute('aria-expanded','false');$('hudDetails').textContent='Ausrüstung anzeigen';const c=JSON.parse(JSON.stringify(S.cfg));c.land='any';cur=newMatch(c,{biome:window.SR_BIOME});cur.lite=matchMedia('(pointer:coarse)').matches||S.cfg.gfx==='low';if(location.hash==='#vend'&&cur.vend&&cur.vend[0]){const v=cur.vend[0],P0=cur.bots.find(b=>b.isP);if(P0){P0.x=P0.px=v.fx+20;P0.y=P0.py=v.fy+20}}P=cur.bots[0];spec=P;acc=0;endT=0;deadShown=false;heardT=0;cam.x=P.x;cam.y=P.y;cur.focus=cam;camI=0;camYaw=0;$('camBtn').textContent='📷 Vorschau';$('rotBtn').textContent='🧭 '+(S.cfg.camRot?'dreht':'fest');miniBase=mkMini(cur);
+function startMatch(){$('match').classList.remove('details-open');$('hudDetails').setAttribute('aria-expanded','false');$('hudDetails').textContent='Ausrüstung anzeigen';const c=JSON.parse(JSON.stringify(S.cfg));c.land='any';cur=newMatch(c,{biome:window.SR_BIOME});cur.lite=matchMedia('(pointer:coarse)').matches||S.cfg.gfx==='low';if(location.hash==='#vend'&&cur.vend&&cur.vend[0]){const v=cur.vend[0],P0=cur.bots.find(b=>b.isP);if(P0){P0.x=P0.px=v.fx+20;P0.y=P0.py=v.fy+20}}if(location.hash==='#lake'&&cur.lakes&&cur.lakes[0]){const v=cur.lakes[0],P0=cur.bots.find(b=>b.isP);if(P0){P0.x=P0.px=v.x+v.r*.75;P0.y=P0.py=v.y}}P=cur.bots[0];spec=P;acc=0;endT=0;deadShown=false;heardT=0;cam.x=P.x;cam.y=P.y;cur.focus=cam;camI=0;camYaw=0;$('camBtn').textContent='📷 Vorschau';$('rotBtn').textContent='🧭 '+(S.cfg.camRot?'dreht':'fest');miniBase=mkMini(cur);
   if(AU.on)auInit();lastK=0;$('toast').hidden=true;$('dead').hidden=true;$('feed').innerHTML='';$('hMap').textContent=cur.B.n+(cur.tod==='abend'?' · Abend':cur.tod==='nacht'?' · Nacht':'')+(cur.fxp&&cur.fxp.rain?' · Regen':'');setSpeed(1);show('match');
   if(!mainView&&!noGL){try{mainView=makeView($('cv'))}catch(e){mainView=null}if(!mainView){noGL=true;$('hMap').textContent='3D nicht verfügbar – im Safari-Browser öffnen'}}
   if(mainView){try{mainView.load(cur)}catch(e){mainView=null;noGL=true;$('hMap').textContent='3D-Fehler: '+e.message}}}
@@ -4457,7 +4473,7 @@ function hud(m){const s=m.storm,p=m.ph[s.ph],f=spec||P;
   while(cells.length<3)cells.push('<div><svg viewBox="0 0 48 22"></svg><b>&nbsp;</b>leer</div>');
   {const e=[[f.med,'Medikit','#74d66b'],[f.pot,'Schild','#4aa8ff'],[f.bmed,'Großverband','#ff8a8a'],[f.bpot,'Gr. Schild','#6ab0ff'],[f.rpot,'Regen','#7aff8a'],[f.pz,'Pizza','#ffc070']].filter(x=>x[0]>0);
     cells.push(`<div class="g" style="border-top-color:#74d66b;${e.length?'':'opacity:.55'}">${ICON.med}<b>Heilung</b><span style="display:flex;flex-direction:column;font-size:10px;line-height:1.15">${e.length?e.map(x=>`<span style="color:${x[2]};white-space:nowrap">${x[1]} ×${x[0]}</span>`).join(''):'leer'}</span></div>`)}
-  {const g=f.gren||0,k=f.smk||0,l=f.fls||0,cap=f.tab==='tf_gurt'?3:2,sp=(c,v,ic)=>`<span style="color:${v?c:'#5b6670'};white-space:nowrap"><small style="opacity:.7;font-size:8px">${ic}</small>${v}</span>`;
+  {const g=f.gren||0,k=f.smk||0,l=f.fls||0,cap=f.tab==='tf_gurt'?2:1,sp=(c,v,ic)=>`<span style="color:${v?c:'#5b6670'};white-space:nowrap"><small style="opacity:.7;font-size:8px">${ic}</small>${v}</span>`;
     
     cells.push(`<div class="g" style="border-top-color:#8a9a5a;${g+k+l?'':'opacity:.55'}">${ICON.gren}<b>Granaten</b><span class="gq" style="display:flex;justify-content:center;gap:3px;font-size:11px;font-weight:700">${sp('#b5c48a',g,'S')}${sp('#c9d0d6',k,'R')}${sp('#ffe9a0',l,'B')}</span></div>`)}
   $('sInv').innerHTML=cells.join('')}
