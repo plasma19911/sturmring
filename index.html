@@ -2658,6 +2658,7 @@ const BIOMES={
   mall:{n:'Shopping Mall',d:'Galerien, Rolltreppen und Läden auf drei Ebenen',sky:0xc4d4de,gnd:0xb8b4ac,g0:[.7,.68,.64],g1:[.82,.8,.76],hm:'mall',mall:1,den:[0,0,0,0],tree:'round',leaf:0x3f8a3c,rock:0x8a9096,mini:'#b9b4aa',hc:[0xe8e2d6,0xd9c7b0,0xc9d4dc,0xe6d2c4,0xcfd8c8]},
   alien:{n:'Alien-Planet',d:'Kristalle, Riesenpilze und fremder Himmel',sky:0x2a1840,gnd:0x3a2a5a,g0:[.22,.14,.36],g1:[.2,.52,.5],hm:'ter',lv:4,step:46,den:[1,2,16,9],tree:'mushroom',leaf:0x35e0c8,rock:0xd04aff,crystal:1,mini:'#4a3a7a',hc:[0x3fd0c0,0xff5fa8,0x8a6aff],fxp:{c:0x7affea,vy:24},dark:1}};
 const PHF=[.44,.31,.21,.135,.08,.045,.02,0],PHW=[23,23,20,16,12,9,7,5],PHS=[38,30,24,18,13,9,7,7],PHD=[1,2,3,5,7,9,12,16];
+const NAMES2=['Kaktus-Kalle','Sturmfrisur','Nudelholz','Brezel-Baron','Kuchenkrümel','Schnitzel-Sepp','Dosenravioli','Panzerknacker','Zappelphilipp','Socken-Sigi','Hasenfuß','Kampfkeks','Gurkenglas','Frikadellen-Fred','Lauchkönig','Toastbrot','Schnarchnase','Klappstuhl','Tante Emma','Kartoffelpuffer','Wackeldackel','Nebelkerze','Dönerdieb','Sofakissen','Quietscheente','Bratwurst-Bernd','Pfannkuchen','Kühlschrank','Mettigel','Sockenschuss','Zwiebelring','Gartenzwerg','Kugelblitz','Erbsenzähler','Ratatouille','Senfgurke','Schlafmütze','Butterbrot','Rumpelstilz','Nachtschicht','Plüschtiger','Wurstwasser','Krümelmonster','Flaschenpost','Bügeleisen','Lockenwickler','Kaffeesatz','Spätzle-Spezl','Kuckucksuhr','Hosenträger','Pommes rot-weiß','Strudel-Steffi','Gummistiefel','Holzlöffel','Blitzbirne','Schokokuss','Tomatensaft','Heizdecke','Fischstäbchen','Zuckerwatte','Glühwürmchen','Matschbirne','Nudelsieb','Grillanzünder','Bierdeckel','Rasenmäher','Kopfkissen','Schlaubi','Brummbär','Rotkäppchen','Vogelscheuche','Drahtesel','Schnürsenkel','Ofenkartoffel','Pustekuchen','Muckefuck','Kleiderbügel','Pantoffelheld','Wattebausch','Sauerkraut','Frühstücksei','Leberkäs','Schaumschläger','Muskelkater','Dauerlutscher','Fliegenpilz','Puddingpistole','Igelfrisur','Haferflocke','Knallerbse','Schmalzbrot','Raketen-Rudi','Pfeffermühle','Wirbelwind','Tollpatsch','Hustensaft','Turnbeutel','Seifenblase','Kakaobohne','Grummel'];
 const PRE=['Turbo','Mega','Mini','Super','Dr.','Opa','Oma','Baron','Käpt’n','Sir','Don','Lady','Prof.','Hyper','Ultra','Bio','Retro','Neo','Disco','Captain','Onkel','Tante','Graf','Agent','Meister'];
 const SUF=['Krawallo','Pixel','Zora','Lotte','Bert','Campino','Rakete','Mopsi','Knall','Ottokar','Schrotti','Wirbel','Kaltstart','Nullpeilung','Holle','Udo','Bolzen','Zitterhand','Mag','Pfeffer','Streuner','Funkloch','Kimme','Korn','Blindgänger','Erna','Querschläger','Nachlader','Zielwasser','Prellbock','Kalle','Dachhase','Mauerblume','Heinz','Senkblei','Türsteher','Brösel','Flitzer','Schnitzel','Wumms'];
 
@@ -2926,7 +2927,7 @@ function newMatch(cfg,o){o=o||{};const tsz=(cfg&&cfg.mode==='trio')||o.trio?3:(c
   gen(m);m.bg=mkGrid(W,450);m.sgD=W/Math.sqrt(N)*(B.hm==='isl'?.42:.55);m.sg=mkGrid(W,m.sgD);
   const ord=[];for(let i=0;i<1000;i++)ord.push(i);ord.sort(()=>rnd()-.5);
   if(cfg)m.bots.push(mkBot(m,0,'Dein Bot',true,cfg,cfg.skills,-1));
-  while(m.bots.length<N){const e=randCfg(),k=ord[m.bots.length%1000];m.bots.push(mkBot(m,m.bots.length,PRE[k%25]+' '+SUF[(k/25)|0],false,e.cfg,e.pts,e.tier))}
+  while(m.bots.length<N){const e=randCfg(),k=ord[m.bots.length%1000];m.bots.push(mkBot(m,m.bots.length,k%3===0?NAMES2[(k/3|0)%NAMES2.length]+((k/3|0)>=NAMES2.length?' '+(((k/3|0)/NAMES2.length|0)+1):''):PRE[k%25]+' '+SUF[(k/25)|0],false,e.cfg,e.pts,e.tier))}
   /* Trio: je drei Bots bilden ein Team, landen zusammen und spielen zusammen */
   if(m.tsz>1){m.trio=true;const Z=m.tsz;for(let i=0;i<m.bots.length;i++){const b=m.bots[i];b.team=(i/Z)|0;if(i%Z){const L=m.bots[i-i%Z];for(let k=0;k<14;k++){const a=rr(0,TAU)+(i%Z)*2.1,d=rr(120,210),x=L.x+Math.cos(a)*d,y=L.y+Math.sin(a)*d;if(freeSpot(m,x,y)){b.x=b.px=x;b.y=b.py=y;break}}}}
     for(const b of m.bots)if(!b.isP&&b.tier>=2&&rnd()<.4)b.perks.add(pick(Z===2?['p_duo','p_last','p_focus','p_rally']:['p_triad','p_squad','p_focus','p_rally','p_guard']));
@@ -3049,6 +3050,8 @@ function vendGo(m,b,go,s){
   const cw=b.wp[b.cur];if(!cw||cw.id==='pistol'&&b.wp.length>1)return false;const want=vendPick(b,cw);if(!want)return false;const v=vendPickM(m,b,s,1100),vd=v?Math.hypot((v.fx??v.x)-b.x,(v.fy??v.y)-b.y):1e9;if(!v)return false;
   if(vd<24){b.ta=b.a=Math.atan2(v.y-b.y,v.x-b.x);b.bT=1.6;const a=ATTS[want];b.gold-=a[2];cw.att={...(cw.att||{}),[a[1]]:want};b.attBuys=(b.attBuys||0)+1;b.vendV=null;b.state='Kauft '+a[0];ev(m,'buy',b.x,b.y,300);v.used=m.t;b.due=true;if(a[1]==='mag')b.mags[b.cur]=Math.min(b.mags[b.cur],magOf(b,cw.id,cw));return true}
   go(v.fx??v.x,v.fy??v.y);b.state='Läuft zum Automaten';return true}
+/* Schüsse hört man doppelt so weit, wie man sieht: Zuhörer wissen danach ungefähr, wo geschossen wurde (schießen können sie erst, wenn der Schütze in Sicht ist) */
+function hearShot(m,b){if(m.t-(b.shoutT||-9)<.5)return;b.shoutT=m.t;gNear(m.bg,b.x,b.y,1450,o=>{if(o===b||!o.alive||o.down||o.isP&&false||m.trio&&o.team===b.team||o.see)return;const d=d2(o,b),R=2*(o.sightR||600);if(d>R)return;const er=d*.12;o.lastFoe=b;o.lastSeen={x:b.x+rr(-er,er),y:b.y+rr(-er,er),t:m.t,heard:true};o.heardT=m.t;o.due=true})}
 function tryFire(m,b,foe,fd){const cw=b.wp[b.cur],w=b.W[cw.id];if(b.rel>0||b.cd>0||fd>w.range*(b.pose===1?1.1:1)*attF(cw,'range'))return;if(fd>=110&&(b.ads||0)<.7)return;
   if(b.mags[b.cur]<=0){let bi=-1,bs=0;b.wp.forEach((q,i)=>{if(i!==b.cur&&b.mags[i]>0){const v=expDps(b.W[q.id],fd)*rarM(q.id,q.rar);if(v>bs){bs=v;bi=i}}});
     if(bi>=0){b.cur=bi;b.cd=.35;b.sw=6}else b.rel=w.reload*b.sk.rel*attF(cw,'rel')*(m.trio&&mates(m,b).some(o=>o.alive&&!o.down&&o.tab==='tf_mun'&&d2(o,b)<260)?.8:1);return}
@@ -3142,7 +3145,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     b.go=false;return}
   /* Sichtweite richtet sich nach der Waffe mit der größten Reichweite im Gepäck */
   let reach=TUNE.sight;for(let i=0;i<b.wp.length;i++){const q=Math.min(720,b.W[b.wp[i].id].range*.96);if(q>reach)reach=q}
-  const sight=reach*b.sk.sight*(m.trio&&(b.tab==='tf_funk'||mates(m,b).some(o=>o.alive&&o.tab==='tf_funk'))?1.15:1);b.sight=sight;
+  const sight=reach*b.sk.sight*(m.trio&&(b.tab==='tf_funk'||mates(m,b).some(o=>o.alive&&o.tab==='tf_funk'))?1.15:1);b.sightR=sight;b.sight=sight;
   let foe=null,fd=1e9,best=1e9,nSee=0;
   {const g=m.bg,cs=g.cs,n=g.n,x0=Math.max(0,((b.x-sight)/cs)|0),x1=Math.min(n-1,((b.x+sight)/cs)|0),y0=Math.max(0,((b.y-sight)/cs)|0),y1=Math.min(n-1,((b.y+sight)/cs)|0);
     for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++){const a=g.c[cy*n+cx];for(let i=0;i<a.length;i++){const o=a[i];if(o===b||!o.alive||m.trio&&o.team===b.team||o.down&&m.t-o.downT<prot(o))continue;const d=d2(b,o);const lh=o===b.lastHit&&m.t-b.lastHitT<3;
@@ -3156,7 +3159,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
       const hf=Math.min(1,(o.hp+o.sh)/150),sc=d*(b.style==='hunter'?.3+.7*hf:.6+.4*hf)*(o===b.lastFoe?.58:1)*(lh?.3:1)*(o.down?12:o.act==='revive'?.45:1)*(b.callT&&o===b.callFoe&&m.t-b.callT<4?.55:1);if(sc<best){best=sc;foe=o;fd=d}}}}
   if(m.t<m.grace){foe=null;fd=1e9;nSee=0}
   /* Kurzzeitgedächtnis: wer gerade erst hinter Deckung verschwunden ist, bleibt noch gut eine Sekunde Ziel, damit der Bot nicht ständig zwischen Kampf und Suchen umschaltet (geschossen wird trotzdem nur bei freier Sicht) */
-  let ghost=false;if(!foe&&m.t>=m.grace){const lf=b.lastFoe;if(lf&&lf.alive&&!lf.down&&b.lastSeen&&m.t-b.lastSeen.t<1.2&&!(m.t<b.blindT)){const d=d2(b,lf);if(d<sight*1.1){foe=lf;fd=d;ghost=true}}}
+  let ghost=false;if(!foe&&m.t>=m.grace){const lf=b.lastFoe;if(lf&&lf.alive&&!lf.down&&b.lastSeen&&!b.lastSeen.heard&&m.t-b.lastSeen.t<1.2&&!(m.t<b.blindT)){const d=d2(b,lf);if(d<sight*1.1){foe=lf;fd=d;ghost=true}}}
   b.see=ghost?null:foe;if(foe&&!ghost)b.lastSeen={x:foe.x,y:foe.y,t:m.t};if(foe)b.lastSeen={x:foe.x,y:foe.y,t:m.t};
   /* Absprachen im Team: Sichtung melden, gemeinsames Ziel, Position durchgeben */
   if(m.trio&&foe&&m.t-(b.callOut||-9)>3){b.callOut=m.t;if(m.t-((b.sig&&b.sig.t)||-9)>4)b.sig={k:'point',t:m.t};const dir=['Osten','Südosten','Süden','Südwesten','Westen','Nordwesten','Norden','Nordosten'][((Math.round(Math.atan2(foe.y-b.y,foe.x-b.x)/(Math.PI/4))%8)+8)%8];let told=false;
@@ -3178,6 +3181,11 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
   const wasOpen=b.act==='open';b.pcov=b.inCov;if(!b.pcov)b.covT=0;else if(!b.covT)b.covT=m.t;b.priority='Erkunden';b.fire=null;b.act='';b.go=false;b.sprint=false;b.urgent=false;b.pose=0;b.inCov=false;
   let maxR=0;for(let i=0;i<b.wp.length;i++)maxR=Math.max(maxR,b.W[b.wp[i].id].range);const outR=!!foe&&fd>maxR;
   const go=(x,y)=>{
+    /* Gegen Hin und Her über Absichten hinweg: kippt das Ziel zum zweiten Mal in kurzer Zeit in die Gegenrichtung, bleibt der Bot für einige Sekunden beim bisherigen Ziel (Notfälle wie Granate, Treffer oder Sturm ausgenommen) */
+    {const urgent=b.priority==='Granate'||m.t-b.lastHitT<1||b.priority==='Sturm'&&ds>s.r;
+      if(b.glk&&m.t<b.glk.until&&!urgent){if(Math.hypot(b.glk.x-b.x,b.glk.y-b.y)>22){x=b.glk.x;y=b.glk.y}else b.glk=null}
+      else{const px=b.lgx,py=b.lgy;if(px!=null&&b.lgT!=null&&m.t-b.lgT<2.5){const ax=px-b.x,ay=py-b.y,bx2=x-b.x,by2=y-b.y,la=Math.hypot(ax,ay),lb=Math.hypot(bx2,by2);
+          if(la>30&&lb>30&&(ax*bx2+ay*by2)/(la*lb)<-.35){b.flp=(b.flp||[]).filter(q=>m.t-q<8);b.flp.push(m.t);if(b.flp.length>=2&&!urgent){b.glk={x:px,y:py,until:m.t+3.5};b.flp=[];x=px;y=py}}}}}
     /* Festlegen statt Zappeln: innerhalb derselben Absicht bleibt ein Ziel mindestens 0,9 s bestehen, außer es ist erreicht oder nur leicht verschoben */
     if(b.lgT!=null&&b.lgP===b.priority&&b.lgTg===b.tg&&b.priority!=='Granate'&&m.t-b.lgT<1.1&&Math.hypot(x-b.lgx,y-b.lgy)>40&&Math.hypot(b.lgx-b.x,b.lgy-b.y)>18){x=b.lgx;y=b.lgy}else{b.lgx=x;b.lgy=y;b.lgT=m.t;b.lgP=b.priority;b.lgTg=b.tg}
     const p=validGoal(m,x,y);if(p){b.gx=p.x;b.gy=p.y;b.go=true}else{b.go=false;b.path=null;b.cover=b.spot=b.wpt=null;b.lgT=null}};
@@ -3438,7 +3446,7 @@ function think(m,b,dt,bi){if(m.t<DROP||m.t<(b.rsL||0))return;
     b.go=false;b.vx=b.vy=0}
   else if(b.due||(b.bT-=dt)<=0){b.due=false;b.bT=bi;const p0=b.pose;brain(m,b);if(p0===2&&b.pose!==2)b.up=.4}
   if(m.t<b.blindT&&b.blindM==='spray'&&!b.down&&b.cd<=0){const tg=b.lastFoe&&b.lastFoe.alive&&!b.lastFoe.down&&b.lastSeen&&m.t-b.lastSeen.t<5?b.lastFoe:null,ls=b.lastSeen;
-    if(tg){b.a=b.ta=Math.atan2(ls.y-b.y,ls.x-b.x)+rr(-.55,.55);const td=d2(b,tg);if(Math.hypot(tg.x-ls.x,tg.y-ls.y)<90&&los(m,b,tg,false))tryFire(m,b,tg,td);else if(b.mags[b.cur]>0){b.mags[b.cur]--;b.cd=1/b.W[b.wp[b.cur].id].rate;b.lastShotT=m.t;ev(m,'shot',b.x,b.y,700);m.tracers.push({x1:b.x,y1:b.y,x2:b.x+Math.cos(b.a)*260,y2:b.y+Math.sin(b.a)*260,t:.15,own:b.isP,wid:b.wp[b.cur].id,mx:b.x+Math.cos(b.a)*rr(90,240),my:b.y+Math.sin(b.a)*rr(90,240)})}else b.cd=.3}else b.cd=.3}
+    if(tg){b.a=b.ta=Math.atan2(ls.y-b.y,ls.x-b.x)+rr(-.55,.55);const td=d2(b,tg);if(Math.hypot(tg.x-ls.x,tg.y-ls.y)<90&&los(m,b,tg,false))tryFire(m,b,tg,td);else if(b.mags[b.cur]>0){b.mags[b.cur]--;b.cd=1/b.W[b.wp[b.cur].id].rate;b.lastShotT=m.t;ev(m,'shot',b.x,b.y,700);hearShot(m,b);m.tracers.push({x1:b.x,y1:b.y,x2:b.x+Math.cos(b.a)*260,y2:b.y+Math.sin(b.a)*260,t:.15,own:b.isP,wid:b.wp[b.cur].id,mx:b.x+Math.cos(b.a)*rr(90,240),my:b.y+Math.sin(b.a)*rr(90,240)})}else b.cd=.3}else b.cd=.3}
   if(b.dive){const q=b.dive;q.t-=dt;const nx=b.x+q.vx*dt,ny=b.y+q.vy*dt;if(walkClear(m,b.x,b.y,nx,ny)){b.x=nx;b.y=ny}else q.t=0;b.pose=2;b.fire=null;b.mv=true;b.a=b.ta=Math.atan2(q.vy,q.vx);
     b.moveSpeed=Math.hypot(q.vx,q.vy);b.motionX=b.x;b.motionY=b.y;if(q.t<=0){b.dive=null;b.up=.4;b.due=true}return}
   b.mv=false;b.run=false;if(!b.go||b.act!==''){b.vx*=.6;b.vy*=.6}
