@@ -3138,31 +3138,34 @@ function mallVia(m,b,gx,gy){if(!m.ramps||!m.ramps.length)return null;const rOf=(
   const lb=height0(m,b.x,b.y);if(Math.abs(lb-lg)<8){b.mvia=null;return null}const up=lg>lb;
   /* einmal gewählte Rolltreppe beibehalten, solange das Ziel auf derselben Ebene liegt */
   let pick=null;if(b.mvia&&m.t<b.mvia.until&&Math.abs(b.mvia.lg-lg)<8){const e=ends(b.mvia.q),a=Math.abs(e[0].L-lb)<8?[e[0],e[1]]:Math.abs(e[1].L-lb)<8?[e[1],e[0]]:null;if(a)pick=a}
-  if(!pick){let bs=1e18;for(const q of m.ramps){if(b.rBan&&b.rBan.has(q)&&m.t<b.rBanT)continue;const e=ends(q),a=Math.abs(e[0].L-lb)<8?[e[0],e[1]]:Math.abs(e[1].L-lb)<8?[e[1],e[0]]:null;if(!a||(a[1].L>lb)!==up)continue;const s=Math.hypot(a[0].x-b.x,a[0].y-b.y)*1.3+Math.hypot(a[1].x-gx,a[1].y-gy);if(s<bs){bs=s;pick=a;b.mvia={q,lg,until:m.t+8}}}}
+  if(!pick){let bs=1e18;for(const q of m.ramps){if(b.rBan&&b.rBan.has(q)&&m.t<b.rBanT)continue;const e=ends(q),a=Math.abs(e[0].L-lb)<8?[e[0],e[1]]:Math.abs(e[1].L-lb)<8?[e[1],e[0]]:null;if(!a||(a[1].L>lb)!==up)continue;{const dx=a[0].x-b.x,dy=a[0].y-b.y,L=Math.hypot(dx,dy);if(L<1500){const x0=Math.min(b.x,a[0].x),x1=Math.max(b.x,a[0].x),y0=Math.min(b.y,a[0].y),y1=Math.max(b.y,a[0].y),cs=m.ramps.filter(r=>r!==q&&r.x+r.hw>=x0&&r.x-r.hw<=x1&&r.y+r.hh>=y0&&r.y-r.hh<=y1);let hit=false;if(cs.length){const n=Math.ceil(L/20);for(let k=1;k<n&&!hit;k++){const px=b.x+dx*k/n,py=b.y+dy*k/n;for(const r of cs)if(Math.abs(px-r.x)<=r.hw&&Math.abs(py-r.y)<=r.hh){hit=true;break}}}if(hit)continue}}const s=Math.hypot(a[0].x-b.x,a[0].y-b.y)*1.3+Math.hypot(a[1].x-gx,a[1].y-gy);if(s<bs){bs=s;pick=a;b.mvia={q,lg,until:m.t+8}}}}
   if(!pick)return null;return Math.hypot(pick[0].x-b.x,pick[0].y-b.y)>26?pick[0]:pick[1]}
 function route(m,b){let gx=b.gx,gy=b.gy;
  /* Mall: kommt ein Bot auf dem Weg zu einer anderen Ebene 6 s lang nicht vom Fleck, wird diese Rolltreppe gemieden und neu geplant */
  if(m.ramps&&m.ramps.length){if(!b.stkP||m.t-b.stkT>6){if(b.stkP&&b.mvia&&Math.hypot(b.x-b.stkP.x,b.y-b.stkP.y)<60&&Math.hypot(b.viaF?b.viaF.x-b.x:0,b.viaF?b.viaF.y-b.y:0)>200){if(!b.rBan||m.t>=b.rBanT)b.rBan=new Set();b.rBan.add(b.mvia.q);b.rBanT=m.t+20;b.mvia=null;b.path=null;b.viaP=null}b.stkP={x:b.x,y:b.y};b.stkT=m.t}}
- {/* Zwischenziel Rolltreppe: weiter am eigentlichen Ziel ausrichten, nicht am Treppenende */let fx=gx,fy=gy;if(b.viaP&&Math.abs(gx-b.viaP.x)<1&&Math.abs(gy-b.viaP.y)<1&&b.viaF){fx=b.viaF.x;fy=b.viaF.y}else b.viaF={x:gx,y:gy};const v=mallVia(m,b,fx,fy);if(v){gx=v.x;gy=v.y;b.viaP={x:v.x,y:v.y};if(walkClear(m,b.x,b.y,gx,gy)){b.gx=gx;b.gy=gy;b.path=null;return}}}
- if(walkClear(m,b.x,b.y,gx,gy)){b.path=null;return;}
+ {/* Zwischenziel Rolltreppe: weiter am eigentlichen Ziel ausrichten, nicht am Treppenende */let fx=gx,fy=gy;if(b.viaF&&(b.viaP&&Math.abs(gx-b.viaP.x)<1&&Math.abs(gy-b.viaP.y)<1||b.mPath&&Math.abs(gx-b.mPath.x)<1&&Math.abs(gy-b.mPath.y)<1)){fx=b.viaF.x;fy=b.viaF.y}else b.viaF={x:gx,y:gy};const v=mallVia(m,b,fx,fy);if(v){gx=v.x;gy=v.y;b.viaP={x:v.x,y:v.y};if(walkClear(m,b.x,b.y,gx,gy)){b.gx=gx;b.gy=gy;b.path=null;return}}}
+ const onR=m.ramps&&m.ramps.length?m.ramps.find(q=>Math.abs(b.x-q.x)<=q.hw+2&&Math.abs(b.y-q.y)<=q.hh+2):null,avR=!!(m.ramps&&m.ramps.length&&!onR&&m.t>=(b.rampOK||0)),
+  /* gleiche Ebene: Rolltreppen nicht als Abkürzung benutzen, sonst läuft der Bot hoch und gleich wieder runter */
+  wc=(x1,y1,x2,y2)=>{if(!walkClear(m,x1,y1,x2,y2))return false;if(!avR)return true;const x0=Math.min(x1,x2)-2,xx=Math.max(x1,x2)+2,y0=Math.min(y1,y2)-2,yy=Math.max(y1,y2)+2;const sk=b.mvia&&b.mvia.q;for(const r of m.ramps){if(r===sk||r.x+r.hw<x0||r.x-r.hw>xx||r.y+r.hh<y0||r.y-r.hh>yy)continue;const L=Math.hypot(x2-x1,y2-y1),n=Math.max(1,Math.ceil(L/14));for(let k=0;k<=n;k++){const px=x1+(x2-x1)*k/n,py=y1+(y2-y1)*k/n;if(Math.abs(px-r.x)<=r.hw&&Math.abs(py-r.y)<=r.hh)return false}}return true};
+ if(wc(b.x,b.y,gx,gy)){b.path=null;return;}
  if(b.path&&m.t<b.pathUntil&&Math.hypot(gx-b.pathGoalX,gy-b.pathGoalY)<150){
   while(b.path.length&&d2(b,b.path[0])<14)b.path.shift();
-  while(b.path.length>1&&walkClear(m,b.x,b.y,b.path[1].x,b.path[1].y))b.path.shift();
-  if(b.path.length&&walkClear(m,b.x,b.y,b.path[0].x,b.path[0].y)){b.gx=b.path[0].x;b.gy=b.path[0].y;return;}}
+  while(b.path.length>1&&wc(b.x,b.y,b.path[1].x,b.path[1].y))b.path.shift();
+  if(b.path.length&&wc(b.x,b.y,b.path[0].x,b.path[0].y)){b.gx=b.path[0].x;b.gy=b.path[0].y;b.mPath={x:b.gx,y:b.gy};return;}}
  if(m.t<(b.pathRetry||0)){b.go=false;return;}if(!b.isP&&(m.astar=(m.astar||0)+1)>(m.lite?4:8)){b.pathRetry=m.t+.12;b.go=false;return}b.pathRetry=m.t+.4;
- const cell=28,lim=b.isP?26:18,start={x:b.x,y:b.y,ix:0,iy:0,g:0,h:Math.hypot(gx-b.x,gy-b.y),p:null},open=[start],nodes=new Map([[4040,start]]),itMax=b.isP?900:(b.lod||1)>1?150:420;let best=start,done=null;
+ const far=!!(m.ramps&&m.ramps.length)&&Math.hypot(gx-b.x,gy-b.y)>450,cell=far?44:28,lim=b.isP||far?30:18,start={x:b.x,y:b.y,ix:0,iy:0,g:0,h:Math.hypot(gx-b.x,gy-b.y),p:null},open=[start],nodes=new Map([[4040,start]]),itMax=b.isP?900:far?450:(b.lod||1)>1?150:420;let best=start,done=null;
  for(let it=0;open.length&&it<itMax;it++){let k=0;for(let j=1;j<open.length;j++)if(open[j].g+open[j].h<open[k].g+open[k].h)k=j;
  const q=open.splice(k,1)[0];q.closed=true;if(q!==start&&(best===start||q.h<best.h))best=q;
- if(q.h<cell*1.5&&walkClear(m,q.x,q.y,gx,gy)){done={x:gx,y:gy,p:q};break;}
+ if(q.h<cell*1.5&&wc(q.x,q.y,gx,gy)){done={x:gx,y:gy,p:q};break;}
  for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){if(!dx&&!dy)continue;const ix=q.ix+dx,iy=q.iy+dy;if(Math.abs(ix)>lim||Math.abs(iy)>lim)continue;
  const key=(ix+40)*100+iy+40,old=nodes.get(key);if(old&&old.closed)continue;const x=b.x+ix*cell,y=b.y+iy*cell,ng=q.g+Math.hypot(dx,dy)*cell;
- if(old&&ng>=old.g)continue;if(!walkClear(m,q.x,q.y,x,y))continue;
+ if(old&&ng>=old.g)continue;if(!wc(q.x,q.y,x,y))continue;
  if(old){old.g=ng;old.p=q}else{const v={x,y,ix,iy,g:ng,h:Math.hypot(gx-x,gy-y),p:q};nodes.set(key,v);open.push(v);}}}
  let q=done||(best!==start?best:null);const raw=[];while(q&&q.p){raw.unshift({x:q.x,y:q.y});q=q.p;}
  /* Weg glätten: Zwischenpunkte weglassen, die man auch direkt erreicht */
- const path=[];let cx=b.x,cy=b.y,i=0;while(i<raw.length){let j=raw.length-1;while(j>i&&!walkClear(m,cx,cy,raw[j].x,raw[j].y))j--;path.push(raw[j]);cx=raw[j].x;cy=raw[j].y;i=j+1}
+ const path=[];let cx=b.x,cy=b.y,i=0;while(i<raw.length){let j=raw.length-1;while(j>i&&!wc(cx,cy,raw[j].x,raw[j].y))j--;path.push(raw[j]);cx=raw[j].x;cy=raw[j].y;i=j+1}
  b.path=path;b.pathGoalX=gx;b.pathGoalY=gy;b.pathUntil=m.t+7;
- if(path.length){b.gx=path[0].x;b.gy=path[0].y;b.detT=0;}else{b.go=false;b.cover=b.spot=b.wpt=null;if(b.tg){b.ban.add(b.tg);b.tg=null}b.due=true;}}
+ if(path.length){b.gx=path[0].x;b.gy=path[0].y;b.mPath={x:b.gx,y:b.gy};b.detT=0;}else{if(avR)b.rampOK=m.t+8;b.go=false;b.cover=b.spot=b.wpt=null;if(b.tg){b.ban.add(b.tg);b.tg=null}b.due=true;}}
 
 /* Entscheidung alle 0,2 s: wahrnehmen, Lage einschätzen, genau eine Handlung wählen */
 // Point behind the actual obstacle boundary, not its centre/radius approximation.
@@ -3232,7 +3235,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     const seen=(Math.abs(da)<b.fov/2&&!busy)||(dq<50&&q.t<.2);if(seen&&(!dg||q.t<dg.t))dg=q}
   if(dg&&(dg.k||'he')==='he'&&!dg.back&&dg.t>.3&&Math.hypot(dg.x-b.x,dg.y-b.y)<70&&!b.down&&b.rel<=0&&rnd()<(b.tier>=2?.45:.25)&&dg.from&&dg.from.alive){const f=dg.from;dg.back=true;dg.x0=b.x;dg.y0=b.y;dg.x=f.x+rr(-30,30);dg.y=f.y+rr(-30,30);dg.T=dg.t=Math.max(.45,dg.t);dg.from=b;b.state='Wirft Granate zurück';ev(m,'throw',b.x,b.y,900);if(b.isP)b.throwBack=(b.throwBack||0)+1;dg=null}
   const zoneDistance=Math.max(0,dn-s.nr+60),zoneETA=zoneDistance/(85*b.sk.spd),zoneDeadline=s.shr?Math.max(0,ph.shrink-s.t+ph.wait):Math.max(0,ph.wait-s.t),zoneCritical=outside&&!stay;
-  const inSmk=!!m.smokes&&m.smokes.some(q=>q.big&&m.t-q.t<q.d-1&&Math.hypot(q.x-b.x,q.y-b.y)<62),covHeal=!dg&&!zoneCritical&&m.t-b.lastHitT>=1.2&&(foe?b.pcov&&b.covT>0&&m.t-b.covT>=1.2&&Math.hypot(foe.x-b.x,foe.y-b.y)>110&&!(foe.hp+foe.sh<45):inSmk||b.pcov&&b.covT>0&&m.t-b.covT>=2),safeHeal=ds<=s.r&&!(s.nr<s.r-5&&s.r-ds<160&&b.hp+b.sh>(b.max+100)*.2)&&(covHeal||!foe&&!dg&&!zoneCritical&&(b.hp+b.sh)<(b.max+100)*.35&&m.t-b.lastHitT>=1.5||!dg&&!zoneCritical&&!foe&&m.t-b.lastHitT>=5&&m.t-b.lastShotT>=5),runZ=dn>s.nr-30&&(s.shr||zoneETA>zoneDeadline-8),safeStart=safeHeal&&!runZ;
+  const inSmk=!!m.smokes&&m.smokes.some(q=>q.big&&m.t-q.t<q.d-1&&Math.hypot(q.x-b.x,q.y-b.y)<62),covHeal=!dg&&!zoneCritical&&m.t-b.lastHitT>=1.2&&(foe&&(b.hp+b.sh)<(b.max+100)*.35&&m.t-b.lastHitT>=1.5&&(Math.hypot(foe.x-b.x,foe.y-b.y)>380||!los(m,foe,b,false))||foe?b.pcov&&b.covT>0&&m.t-b.covT>=1.2&&Math.hypot(foe.x-b.x,foe.y-b.y)>110&&!(foe.hp+foe.sh<45):inSmk||b.pcov&&b.covT>0&&m.t-b.covT>=2),safeHeal=ds<=s.r&&!(s.nr<s.r-5&&s.r-ds<160&&b.hp+b.sh>(b.max+100)*.2)&&(covHeal||!foe&&!dg&&!zoneCritical&&(b.hp+b.sh)<(b.max+100)*.35&&m.t-b.lastHitT>=1.5||!dg&&!zoneCritical&&!foe&&m.t-b.lastHitT>=5&&m.t-b.lastShotT>=5),runZ=dn>s.nr-30&&(s.shr||zoneETA>zoneDeadline-8)&&!((b.hp+b.sh)<(b.max+100)*.35&&ds<s.r-80&&zoneETA<zoneDeadline-3),safeStart=safeHeal&&!runZ;
   /* Fähigkeit: der Bot zündet sie selbst, wenn es eng wird */
   if(b.ab&&m.t>=b.abT&&m.t-b.lastHitT<1.5){let used='';
     if(b.ab==='schild'){if(b.sh<=5&&b.hp<b.max*.55){b.sh=Math.min(100,b.sh+40);b.abT=m.t+60;used='Notschild'}}
@@ -3426,7 +3429,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     if(attacked&&equipped&&P.conf<=1&&hpF>.6&&d<Math.min(maxR+150,reach*1.25)){go(b.x+(h.x-b.x)/d*200,b.y+(h.y-b.y)/d*200);b.sprint=true;b.state='Sucht den Schützen'}
     else{if(attacked){b.fleeT=m.t+4;b.fleeFrom={x:h.x,y:h.y,alive:true,pose:0}}const ax=(b.x-h.x)/d,ay=(b.y-h.y)/d,sh={x:h.x,y:h.y,alive:true,pose:0};let c=b.fleeC&&m.t<b.fleeC.until?b.fleeC:null;
       if(!c){let bs=-1e9;gNear(m.og,b.x,b.y,320,o=>{if(o.low)return;const q=coverPoint(o,h.x,h.y),dx=q.x-b.x,dy=q.y-b.y,dd=Math.hypot(dx,dy);if(dd>320||!freeSpot(m,q.x,q.y))return;const v=(dx*ax+dy*ay)*.7-dd;if(v>bs&&!los(m,sh,{x:q.x,y:q.y,alive:true,pose:1},false)){bs=v;c={x:q.x,y:q.y,until:m.t+4}}});b.fleeC=c}
-      if(c){if(d2(b,c)>16){go(c.x,c.y);b.sprint=true;b.state='Rennt in Deckung'}else{b.pose=1;b.inCov=true;b.covA=Math.atan2(h.y-b.y,h.x-b.x);b.ta=b.covA;b.state='Hält Deckung'}}
+      if(c){if(d2(b,c)>16){go(c.x,c.y);b.sprint=true;b.state='Rennt in Deckung'}else{b.pose=1;b.inCov=true;b.covA=Math.atan2(h.y-b.y,h.x-b.x);b.ta=b.covA;b.state='Hält Deckung';if(!b.covT)b.covT=m.t}}
       else{const sg=(((m.t*1.2)|0)+b.i)%2?1:-1,p=validGoal(m,b.x+(ax-ay*sg*.45)*240,b.y+(ay+ax*sg*.45)*240);if(p)go(p.x,p.y);b.sprint=true;b.state='Flieht aus dem Beschuss'}
       b.urgent=true}}
   else if(false){zone();b.sprint=s.shr;b.state='Läuft zur Zone'}
@@ -4014,7 +4017,7 @@ function makeView(cv){
   for(const q of[holeM,chipM]){q.frustumCulled=false;q.count=0;scene.add(q)}let holeI=0;const _hd=new T.Object3D();
   const SPL=mobileGraphics?140:360,splM=new T.InstancedMesh(new T.CylinderGeometry(1,1,.12,mobileGraphics?9:14),new T.MeshLambertMaterial({color:0x5c0707}),SPL),splG=[];splM.frustumCulled=false;splM.count=0;splM.receiveShadow=true;scene.add(splM);let splI=0;
   /* Blutflecken am Boden: kleine bei Treffern, große Lache bei Kills, die langsam ausläuft */
-  const addSplat=(x,z,y,s,grow)=>{const i=splI%SPL;splI++;splG[i]={i,x,y,z,s,r:Math.random()*6,grow:!!grow,t:0};_hd.position.set(x,y+.25,z);_hd.rotation.set(0,splG[i].r,0);const k=grow?.3:1;_hd.scale.set(s*k,1,s*k*.8);_hd.updateMatrix();splM.setMatrixAt(i,_hd.matrix);splM.count=Math.min(SPL,splI);splM.instanceMatrix.needsUpdate=true};
+  const addSplat=(x,z,y,s,grow)=>{{const r=s*.9;let lo=1e9,hi=-1e9;for(const[dx,dz]of[[0,0],[r,0],[-r,0],[0,r],[0,-r]]){const q=height(M,x+dx,z+dz);if(q<lo)lo=q;if(q>hi)hi=q}if(hi-lo>3||Math.abs(height(M,x,z)-y)>3)return;y=height(M,x,z)}const i=splI%SPL;splI++;splG[i]={i,x,y,z,s,r:Math.random()*6,grow:!!grow,t:0};_hd.position.set(x,y+.25,z);_hd.rotation.set(0,splG[i].r,0);const k=grow?.3:1;_hd.scale.set(s*k,1,s*k*.8);_hd.updateMatrix();splM.setMatrixAt(i,_hd.matrix);splM.count=Math.min(SPL,splI);splM.instanceMatrix.needsUpdate=true};
   const addHole=(x,y,z,nx,nz)=>{const i=holeI%HOLES;holeI++;for(const[mm,s,off]of[[holeM,1.5,.35],[chipM,3.6,.12]]){_hd.position.set(x+nx*off,y,z+nz*off);_hd.rotation.set(0,nx?Math.PI/2:0,(i*.7)%3);_hd.scale.set(s,s,.5);_hd.updateMatrix();mm.setMatrixAt(i,_hd.matrix);mm.count=Math.min(HOLES,holeI);mm.instanceMatrix.needsUpdate=true}};
   /* Rauchschwaden nach Explosionen: weiche, durchsichtige Ballen, die steigen, wachsen und verwehen */
   const SMN=mobileGraphics?40:70,smM=new T.InstancedMesh(new T.IcosahedronGeometry(1,1),new T.MeshLambertMaterial({color:0x6e6a64,transparent:true,opacity:.42,depthWrite:false}),SMN);smM.frustumCulled=false;smM.count=0;scene.add(smM);const smk=[];
