@@ -2752,7 +2752,7 @@ function los(m,a,b,low){const g=m.og,cs=g.cs,n=g.n,dx=b.x-a.x,dy=b.y-a.y,l2=dx*d
     const t=clamp(((o.x-a.x)*dx+(o.y-a.y)*dy)/l2,0,1);
     let hitO=false;if(o.k==='b')hitO=segBox(a.x,a.y,dx,dy,o);else{const px=a.x+dx*t-o.x,py=a.y+dy*t-o.y;hitO=px*px+py*py<o.r*o.r}
     if(!hitO)continue;if(duck)return false;
-    const top=(flat?0:height(m,o.x,o.y))+obsTop(o);if(top>lineH(t)-2){/* direkt hinter der Deckung: über die Kante schießen, wenn sie nicht höher als die Augen ist */const sz=o.r||Math.max(o.hw,o.hh),na=Math.hypot(o.x-a.x,o.y-a.y)<sz+34,nb=Math.hypot(o.x-b.x,o.y-b.y)<sz+34;if(na&&top<=ha+3&&!nb||nb&&top<=hb+16&&!na&&(b.pose||0)===0)continue;return false}}}
+    const top=(flat?0:height(m,o.x,o.y))+obsTop(o);if(top>lineH(t)-2){/* direkt hinter der Deckung: über die Kante schießen, wenn sie nicht höher als die Augen ist */const sz=o.r||Math.max(o.hw,o.hh),na=Math.hypot(o.x-a.x,o.y-a.y)<sz+34,nb=Math.hypot(o.x-b.x,o.y-b.y)<sz+34;if(na&&!nb&&obsTop(o)<=34&&top<=ha-6)continue;return false}}}
   if(!flat&&l2>6400){const L=Math.sqrt(l2),st=Math.max(2,Math.ceil(L/55));for(let k=1;k<st;k++){const t=k/st;if(height(m,a.x+dx*t,a.y+dy*t)>lineH(t)-3)return false}}
   return true}
 const blocked=(o,x,y,pad)=>o.k==='b'?Math.abs(x-o.x)<o.hw+pad&&Math.abs(y-o.y)<o.hh+pad:Math.hypot(x-o.x,y-o.y)<o.r+pad;
@@ -3161,6 +3161,8 @@ function navFollow(m,b,P,gx,gy){const V=m.nav,C=V.C,N=V.N,cx=k=>(k%N+.5)*C,cy=k=
   {const r=j>0?V.rp[p[j-1]+':'+p[j]]:null;if(r)b.mvia={q:r.q,lg:V.lv[p[j]],until:m.t+4}}
   P.lx=b.x;P.ly=b.y;if(j>=p.length-1)return{x:gx,y:gy,last:true};return{x:cx(p[j]),y:cy(p[j])}}
 function route(m,b){let gx=b.gx,gy=b.gy;
+ /* festgefahren (z. B. zwischen Containern): Weg mit größerem Suchradius neu planen */
+ if(!b.ukP||m.t-b.ukT>4){if(b.ukP&&Math.hypot(b.x-b.ukP.x,b.y-b.ukP.y)<30&&Math.hypot(gx-b.x,gy-b.y)>60){b.unstuckT=m.t+5;b.path=null;b.pathRetry=0}b.ukP={x:b.x,y:b.y};b.ukT=m.t}
  if(m.B.mall&&m.ramps&&m.ramps.length){let fx=gx,fy=gy;if(b.navW&&Math.abs(gx-b.navW.x)<1&&Math.abs(gy-b.navW.y)<1&&b.navF){fx=b.navF.x;fy=b.navF.y}else b.navF={x:gx,y:gy};
    if(Math.hypot(fx-b.x,fy-b.y)>360||Math.abs(height0(m,fx,fy)-height0(m,b.x,b.y))>6){const w=navStep(m,b,fx,fy);if(w&&!w.last){b.navW={x:w.x,y:w.y};b.gx=w.x;b.gy=w.y;gx=w.x;gy=w.y;b.navOn=m.t+1;if(walkClear(m,b.x,b.y,gx,gy)){b.path=null;return}}else if(w&&w.last){b.navOn=m.t+1}}}
  /* Mall: kommt ein Bot auf dem Weg zu einer anderen Ebene 6 s lang nicht vom Fleck, wird diese Rolltreppe gemieden und neu geplant */
@@ -3175,7 +3177,7 @@ function route(m,b){let gx=b.gx,gy=b.gy;
   while(b.path.length>1&&wc(b.x,b.y,b.path[1].x,b.path[1].y))b.path.shift();
   if(b.path.length&&wc(b.x,b.y,b.path[0].x,b.path[0].y)){b.gx=b.path[0].x;b.gy=b.path[0].y;b.mPath={x:b.gx,y:b.gy};return;}}
  if(m.t<(b.pathRetry||0)){b.go=false;return;}if(!b.isP&&(m.astar=(m.astar||0)+1)>(m.lite?4:8)){b.pathRetry=m.t+.12;b.go=false;return}b.pathRetry=m.t+.4;
- const far=!!(m.ramps&&m.ramps.length)&&Math.hypot(gx-b.x,gy-b.y)>450,cell=far?44:28,lim=b.isP||far?30:18,start={x:b.x,y:b.y,ix:0,iy:0,g:0,h:Math.hypot(gx-b.x,gy-b.y),p:null},open=[start],nodes=new Map([[4040,start]]),itMax=b.isP?900:far?450:(b.lod||1)>1?150:420;let best=start,done=null;
+ const far=(!!(m.ramps&&m.ramps.length)||m.t<(b.unstuckT||0))&&Math.hypot(gx-b.x,gy-b.y)>(m.t<(b.unstuckT||0)?60:450),cell=far?44:28,lim=b.isP||far?30:18,start={x:b.x,y:b.y,ix:0,iy:0,g:0,h:Math.hypot(gx-b.x,gy-b.y),p:null},open=[start],nodes=new Map([[4040,start]]),itMax=b.isP?900:far?450:(b.lod||1)>1?150:420;let best=start,done=null;
  for(let it=0;open.length&&it<itMax;it++){let k=0;for(let j=1;j<open.length;j++)if(open[j].g+open[j].h<open[k].g+open[k].h)k=j;
  const q=open.splice(k,1)[0];q.closed=true;if(q!==start&&(best===start||q.h<best.h))best=q;
  if(q.h<cell*1.5&&wc(q.x,q.y,gx,gy)){done={x:gx,y:gy,p:q};break;}
@@ -3444,7 +3446,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     if(sp.k==='supp'&&m.t-ls.t<5){b.fire=lf;b.ta+=rr(-.45,.45);b.pose=rnd()<.5?1:0;b.state='Schießt blind in den Rauch'}
     else if(sp.k==='flank'){const dx=ls.x-b.x,dy=ls.y-b.y,d=Math.hypot(dx,dy)||1,x=b.x+(dx/d*.45-dy/d*sp.sg)*120,y=b.y+(dy/d*.45+dx/d*sp.sg)*120;if(walkClear(m,b.x,b.y,x,y))go(x,y);else sp.sg=-sp.sg;b.sprint=true;b.state='Umgeht den Rauch'}
     else{if(b.cover&&d2(b,b.cover)>14)go(b.cover.x,b.cover.y);else b.pose=1;b.state='Wartet, bis der Rauch sich lichtet'}}
-  else if(!foe&&m.t<b.engT&&b.lastFoe&&b.lastFoe.alive&&(b.style==='rusher'||b.style==='hunter'||((b.lastFoe.hp+b.lastFoe.sh<55||b.lastFoe.act==='heal'&&b.lastFoe.hp+b.lastFoe.sh<95)&&b.hp+b.sh>b.lastFoe.hp+b.lastFoe.sh+20&&hpF>.35))){const lf=b.lastFoe,wk=lf.hp+lf.sh<95&&!smokeBlock(m,b,lf);if(wk&&b.lastSeen&&m.t-b.lastSeen.t<4&&d2(b,lf)>20){go(lf.x,lf.y);b.sprint=true;b.ta=Math.atan2(lf.y-b.y,lf.x-b.x);b.state='Stürmt hinter die Deckung'}else if(b.lastSeen&&m.t-b.lastSeen.t<3&&d2(b,b.lastSeen)>24){go(b.lastSeen.x,b.lastSeen.y);b.sprint=true;b.state='Sucht letzte Sichtposition'}else{b.engT=-9;b.state='Sucht Gegner'}}
+  else if(!foe&&m.t<b.engT&&b.lastFoe&&b.lastFoe.alive&&(b.style==='rusher'||b.style==='hunter'||((b.lastFoe.hp+b.lastFoe.sh<55||b.lastFoe.act==='heal'&&b.lastFoe.hp+b.lastFoe.sh<95)&&b.hp+b.sh>b.lastFoe.hp+b.lastFoe.sh+20&&hpF>.35))){const lf=b.lastFoe,wk=lf.hp+lf.sh<95&&!smokeBlock(m,b,lf);if(wk&&b.lastSeen&&m.t-b.lastSeen.t<4&&d2(b,b.lastSeen)>20){const ls0=b.lastSeen;go(ls0.x,ls0.y);b.sprint=true;b.ta=Math.atan2(ls0.y-b.y,ls0.x-b.x);b.state='Stürmt hinter die Deckung'}else if(b.lastSeen&&m.t-b.lastSeen.t<3&&d2(b,b.lastSeen)>24){go(b.lastSeen.x,b.lastSeen.y);b.sprint=true;b.state='Sucht letzte Sichtposition'}else{b.engT=-9;b.state='Sucht Gegner'}}
   else if(!foe&&equipped&&m.t<b.engT-1.2&&b.lastFoe&&b.lastFoe.alive){if(b.lastSeen)b.ta=Math.atan2(b.lastSeen.y-b.y,b.lastSeen.x-b.x);b.state='Kämpft'}
   else if((attacked||m.t<(b.fleeT||0)&&b.fleeFrom)&&!foe&&!(zoneCritical||dn>s.nr-30&&zoneETA>zoneDeadline-12)){const h=attacked?b.lastHit:b.fleeFrom,d=Math.hypot(b.x-h.x,b.y-h.y)||1;
     /* unsichtbarer Schütze: nur wer fit ist und ihn in Sicht- und Schussweite bekommen kann, geht auf ihn zu; alle anderen rennen von ihm weg hinter die nächste Deckung */
