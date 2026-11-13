@@ -2950,6 +2950,8 @@ function stormStep(m){const s=m.storm;s.t+=DT;const p=m.ph[s.ph];if(s.t<p.wait)r
   if(k>=1){if(s.ph<m.ph.length-1){s.ph++;nextZone(m)}else s.r=0}}
 
 function hurt(m,b,d,from,hs,gk){if(!b.alive||b.godP||m.t<(b.rsL||0))return;if(m.t<(b.armT||0))d*=.6;if(from&&from!==b&&m.trio&&from.team===b.team)return;if(b.down&&from&&m.t-b.downT<prot(b))return;
+  /* Schadensbilanz des laufenden Gefechts: wer klar vorne liegt, setzt nach */
+  if(from&&from!==b){if(from.eF!==b){from.eF=b;from.eD=0;from.eTk=0}from.eD+=d;from.eDT=m.t;if(b.eF!==from){b.eF=from;b.eD=0;b.eTk=0}b.eTk+=d;b.eDT=m.t}
   if(from){(m.blood||(m.blood=[])).push({x:b.x,y:b.y,t:m.t});if(m.blood.length>80)m.blood.shift();d*=TUNE.dmg*b.tough*(b.act==='revive'&&b.perks.has('p_guard')?.75:1);if(m.trio&&from&&from.team!==b.team){if(b.markT>m.t&&from.team===b.markTeam)d*=1.08;if(from.tab==='tf_mark'){b.markT=m.t+4;b.markTeam=from.team}if(b.tab==='tf_rueck'&&mates(m,b).some(o=>o.fire===from))d*=.9}
   if(m.trio&&!b.down){const ms=mates(m,b);if(b.perks.has('p_duo')&&ms.some(o=>o.alive&&!o.down&&d2(o,b)<200))d*=.92;if(ms.some(o=>o.alive&&!o.down&&o.perks.has('p_squad')&&d2(o,b)<300))d*=.94}
     if(hs){d*=b.helm?HELM[b.helm].m:2;if(b.helm&&--b.helmD<=0){b.helm=0;ev(m,'break',b.x,b.y,500)}}
@@ -3344,6 +3346,15 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
           {let cv=0;gNear(m.og,x,y,60,o=>{const dd=Math.hypot(o.x-x,o.y-y)-(o.r||Math.max(o.hw,o.hh));if(dd<45)cv=Math.max(cv,(45-dd)/45)});v+=cv*(foe.fire===b?10:5)}if(Math.hypot(x-s.x,y-s.y)>s.r-30)v-=40;if(v>bs){bs=v;best={x,y,sg}}}
         if(best){cx=best.x;cy=best.y;if(best.sg&&best.sg!==b.strafe){b.strafe=best.sg;b.strafeUntil=m.t+1.2}}}
       go(cx,cy)}}
+  else if(!foe&&equipped&&!dg&&b.lastFoe&&b.lastFoe.alive&&!b.lastFoe.down&&b.lastSeen&&m.t-b.lastSeen.t<8&&d2(b,b.lastSeen)<Math.max(maxR+120,520)&&!(m.smokes&&m.smokes.length&&smokeBlock(m,b,b.lastFoe))){
+    /* Gegner außer Sicht, aber nicht vergessen: je nach Gefechtsbilanz nachsetzen, umgehen oder die Ecke halten */
+    const lf=b.lastFoe,ls=b.lastSeen,me=b.hp+b.sh,lead=b.eF===lf&&m.t-(b.eDT||-99)<10?(b.eD||0)-(b.eTk||0):0;
+    let pl=b.mPlan&&b.mPlan.f===lf&&m.t<b.mPlan.until?b.mPlan:null;
+    if(!pl){const k=lead>45&&me>(b.max+100)*.45?'push':me<(b.max+100)*.4?'hold':lead>-20&&rnd()<.5?'flank':'hold';pl=b.mPlan={f:lf,k,until:m.t+(k==='hold'?rr(2,3.5):rr(2.5,4)),sg:rnd()<.5?1:-1}}
+    b.priority='Kampf';b.ta=Math.atan2(ls.y-b.y,ls.x-b.x);b.engT=Math.max(b.engT||0,m.t+2);
+    if(pl.k==='push'){go(ls.x,ls.y);b.sprint=true;b.state='Setzt nach, bevor er sich heilt'}
+    else if(pl.k==='flank'){const dx=ls.x-b.x,dy=ls.y-b.y,d=Math.hypot(dx,dy)||1,x=ls.x-dx/d*Math.min(d,260)*.6-dy/d*pl.sg*180,y=ls.y-dy/d*Math.min(d,260)*.6+dx/d*pl.sg*180,p=validGoal(m,x,y);if(p&&walkClear(m,b.x,b.y,p.x,p.y))go(p.x,p.y);else if(p)go(p.x,p.y);else pl.k='hold';b.state='Umgeht den Gegner'}
+    if(pl.k==='hold'){if(b.cover&&d2(b,b.cover)>14)go(b.cover.x,b.cover.y);else{b.pose=1;b.ads=Math.max(b.ads||0,.6)}b.state='Hält die Ecke im Blick'}}
   else if(!foe&&equipped&&b.lastFoe&&b.lastFoe.alive&&!b.lastFoe.down&&b.lastSeen&&m.t-b.lastSeen.t<6&&m.smokes&&m.smokes.length&&smokeBlock(m,b,b.lastFoe)&&d2(b,b.lastFoe)<Math.min(520,maxR+80)){const lf=b.lastFoe,ls=b.lastSeen,sp=b.smkP&&m.t<b.smkP.until&&b.smkP.f===lf?b.smkP:(b.smkP={f:lf,until:m.t+rr(2.2,3.4),k:b.mags[b.cur]>2&&rnd()<.8?'supp':b.hp+b.sh<(b.max+100)*.45?'hold':rnd()<.6?'flank':'hold',sg:rnd()<.5?1:-1});b.priority='Kampf';b.ta=Math.atan2(ls.y-b.y,ls.x-b.x);
     if(sp.k==='supp'&&m.t-ls.t<5){b.fire=lf;b.ta+=rr(-.45,.45);b.pose=rnd()<.5?1:0;b.state='Schießt blind in den Rauch'}
     else if(sp.k==='flank'){const dx=ls.x-b.x,dy=ls.y-b.y,d=Math.hypot(dx,dy)||1,x=b.x+(dx/d*.45-dy/d*sp.sg)*120,y=b.y+(dy/d*.45+dx/d*sp.sg)*120;if(walkClear(m,b.x,b.y,x,y))go(x,y);else sp.sg=-sp.sg;b.sprint=true;b.state='Umgeht den Rauch'}
