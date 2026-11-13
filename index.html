@@ -3195,7 +3195,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     const seen=(Math.abs(da)<b.fov/2&&!busy)||(dq<50&&q.t<.2);if(seen&&(!dg||q.t<dg.t))dg=q}
   if(dg&&(dg.k||'he')==='he'&&!dg.back&&dg.t>.3&&Math.hypot(dg.x-b.x,dg.y-b.y)<70&&!b.down&&b.rel<=0&&rnd()<(b.tier>=2?.45:.25)&&dg.from&&dg.from.alive){const f=dg.from;dg.back=true;dg.x0=b.x;dg.y0=b.y;dg.x=f.x+rr(-30,30);dg.y=f.y+rr(-30,30);dg.T=dg.t=Math.max(.45,dg.t);dg.from=b;b.state='Wirft Granate zurück';ev(m,'throw',b.x,b.y,900);if(b.isP)b.throwBack=(b.throwBack||0)+1;dg=null}
   const zoneDistance=Math.max(0,dn-s.nr+60),zoneETA=zoneDistance/(85*b.sk.spd),zoneDeadline=s.shr?Math.max(0,ph.shrink-s.t+ph.wait):Math.max(0,ph.wait-s.t),zoneCritical=outside&&!stay;
-  const inSmk=!!m.smokes&&m.smokes.some(q=>q.big&&m.t-q.t<q.d-1&&Math.hypot(q.x-b.x,q.y-b.y)<62),covHeal=!dg&&!zoneCritical&&m.t-b.lastHitT>=1.6&&(foe?b.pcov&&b.covT>0&&m.t-b.covT>=2&&Math.hypot(foe.x-b.x,foe.y-b.y)>110&&!(foe.hp+foe.sh<45):inSmk||b.pcov&&b.covT>0&&m.t-b.covT>=2),safeHeal=covHeal||!dg&&!zoneCritical&&!foe&&m.t-b.lastHitT>=5&&m.t-b.lastShotT>=5;
+  const inSmk=!!m.smokes&&m.smokes.some(q=>q.big&&m.t-q.t<q.d-1&&Math.hypot(q.x-b.x,q.y-b.y)<62),covHeal=!dg&&!zoneCritical&&m.t-b.lastHitT>=1.6&&(foe?b.pcov&&b.covT>0&&m.t-b.covT>=2&&Math.hypot(foe.x-b.x,foe.y-b.y)>110&&!(foe.hp+foe.sh<45):inSmk||b.pcov&&b.covT>0&&m.t-b.covT>=2),safeHeal=ds<=s.r&&(covHeal||!dg&&!zoneCritical&&!foe&&m.t-b.lastHitT>=5&&m.t-b.lastShotT>=5);
   /* Fähigkeit: der Bot zündet sie selbst, wenn es eng wird */
   if(b.ab&&m.t>=b.abT&&m.t-b.lastHitT<1.5){let used='';
     if(b.ab==='schild'){if(b.sh<=5&&b.hp<b.max*.55){b.sh=Math.min(100,b.sh+40);b.abT=m.t+60;used='Notschild'}}
@@ -3212,7 +3212,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
   /* Sturm: wer den Weg hinaus sonst nicht überlebt, heilt unterwegs, statt mit vollem Rucksack zu sterben */
   if(b.healT<=0)b.stormH=false;
   {const stormIn=ds>s.r&&!b.down,need=stormIn?sdps*((ds-s.r)/(85*b.sk.spd)+1.5):0;
-    if(stormIn&&b.healT<=0&&!dg&&m.t-b.lastHitT>1.2&&(b.hp<need+10||b.hp<b.max*.3)){const tm=2.6*b.healK*(b.perks.has('p_medic')?.6:1);let k='';
+    if(stormIn&&b.healT<=0&&!dg&&m.t-b.lastHitT>1.2&&b.hp<need+4&&b.hp<b.max*.35){const tm=2.6*b.healK*(b.perks.has('p_medic')?.6:1);let k='';
       if(b.pz>0&&25-sdps*1.1>4)k='z';else if(b.med>0&&b.healAmt-sdps*tm>6)k='m';else if(b.rpot>0&&m.t>(b.regT||0)&&sdps<4.5)k='r';else if(b.bmed>0&&b.hp>sdps*6*b.healK+4&&b.max-b.hp-sdps*6*b.healK>15)k='B';
       if(k){b.stormH=true;b.priority='Heilen';b.act='heal';b.useK=k;b.healT=k==='B'?6*b.healK:k==='r'?1.4:k==='z'?1.1:tm;b.state='Heilt im Sturm';return}}}
   if(b.healT>0){if(!safeHeal&&!(b.stormH&&!dg&&m.t-b.lastHitT>1.2))b.healT=0;else{if(covHeal&&b.pcov){b.inCov=true;b.pose=1}b.priority='Heilen';b.act='heal';b.state=b.useK==='s'?'Trinkt Schildtrank':b.useK==='B'?'Legt großen Verband an':b.useK==='P'?'Trinkt großen Schildtrank':b.useK==='r'?'Trinkt Regenerationstrank':b.useK==='z'?'Isst ein Stück Pizza':'Heilt';return}}
