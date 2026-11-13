@@ -1,7 +1,7 @@
 <!doctype html><html lang="de"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}body.skinZoom .hero{height:clamp(220px,40vw,320px)!important}body.skinZoom .hero-t{display:none}
 
 /* Querformat am Handy: Tempo-Tasten rechts mittig, damit Rand und Gestenleiste sie nicht verdecken */
-@media(orientation:landscape) and (max-height:560px){#speed{position:fixed!important;right:calc(8px + env(safe-area-inset-right))!important;top:50%!important;bottom:auto!important;transform:translateY(-50%);display:flex!important;flex-direction:column!important;width:54px!important;gap:6px!important;z-index:40}#speed button{width:100%!important;min-height:42px!important;font-size:14px!important}}
+@media(orientation:landscape) and (max-height:560px){.status{transform:scale(.7);transform-origin:left bottom;bottom:calc(6px + env(safe-area-inset-bottom))!important;margin-bottom:0!important}#speed{position:fixed!important;right:calc(8px + env(safe-area-inset-right))!important;top:50%!important;bottom:auto!important;transform:translateY(-50%);display:flex!important;flex-direction:column!important;width:54px!important;gap:6px!important;z-index:40}#speed button{width:100%!important;min-height:42px!important;font-size:14px!important}}
 
 /* ===== Neue Optik: ruhige Glas-Panels, klare Hierarchie, Akzent Türkis/Bernstein. Für Handy und PC. ===== */
 :root{--g1:rgba(22,34,46,.78);--g2:rgba(30,46,60,.86);--gl:rgba(120,190,200,.16);--glh:rgba(86,239,208,.55);--rad:16px}
@@ -42,8 +42,7 @@ body{background:radial-gradient(1200px 700px at 15% -10%,#17364a 0%,transparent 
 .status{border-radius:16px!important}
 .hb{border-radius:99px!important;background:rgba(255,255,255,.08)!important;overflow:hidden}
 .hb i{border-radius:99px!important}
-.inv div{border-radius:10px!important;background:rgba(255,255,255,.04)!important;border:1px solid rgba(140,200,210,.14)!important}
-.inv div.on,.inv div[aria-current="true"]{border-color:var(--glh)!important;background:rgba(86,239,208,.1)!important}
+.inv div{border-radius:10px!important}
 .speed button,#speed button{border-radius:12px!important;font-family:var(--disp)!important;font-weight:700!important;background:linear-gradient(160deg,rgba(18,30,40,.88),rgba(10,18,26,.88))!important;border:1px solid rgba(140,200,210,.2)!important;color:#cfe0e6!important}
 .speed button[aria-pressed="true"],#speed button[aria-pressed="true"]{background:linear-gradient(135deg,#56efd0,#2bb5d8)!important;color:#05211d!important;border-color:transparent!important;box-shadow:0 4px 14px rgba(86,239,208,.35)!important}
 #mini,.mini,canvas.map{border-radius:16px!important}
@@ -3207,7 +3206,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     const seen=(Math.abs(da)<b.fov/2&&!busy)||(dq<50&&q.t<.2);if(seen&&(!dg||q.t<dg.t))dg=q}
   if(dg&&(dg.k||'he')==='he'&&!dg.back&&dg.t>.3&&Math.hypot(dg.x-b.x,dg.y-b.y)<70&&!b.down&&b.rel<=0&&rnd()<(b.tier>=2?.45:.25)&&dg.from&&dg.from.alive){const f=dg.from;dg.back=true;dg.x0=b.x;dg.y0=b.y;dg.x=f.x+rr(-30,30);dg.y=f.y+rr(-30,30);dg.T=dg.t=Math.max(.45,dg.t);dg.from=b;b.state='Wirft Granate zurück';ev(m,'throw',b.x,b.y,900);if(b.isP)b.throwBack=(b.throwBack||0)+1;dg=null}
   const zoneDistance=Math.max(0,dn-s.nr+60),zoneETA=zoneDistance/(85*b.sk.spd),zoneDeadline=s.shr?Math.max(0,ph.shrink-s.t+ph.wait):Math.max(0,ph.wait-s.t),zoneCritical=outside&&!stay;
-  const inSmk=!!m.smokes&&m.smokes.some(q=>q.big&&m.t-q.t<q.d-1&&Math.hypot(q.x-b.x,q.y-b.y)<62),covHeal=!dg&&!zoneCritical&&m.t-b.lastHitT>=1.2&&(foe?b.pcov&&b.covT>0&&m.t-b.covT>=1.2&&Math.hypot(foe.x-b.x,foe.y-b.y)>110&&!(foe.hp+foe.sh<45):inSmk||b.pcov&&b.covT>0&&m.t-b.covT>=2),safeHeal=ds<=s.r&&(covHeal||!dg&&!zoneCritical&&!foe&&m.t-b.lastHitT>=5&&m.t-b.lastShotT>=5);
+  const inSmk=!!m.smokes&&m.smokes.some(q=>q.big&&m.t-q.t<q.d-1&&Math.hypot(q.x-b.x,q.y-b.y)<62),covHeal=!dg&&!zoneCritical&&m.t-b.lastHitT>=1.2&&(foe?b.pcov&&b.covT>0&&m.t-b.covT>=1.2&&Math.hypot(foe.x-b.x,foe.y-b.y)>110&&!(foe.hp+foe.sh<45):inSmk||b.pcov&&b.covT>0&&m.t-b.covT>=2),safeHeal=ds<=s.r&&!(s.nr<s.r-5&&s.r-ds<160&&b.hp+b.sh>(b.max+100)*.2)&&(covHeal||!dg&&!zoneCritical&&!foe&&m.t-b.lastHitT>=5&&m.t-b.lastShotT>=5);
   /* Fähigkeit: der Bot zündet sie selbst, wenn es eng wird */
   if(b.ab&&m.t>=b.abT&&m.t-b.lastHitT<1.5){let used='';
     if(b.ab==='schild'){if(b.sh<=5&&b.hp<b.max*.55){b.sh=Math.min(100,b.sh+40);b.abT=m.t+60;used='Notschild'}}
