@@ -2996,12 +2996,12 @@ const wcl=id=>{const r=WEAPONS[id].range;return r>=500?2:r>320?1:0};
 /* höchstens drei verschiedene Waffen; angestrebt wird je eine für kurze, mittlere und weite Distanz */
 function wSlot(b,l){const r=wSlot0(b,l);if(r>=0||b.wp.some(w=>w.id===l.id&&w.rar>=l.rar))return r;
   /* Deutlich besserer Fund verdrängt die schwächste Waffe, auch wenn dadurch eine Distanzklasse doppelt belegt ist */
-  let wi=-1,wv=-1e9;b.wp.forEach((w,i)=>{const v=val(b,w);if(v>wv){wv=v;wi=i}});return val(b,l)<wv-2.4?(b.wp.length<3?b.wp.length:wi):-1}
+  const cnt=[0,0,0];for(const w of b.wp)if(w.id!=='pistol')cnt[wcl(w.id)]++;let wi=-1,wv=-1e9;b.wp.forEach((w,i)=>{if(w.id!=='pistol'&&cnt[wcl(w.id)]<2)return;const v=val(b,w);if(v>wv){wv=v;wi=i}});return wi>=0&&val(b,l)<wv-2.4?(b.wp.length<3?b.wp.length:wi):-1}
 function wSlot0(b,l){const same=b.wp.findIndex(w=>w.id===l.id);if(same>=0)return l.rar>b.wp[same].rar?same:-1;
   const c=wcl(l.id),held=b.wp.findIndex(w=>w.id!=='pistol'&&wcl(w.id)===c),pi=b.wp.findIndex(w=>w.id==='pistol');
   if(held<0){if(b.wp.length<3)return b.wp.length;if(pi>=0)return pi;const n=[0,0,0];for(const w of b.wp)n[wcl(w.id)]++;let wi=-1,wv=-1e9;b.wp.forEach((w,i)=>{if(n[wcl(w.id)]>1){const v=val(b,w);if(v>wv){wv=v;wi=i}}});return wi}
   /* Klasse schon besetzt: nur tauschen, wenn der Fund besser ist; ein freier Platz bleibt für die fehlende Klasse */
-  let wi=-1,wv=-1e9;b.wp.forEach((w,i)=>{if(w.id!=='pistol'&&wcl(w.id)===c){const v=val(b,w);if(v>wv){wv=v;wi=i}}});if(val(b,l)<wv)return wi;
+  let wi=-1,wv=-1e9;b.wp.forEach((w,i)=>{if(w.id!=='pistol'&&wcl(w.id)===c){const v=val(b,w);if(v>wv){wv=v;wi=i}}});{const hw=b.wp[wi];if(hw&&(l.rar>hw.rar||l.rar===hw.rar&&rank(b,l.id)<rank(b,hw.id)))return wi}
   if(pi>=0&&b.wp.length===1)return 0;return -1}
 function want(b,l){if(l.k==='g')return true;
   /* Rüstung: ohne Rüstung immer; sonst nur, wenn der Fund mit seiner Restfestigkeit spürbar mehr schützt als das Getragene */
@@ -3198,7 +3198,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     const seen=(Math.abs(da)<b.fov/2&&!busy)||(dq<50&&q.t<.2);if(seen&&(!dg||q.t<dg.t))dg=q}
   if(dg&&(dg.k||'he')==='he'&&!dg.back&&dg.t>.3&&Math.hypot(dg.x-b.x,dg.y-b.y)<70&&!b.down&&b.rel<=0&&rnd()<(b.tier>=2?.45:.25)&&dg.from&&dg.from.alive){const f=dg.from;dg.back=true;dg.x0=b.x;dg.y0=b.y;dg.x=f.x+rr(-30,30);dg.y=f.y+rr(-30,30);dg.T=dg.t=Math.max(.45,dg.t);dg.from=b;b.state='Wirft Granate zurück';ev(m,'throw',b.x,b.y,900);if(b.isP)b.throwBack=(b.throwBack||0)+1;dg=null}
   const zoneDistance=Math.max(0,dn-s.nr+60),zoneETA=zoneDistance/(85*b.sk.spd),zoneDeadline=s.shr?Math.max(0,ph.shrink-s.t+ph.wait):Math.max(0,ph.wait-s.t),zoneCritical=outside&&!stay;
-  const inSmk=!!m.smokes&&m.smokes.some(q=>q.big&&m.t-q.t<q.d-1&&Math.hypot(q.x-b.x,q.y-b.y)<62),covHeal=!dg&&!zoneCritical&&m.t-b.lastHitT>=1.6&&(foe?b.pcov&&b.covT>0&&m.t-b.covT>=2&&Math.hypot(foe.x-b.x,foe.y-b.y)>110&&!(foe.hp+foe.sh<45):inSmk||b.pcov&&b.covT>0&&m.t-b.covT>=2),safeHeal=ds<=s.r&&(covHeal||!dg&&!zoneCritical&&!foe&&m.t-b.lastHitT>=5&&m.t-b.lastShotT>=5);
+  const inSmk=!!m.smokes&&m.smokes.some(q=>q.big&&m.t-q.t<q.d-1&&Math.hypot(q.x-b.x,q.y-b.y)<62),covHeal=!dg&&!zoneCritical&&m.t-b.lastHitT>=1.2&&(foe?b.pcov&&b.covT>0&&m.t-b.covT>=1.2&&Math.hypot(foe.x-b.x,foe.y-b.y)>110&&!(foe.hp+foe.sh<45):inSmk||b.pcov&&b.covT>0&&m.t-b.covT>=2),safeHeal=ds<=s.r&&(covHeal||!dg&&!zoneCritical&&!foe&&m.t-b.lastHitT>=5&&m.t-b.lastShotT>=5);
   /* Fähigkeit: der Bot zündet sie selbst, wenn es eng wird */
   if(b.ab&&m.t>=b.abT&&m.t-b.lastHitT<1.5){let used='';
     if(b.ab==='schild'){if(b.sh<=5&&b.hp<b.max*.55){b.sh=Math.min(100,b.sh+40);b.abT=m.t+60;used='Notschild'}}
@@ -3326,6 +3326,8 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     else if(wantHide&&m.t>=(b.noTall||0)){const urg=b.rel>0||b.mags[b.cur]<=0||(b.hp+b.sh)<(b.max+100)*.45,RR=urg?140:95;let bd=RR;gNear(m.og,b.x,b.y,RR,o=>{if(o.low)return;const q=coverPoint(o,foe.x,foe.y),d=Math.hypot(q.x-b.x,q.y-b.y);if(d<bd&&d>8&&freeSpot(m,q.x,q.y)&&walkClear(m,b.x,b.y,q.x,q.y)&&!los(m,foe,q,false)){bd=d;cov={...q,o,fo:Math.hypot(o.x-foe.x,o.y-foe.y),tall:true,until:m.t+4}}});b.tCov=cov}
     if(!wantHide)b.tCov=null;
     /* Um die Ecke lehnen: hinter hoher Deckung abwechselnd verstecken (nachladen, heilen, durchatmen) und seitlich herauslehnen und schießen */
+    /* Wenig Leben, aber Heilung dabei und in Deckung: drinbleiben und erst heilen, statt rauszulaufen */
+    {const hasH=b.med+b.bmed+b.rpot+b.pz+b.pot+b.bpot>0;if(hasH&&b.pcov&&(b.hp+b.sh)<(b.max+100)*.45&&fd>120&&foe.hp+foe.sh>=45&&m.t-(b.covT||m.t)<6){b.go=false;b.pose=1;b.inCov=true;b.fire=null;b.lean=0;b.state='Bleibt in Deckung und heilt';if(!b.covT)b.covT=m.t;return}}
     b.lean=0;if(rushWeak){cov=null;b.tCov=null}
     if(cov&&cov.tall&&(d2(b,cov)<=26||b.pk&&!b.pk.none&&b.pk.o===cov.o&&d2(b,b.pk)<34)){const o=cov.o;
       if(!b.pk||b.pk.o!==o||Math.hypot(b.pk.fx-foe.x,b.pk.fy-foe.y)>90||b.pk.redo){const ux=(foe.x-o.x)/(Math.hypot(foe.x-o.x,foe.y-o.y)||1),uy=(foe.y-o.y)/(Math.hypot(foe.x-o.x,foe.y-o.y)||1),px=-uy,py=ux,ext=(o.k==='b'?Math.abs(px)*o.hw+Math.abs(py)*o.hh:o.r)+R+5;
@@ -3501,7 +3503,7 @@ function think(m,b,dt,bi){if(m.t<DROP||m.t<(b.rsL||0))return;
     if(b.ads>=.95&&far&&b.sta>12&&!b.exh&&m.t>=(b.brCd||0)){b.hold=true;b.holdT=(b.holdT||0)+dt;b.sta-=12*dt;b.useT=.6;if(b.holdT>=4){b.hold=false;b.holdT=0;b.brCd=m.t+2}}
     else{if(b.hold){b.brCd=m.t+1}b.hold=false;b.holdT=0}}
   if(f&&f.down&&m.t-f.downT<prot(f)){b.fire=null;b.due=true}
-  else if(f&&!b.down&&!b.dive){if(!f.alive){b.fire=null;b.due=true}else if(Math.abs(Math.atan2(Math.sin(b.ta-b.a),Math.cos(b.ta-b.a)))<.22&&los(m,b,f,b.pose>0||f.pose>0)){const fd=d2(b,f);for(let k=0,km=Math.max(3,Math.ceil(dt*14));k<km&&b.cd<=0&&f.alive&&!(f.down&&m.t-f.downT<prot(f));k++){const c0=b.cd;tryFire(m,b,f,fd);if(b.cd===c0)break}}}}
+  else if(f&&!b.down&&!b.dive){if(!f.alive){b.fire=null;b.due=true}else if(Math.abs(Math.atan2(Math.sin(b.ta-b.a),Math.cos(b.ta-b.a)))<.22&&los(m,b,f,b.pose>0||f.pose>0)){const fd=d2(b,f);/* Anvisieren: je weiter weg, desto länger dauert es, bis der erste Schuss sitzt (Zielfernrohr/ADS verkürzt) */if(b.aimF!==f||m.t-(b.aimL||-9)>.6){b.aimF=f;b.aimS=m.t}b.aimL=m.t;const aimN=(.12+fd/1000*.7)*(1-.35*(b.ads||0))*(b.perks.has('p_first')?.7:1);if(m.t-b.aimS<aimN){}else for(let k=0,km=Math.max(3,Math.ceil(dt*14));k<km&&b.cd<=0&&f.alive&&!(f.down&&m.t-f.downT<prot(f));k++){const c0=b.cd;tryFire(m,b,f,fd);if(b.cd===c0)break}}}}
 
 /* Bots weit weg von der Kamera rechnen nur jeden dritten Schritt mit dreifacher Schrittweite */
 function step(m){if(m.over)return;m.t+=DT;m.tick++;stormStep(m);
