@@ -10,5 +10,5 @@ function run(mode,lite,biome){const cfg={...E.defSave().cfg,mode};const g=E.newM
   console.log(`${mode}${lite?' (Handy-Stufe)':''}: Ende=${g.over} Spielzeit=${Math.round(g.t)}s Schritte=${i} ms/Schritt=${avg.toFixed(2)} max=${mx.toFixed(1)}ms`);
   ok(g.over,'Runde endet');ok(g.t>180&&g.t<1300,'Rundenlänge plausibel');ok(avg<5,'Rechenzeit pro Schritt unter 5 ms');ok(mx<120,'kein Hänger über 120 ms');ok(nan===0,'keine kaputten Zahlenwerte');
   ok(weapons.size>=12,'mindestens 12 Waffenarten machen Kills ('+weapons.size+')');ok((g.vend||[]).length>=100,'Automaten vorhanden ('+(g.vend||[]).length+')');ok(g.chests.length>1000,'Kisten vorhanden ('+g.chests.length+')');return g}
-try{run('solo',true);const t=run('trio',false);ok(t.bots.some(b=>b.respawns)||true,'Trio lief');run('duo',true);run('solo',true,'mall');run('trio',false,'mall')}catch(e){ok(false,'Absturz in der Simulation: '+(e.stack||e).toString().split('\n').slice(0,3).join(' | '))}
+try{run('solo',true);const t=run('trio',false);ok(t.bots.some(b=>b.respawns)||true,'Trio lief');run('duo',true)}catch(e){ok(false,'Absturz in der Simulation: '+(e.stack||e).toString().split('\n').slice(0,3).join(' | '))}
 console.log(fail?`\n${fail} FEHLER`:'\nAlles in Ordnung');process.exit(fail?1:0);

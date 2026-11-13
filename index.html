@@ -2586,19 +2586,7 @@ const STYLES={
   scharf:{n:'Scharfschütze',d:'Hält maximale Distanz und nimmt bevorzugt Gewehre mit Reichweite.',chase:9999,distF:.95,conf:.95,lock:'s_scharf'},
   surv:{n:'Überlebenskünstler',d:'Versteckt sich und kämpft erst, wenn nur noch wenige leben.',chase:200,distF:.9,conf:9,lock:'s_surv'}};
 const SKINS={
-  wuestentarn:{n:'Wüstentarn',body:0xc2a06a,head:0xe0b48c,hat:'cap',hc:0x9a7a48,cost:150},
-  nachtjaeger:{n:'Nachtjäger',body:0x15181d,head:0xc9a27e,hat:'visor',hc:0x2a2f36,cost:200},
-  arktis:{n:'Arktis',body:0xe8edf2,head:0xf0d2b4,hat:'helmet',hc:0xcfd6dc,cost:200},
-  dschungel:{n:'Dschungel',body:0x2f5a22,head:0x8a5a3a,hat:'straw',hc:0x6a5a2a,cost:150},
-  sanitaeter:{n:'Sanitäter',body:0xf2f2f2,head:0xf2d2b0,hat:'cap',hc:0xd8232a,cost:250},
-  marine:{n:'Marine',body:0x1f3f7a,head:0xe0b48c,hat:'cap',hc:0x14264a,cost:200},
-  rotgarde:{n:'Rotgarde',body:0x8a1a1a,head:0xf2d2b0,hat:'helmet',hc:0x4a0d0d,cost:250},
-  pilot:{n:'Pilot',body:0x6b7a3a,head:0xe8c4a0,hat:'visor',hc:0x3a3a3a,cost:200},
-  bauarbeiter:{n:'Bauarbeiter',body:0x2a4a8a,head:0xf2d2b0,hat:'helmet',hc:0xffc400,cost:150},
-  saboteur:{n:'Saboteur',body:0x4a2a5a,head:0xd9b896,hat:'visor',hc:0x1a0f22,cost:250},
   rekrut:{n:'Rekrut',body:0x2f8a80,head:0xf2d2b0,hat:'none'},
-  wald:{n:'Waldläufer',body:0x4b6b3a,head:0xe0b48c,hat:'cap',hc:0x35482a},
-  asphalt:{n:'Asphalt',body:0x59626b,head:0xd9dde0,hat:'visor',hc:0xffb224},
   schweisser:{n:'Schweißer',body:0xe07a2c,head:0x3a424c,hat:'visor',hc:0xffd34d,lock:'k_industrie'},
   feuer:{n:'Feuerwehr',body:0xc8372d,head:0xf2d2b0,hat:'helmet',hc:0xf5c518,lock:'k_feuer'},
   sturm:{n:'Sturmjäger',body:0x7a4ad6,head:0xe6d8ff,hat:'antenna',hc:0xd9c2ff,lock:'k_sturm'},
@@ -2644,7 +2632,6 @@ const SKINS={
   skelett:{n:'Skelett',body:0x1a1c20,head:0xe8e6da,hat:'bare',hc:0xe8e6da,bp:1,cool:1.2,th:'skelett',fc:'x'},
   pharao:{n:'Pharao',body:0xe8dcb8,head:0xc89868,hat:'bare',hc:0xe0b030,bp:1,cool:1.3,th:'pharao'},
   shogun:{n:'Shogun',body:0x8a1a1a,head:0xe8c4a0,hat:'bare',hc:0xe0b030,bp:1,cool:1.38,th:'shogun',fc:'m'},
-  mallcop:{n:'Kaufhausdetektiv',body:0x2a3550,head:0xf2d2b0,hat:'cap',hc:0x1a2238,lock:'k_mall'},
   swat:{n:'SWAT',body:0x2c3a4c,head:0xe0b48c,hat:'bare',hc:0x0e1116,cost:900,shop:1,th:'swat',fc:'m'},
   haeftling:{n:'Häftling',body:0xf26a1a,head:0xe8c4a0,hat:'bare',hc:0x15181d,cost:700,shop:1,th:'haeftling'},
   hai:{n:'Hai',body:0x6f8796,head:0x6f8796,hat:'bare',hc:0xf2f2ee,cost:1000,shop:1,th:'hai',fc:'x'},
@@ -2673,7 +2660,7 @@ const SKINS={
   pinguin:{n:'Pinguin',body:0x15181d,head:0x15181d,hat:'bare',hc:0xffffff,cost:900,shop:1,th:'pinguin',fc:'x'},
   drache:{n:'Drache',body:0x2a7a3a,head:0x3a9a4a,hat:'bare',hc:0xffc400,cost:1300,shop:1,th:'drache',fc:'x'},
   platin:{n:'Platin-Kaiser',body:0xdfe6ec,head:0xf4f6f7,hat:'crown',hc:0xffffff,glow:0xbfd8ff,bp:1}};
-const SKGONE={};/* Tagesshop-Skins: 45 Bot-Skins für 600–1000 Gold, nicht im Battle Pass */
+const SKGONE={wuestentarn:150,nachtjaeger:200,arktis:200,dschungel:150,sanitaeter:250,marine:200,rotgarde:250,pilot:200,bauarbeiter:150,saboteur:250};/* Tagesshop-Skins: 45 Bot-Skins für 600–1000 Gold, nicht im Battle Pass */
 {const N1=['Neon','Polar','Wüsten','Dschungel','Lava','Ozean','Nacht','Sonnen','Nebel','Gewitter','Kirsch','Minz','Rost','Kristall','Schatten'],N2=['Läufer','Söldner','Kurier','Späher','Wächter','Jäger','Pilot','Agent','Rebell','Ranger','Tüftler','Kapitän','Nomade','Bandit','Ritter'],
   P=[[0x2ad8c8,0x0f2a3a],[0xe8f0f6,0x7aa8c8],[0xd8c08a,0x6a4a2a],[0x3d8a4a,0x1a3a1a],[0xff4a10,0x2a0a04],[0x1a6ab0,0x0a1f3a],[0x1a1f3a,0x6a7ac8],[0xffc233,0xb86a10],[0x9aa3ab,0x3a424c],[0x6a2ad8,0x1a0a3a],[0xff8ac0,0x8a1f4a],[0x8affc8,0x1a6a56],[0xb86a3a,0x3a1a0a],[0x9cdcff,0x3a6ab0],[0x23272c,0xc8232a]],
   HT=['cap','visor','helmet','antenna','tophat','tricorn','sombrero','straw','mohawk','horns','ears','flower','crown','halo','crystal','none'],SK=[0xf2d2b0,0xe0b48c,0xc89868,0x8a5a3a,0x5a3a26,0xf4e0c8];
@@ -2687,7 +2674,6 @@ const BIOMES={
   wueste:{n:'Wüste',d:'Dünen, Felsen und Kakteen',sky:0xe6cfa0,gnd:0x9a7a4a,g0:[.72,.56,.32],g1:[.93,.8,.5],hm:'smooth',amp:95,den:[.8,2.5,16,5],tree:'cactus',leaf:0x4f8a4a,rock:0xb8834f,mini:'#c9a565',hc:[0xd9b98a,0xc9a070]},
   eis:{n:'Eisland',d:'Verschneite Berge mit vielen Ebenen',sky:0xcfe2ee,gnd:0x8aa0b0,g0:[.55,.68,.78],g1:[.97,.98,1],hm:'ter',lv:5,step:62,wl:1.4,den:[.7,2,14,7],tree:'pine',leaf:0x2f5f4a,snow:1,rock:0x9cc4de,mini:'#cfe0ea',hc:[0x8a5a3a,0x6f4a32],fxp:{c:0xffffff,vy:-70}},
   industrie:{n:'Industriegebiet',d:'Containerstapel, Hallen und enge Gassen',sky:0xaab4ba,gnd:0x55595c,g0:[.33,.34,.35],g1:[.47,.46,.43],hm:'flat',den:[.35,3,0,.5],tree:'round',leaf:0x4f8a45,rock:0x8b949c,mini:'#7d7a72',hc:[0x8b949c,0x6f7f8f,0xa58f7a,0x7a8a94],ind:1},
-  mall:{n:'Shopping Mall',d:'Galerien, Rolltreppen und Läden auf drei Ebenen',sky:0xc4d4de,gnd:0xb8b4ac,g0:[.7,.68,.64],g1:[.82,.8,.76],hm:'mall',mall:1,den:[0,0,0,0],tree:'round',leaf:0x3f8a3c,rock:0x8a9096,mini:'#b9b4aa',hc:[0xe8e2d6,0xd9c7b0,0xc9d4dc,0xe6d2c4,0xcfd8c8]},
   alien:{n:'Alien-Planet',d:'Kristalle, Riesenpilze und fremder Himmel',sky:0x2a1840,gnd:0x3a2a5a,g0:[.22,.14,.36],g1:[.2,.52,.5],hm:'ter',lv:4,step:46,den:[1,2,16,9],tree:'mushroom',leaf:0x35e0c8,rock:0xd04aff,crystal:1,mini:'#4a3a7a',hc:[0x3fd0c0,0xff5fa8,0x8a6aff],fxp:{c:0x7affea,vy:24},dark:1}};
 const PHF=[.44,.31,.21,.135,.08,.045,.02,0],PHW=[23,23,20,16,12,9,7,5],PHS=[38,30,24,18,13,9,7,7],PHD=[1,2,3,5,7,9,12,16];
 const NAMES2=['Kaktus-Kalle','Sturmfrisur','Nudelholz','Brezel-Baron','Kuchenkrümel','Schnitzel-Sepp','Dosenravioli','Panzerknacker','Zappelphilipp','Socken-Sigi','Hasenfuß','Kampfkeks','Gurkenglas','Frikadellen-Fred','Lauchkönig','Toastbrot','Schnarchnase','Klappstuhl','Tante Emma','Kartoffelpuffer','Wackeldackel','Nebelkerze','Dönerdieb','Sofakissen','Quietscheente','Bratwurst-Bernd','Pfannkuchen','Kühlschrank','Mettigel','Sockenschuss','Zwiebelring','Gartenzwerg','Kugelblitz','Erbsenzähler','Ratatouille','Senfgurke','Schlafmütze','Butterbrot','Rumpelstilz','Nachtschicht','Plüschtiger','Wurstwasser','Krümelmonster','Flaschenpost','Bügeleisen','Lockenwickler','Kaffeesatz','Spätzle-Spezl','Kuckucksuhr','Hosenträger','Pommes rot-weiß','Strudel-Steffi','Gummistiefel','Holzlöffel','Blitzbirne','Schokokuss','Tomatensaft','Heizdecke','Fischstäbchen','Zuckerwatte','Glühwürmchen','Matschbirne','Nudelsieb','Grillanzünder','Bierdeckel','Rasenmäher','Kopfkissen','Schlaubi','Brummbär','Rotkäppchen','Vogelscheuche','Drahtesel','Schnürsenkel','Ofenkartoffel','Pustekuchen','Muckefuck','Kleiderbügel','Pantoffelheld','Wattebausch','Sauerkraut','Frühstücksei','Leberkäs','Schaumschläger','Muskelkater','Dauerlutscher','Fliegenpilz','Puddingpistole','Igelfrisur','Haferflocke','Knallerbse','Schmalzbrot','Raketen-Rudi','Pfeffermühle','Wirbelwind','Tollpatsch','Hustensaft','Turnbeutel','Seifenblase','Kakaobohne','Grummel'];
@@ -2766,7 +2752,7 @@ function los(m,a,b,low){const g=m.og,cs=g.cs,n=g.n,dx=b.x-a.x,dy=b.y-a.y,l2=dx*d
     const t=clamp(((o.x-a.x)*dx+(o.y-a.y)*dy)/l2,0,1);
     let hitO=false;if(o.k==='b')hitO=segBox(a.x,a.y,dx,dy,o);else{const px=a.x+dx*t-o.x,py=a.y+dy*t-o.y;hitO=px*px+py*py<o.r*o.r}
     if(!hitO)continue;if(duck)return false;
-    const top=(flat?0:height(m,o.x,o.y))+obsTop(o);if(top>lineH(t)-2)return false}}
+    const top=(flat?0:height(m,o.x,o.y))+obsTop(o);if(top>lineH(t)-2){/* direkt hinter der Deckung: über die Kante schießen, wenn sie nicht höher als die Augen ist */const sz=o.r||Math.max(o.hw,o.hh),na=Math.hypot(o.x-a.x,o.y-a.y)<sz+34,nb=Math.hypot(o.x-b.x,o.y-b.y)<sz+34;if(na&&top<=ha+3&&!nb||nb&&top<=hb+16&&!na&&(b.pose||0)===0)continue;return false}}}
   if(!flat&&l2>6400){const L=Math.sqrt(l2),st=Math.max(2,Math.ceil(L/55));for(let k=1;k<st;k++){const t=k/st;if(height(m,a.x+dx*t,a.y+dy*t)>lineH(t)-3)return false}}
   return true}
 const blocked=(o,x,y,pad)=>o.k==='b'?Math.abs(x-o.x)<o.hw+pad&&Math.abs(y-o.y)<o.hh+pad:Math.hypot(x-o.x,y-o.y)<o.r+pad;
@@ -2833,8 +2819,8 @@ function randCfg(){let q=rnd()*100,tier=0;for(let i=0;i<TIERS.length;i++){if((q-
   const fav=pick(BUILDS),wt=ks.map(k=>fav.includes(k)?4+rnd()*3:.4+rnd()),ws=wt.reduce((a,b)=>a+b,0);
   for(let g=0;n>0&&g<4000;g++){let q=rnd()*ws,i=0;while((q-=wt[i])>0)i++;const k=ks[i];if(pts[k]<8){pts[k]++;n--}}
   const perks=[];if(tier>=3&&rnd()<.4)perks.push(pick(['p_blood','p_medic','p_storm','p_clutch','p_ammo','p_sprint']));if(tier===5)perks.push('p_first');
-  return{tier,pts,cfg:{skin:rnd()<.8?pick(['wald','asphalt','veteran','herr','wuestentarn','nachtjaeger','arktis','dschungel','sanitaeter','marine','rotgarde','pilot','bauarbeiter','saboteur','foerster','ritter','cowboy','koch','ninja','pirat','wikinger','taucher']):pick(SKINK),style:pick(['balanced','balanced','balanced','rusher','careful','careful','ambush','hunter','scharf','surv']),land:'any',retreat:rr(.3,.6),healAt:rr(.5,.85),early:rnd()<.6,loot:rnd()<.6?'all':'min',high:rnd()<.5,prep:rnd()<.4,stance:rnd()<.7,perks}}}
-const SKINK=Object.keys(SKINS);
+  return{tier,pts,cfg:{skin:rnd()<.8?pick(THSK):pick(SKINK),style:pick(['balanced','balanced','balanced','rusher','careful','careful','ambush','hunter','scharf','surv']),land:'any',retreat:rr(.3,.6),healAt:rr(.5,.85),early:rnd()<.6,loot:rnd()<.6?'all':'min',high:rnd()<.5,prep:rnd()<.4,stance:rnd()<.7,perks}}}
+const SKINK=Object.keys(SKINS),THSK=SKINK.filter(k=>SKINS[k].th);
 
 /* Shopping Mall: Blöcke aus erhöhten Galerien (Ebene 1) und Dachterrassen (Ebene 2), verbunden durch Rolltreppen; dazwischen breite Ladenstraßen im Erdgeschoss */
 function genMall(m,houses){const W=m.W,P=2200,nb=Math.max(1,Math.floor(W/P)),off=(W-nb*P)/2,L1=64,L2=128,RW=50,RL=200,OUT=800;m.plats=[];m.ramps=[];m.mallC=[];m.mallP=P;
@@ -3304,11 +3290,11 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
     if(safeStart&&(canM||canS)){const useS=canS&&(!canM||shN>=hpN);b.priority='Heilen';b.act='heal';
       if(useS){b.healT=1.8;b.useK='s';b.state='Trinkt Schildtrank'}else{b.healT=2.6*b.healK*(b.perks.has('p_medic')?.5:1);b.useK='m';b.state='Heilt'}return}}
   const zone=()=>{const r=Math.max(0,s.nr-90)*.7,q=Math.min(1,dn>1?r/dn:0);go(s.nx+(b.x-s.nx)*q,s.ny+(b.y-s.ny)*q)};
-  if(foe&&!b.grabL&&b.rel<=0&&m.t-b.lastHitT>1.2&&foe.fire!==b&&!dg&&m.t>=(b.grabChk||0)){b.grabChk=m.t+1.2;let best=null,bv=0;const held=Math.min(...b.wp.map(w=>val(b,w))),hpF2=(b.hp+b.sh)/(b.max+100);
-    gNear(m.lg,b.x,b.y,75,l=>{if(b.ban.has(l)||!want(b,l))return;const d=d2(b,l);if(d>75||!walkClear(m,b.x,b.y,l.x,l.y))return;let g=0;
+  if(foe&&!b.grabL&&b.rel<=0&&m.t-b.lastHitT>1.2&&foe.fire!==b&&!dg&&m.t>=(b.grabChk||0)){b.grabChk=m.t+1.2;let best=null,bv=0;const fdG=Math.hypot(foe.x-b.x,foe.y-b.y),GR=fdG>450?260:fdG>300?170:75,GT=fdG>300?1:1.5;const held=Math.min(...b.wp.map(w=>val(b,w))),hpF2=(b.hp+b.sh)/(b.max+100);
+    gNear(m.lg,b.x,b.y,GR,l=>{if(b.ban.has(l)||!want(b,l))return;const d=d2(b,l);if(d>GR||Math.hypot(l.x-foe.x,l.y-foe.y)<fdG*.75||!walkClear(m,b.x,b.y,l.x,l.y))return;let g=0;
       if(l.k==='w')g=held-val(b,l);else if('mBPrz'.includes(l.k))g=hpF2<.5?3:0;else if('sP'.includes(l.k))g=b.sh<40?2:0;else if(l.k==='a'||l.k==='h')g=2.5;
-      g-=d/60;if(g>1.5&&g>bv){bv=g;best=l}});
-    if(best&&rnd()<.6)b.grabGo={l:best,until:m.t+2.5}}
+      g-=d/(GR>75?120:60);if(g>GT&&g>bv){bv=g;best=l}});
+    if(best&&(GR>75||rnd()<.6))b.grabGo={l:best,until:m.t+(GR>75?4.5:2.5)}}
   if(foe&&b.grabGo&&m.t<b.grabGo.until&&!b.grabL&&m.t-b.lastHitT>1){const l=b.grabGo.l;if(m.lg.c[gi(m.lg,l.x,l.y)].includes(l)){go(l.x,l.y);b.sprint=true;b.state='Schnappt sich bessere Beute';b.fire=null;return}b.grabGo=null}else if(b.grabGo&&m.t-b.lastHitT<=1)b.grabGo=null;
   if(foe)pickWeapon(b,fd,m.t);
   const w=b.W[b.wp[b.cur].id],ratio=foe?advOf(b,foe,fd):1,hurtNoMed=hpF<.5&&b.med===0,busy=!!foe&&!!foe.fire&&foe.fire!==b&&foe.fire.alive,weakFoe=!!foe&&foe.hp+foe.sh<45,rushRaw=!!foe&&fd<430&&b.rel<=0&&b.mags[b.cur]>0&&(b.hp+b.sh)>45&&((foe.hp+foe.sh<55||foe.act==='heal'&&foe.hp+foe.sh<95)&&b.hp+b.sh>foe.hp+foe.sh+20||m.t<foe.blindT-.5&&m.t>=b.blindT),rushWeak=(()=>{if(rushRaw){b.rushUntil=m.t+2;b.rushF=foe;return true}return !!foe&&foe===b.rushF&&m.t<(b.rushUntil||0)&&b.hp+b.sh>40&&b.mags[b.cur]>0})();
@@ -3393,7 +3379,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
       else{const under=foe.fire===b||attacked,RL=under?130:85;let bs=1e9;gNear(m.og,b.x,b.y,RL,o=>{if(!o.low)return;const q=cp(o),d=Math.hypot(q.x-b.x,q.y-b.y);
         /* Bewertung: kurzer Weg, nicht auf den Gegner zu, nicht zu dicht am Gegner */
         if(d>RL||q.fo<70||b.covBan&&b.covBan.o===o&&m.t<b.covBan.t||!freeSpot(m,q.x,q.y)||!walkClear(m,b.x,b.y,q.x,q.y)||!los(m,{x:q.x,y:q.y,alive:true,pose:0},foe,false))return;const toward=((q.x-b.x)*(foe.x-b.x)+(q.y-b.y)*(foe.y-b.y))/(fd*(d||1)),sc=d*(1+Math.max(0,toward)*.8)+(q.fo<fd-40?60:0);if(sc<bs){bs=sc;cov=q}})}}
-    const pinned=foe.fire===b&&ratio<1.25&&b.style!=='rusher'&&fd>90,tact=pinned||(w.range>=300||nSee>=2)&&(b.style==='careful'||b.style==='ambush'||b.style==='scharf'||b.style==='surv'||b.style==='hunter'&&w.range>=430||b.style==='balanced'&&(fd>=200||(b.hp+b.sh)<(b.max+100)*.75||nSee>=2)),wantHide=(()=>{const w0=!cov&&!rushWeak&&b.style!=='rusher'&&(b.rel>0||b.mags[b.cur]<=0||(b.hp+b.sh)<(b.max+100)*.45||(tact&&fd>150&&b.peek!==false))&&fd>70;if(w0){b.hideUntil=m.t+1.6;return true}return !cov&&!rushWeak&&fd>70&&m.t<(b.hideUntil||0)})();
+    const pinned=foe.fire===b&&ratio<1.25&&b.style!=='rusher'&&fd>90,tact=pinned||(w.range>=300||nSee>=2)&&(b.style==='careful'||b.style==='ambush'||b.style==='scharf'||b.style==='surv'||b.style==='hunter'&&w.range>=430||b.style==='balanced'&&(fd>=200||(b.hp+b.sh)<(b.max+100)*.75||nSee>=2)),wantHide=(()=>{const w0=!cov&&!rushWeak&&b.style!=='rusher'&&((b.rel>0||b.mags[b.cur]<=0)&&foe.fire===b&&fd<320||(b.hp+b.sh)<(b.max+100)*.45||(tact&&fd>150&&b.peek!==false))&&fd>70;if(w0){b.hideUntil=m.t+1.6;return true}return !cov&&!rushWeak&&fd>70&&m.t<(b.hideUntil||0)})();
     if(b.stk>0)b.noTall=m.t+3;
     if(wantHide&&b.tCov&&m.t<b.tCov.until&&m.t>=(b.noTall||0)&&!los(m,foe,b.tCov,false))cov=b.tCov;
     else if(wantHide&&m.t>=(b.noTall||0)){const urg=b.rel>0||b.mags[b.cur]<=0||(b.hp+b.sh)<(b.max+100)*.45,crit=(b.hp+b.sh)<(b.max+100)*.3&&b.med+b.bmed+b.rpot+b.pz+b.pot+b.bpot>0,RR=crit&&fd>200?320:urg?140:95;let bd=RR;gNear(m.og,b.x,b.y,RR,o=>{if(o.low)return;const q=coverPoint(o,foe.x,foe.y),d=Math.hypot(q.x-b.x,q.y-b.y);if(d<bd&&d>8&&freeSpot(m,q.x,q.y)&&walkClear(m,b.x,b.y,q.x,q.y)&&!los(m,foe,q,false)){bd=d;cov={...q,o,fo:Math.hypot(o.x-foe.x,o.y-foe.y),tall:true,until:m.t+4}}});b.tCov=cov}
@@ -4979,7 +4965,7 @@ function sounds(m,ts){if(!AU.on||!AU.ctx){heardT=m.t;m.ev.length=0;return}
   if(m.tracers)for(const t of m.tracers){if(t.whz)continue;t.whz=1;if(!spec||t.x1===spec.x)continue;const dx=t.x2-t.x1,dy=t.y2-t.y1,L=Math.hypot(dx,dy)||1,u=clamp(((cam.x-t.x1)*dx+(cam.y-t.y1)*dy)/(L*L),0,1),px=t.x1+dx*u,py=t.y1+dy*u;if(Math.hypot(px-cam.x,py-cam.y)<45&&Math.hypot(t.x1-cam.x,t.y1-cam.y)>120)auWhiz(panOf(t.x1,t.y1))}
   if(m.imp)for(const q of m.imp){if(q.snd)continue;q.snd=1;const d=Math.hypot(q.x-cam.x,q.y-cam.y);if(d<520)auImpact(q.k,.25*Math.pow(1-d/520,1.5),panOf(q.x,q.y))}
   heardT=m.t;for(const e of m.ev)auEvent(e);m.ev.length=0;
-  const s=m.storm,dd=Math.hypot(cam.x-s.x,cam.y-s.y)-s.r;AU.storm.gain.setTargetAtTime(clamp(.05+(dd+500)/500*.32,.04,.42),AU.ctx.currentTime,.4);
+  const s=m.storm,dd=Math.hypot(cam.x-s.x,cam.y-s.y)-s.r;AU.storm.gain.setTargetAtTime(0,AU.ctx.currentTime,.4);
   /* eigene Schritte nach Untergrund */
   if(spec&&spec.alive&&spec.mv&&ts-stepT>(spec.run?250:360)/Math.min(speed===1?1.25:speed,2)){stepT=ts;const kd=stepKind(m,spec.x,spec.y);auStep(kd,spec.pose?.035:.06,(AU.foot=-(AU.foot||.15))*.4,spec.run)}
   if(spec&&spec.alive){const busy=spec.act==='heal';if(busy&&ts-(AU.healT||0)>420){AU.healT=ts;if(spec.useK==='s'||spec.useK==='P')auBand(.06,.15,1100,1.5,0,0,0,.02);else auBand(.06,.12,2400,1,0)}
