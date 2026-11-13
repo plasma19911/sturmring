@@ -3004,7 +3004,7 @@ function tryFire(m,b,foe,fd){const cw=b.wp[b.cur],w=b.W[cw.id];if(b.rel>0||b.cd>
   if(w.splash&&fd<100)return;
   b.mags[b.cur]--;b.cd=(b.cd>-.12?b.cd:0)+1/(w.rate*attF(cw,'rate')*(m.t<(b.berT||0)?1.5:1)*(b.perks.has('p_cover')&&m.trio&&mates(m,b).some(o=>o.down&&o.rvBy)?1.2:1));
   let sp=w.spread*TUNE.spread*b.sk.aim*(b.run?2.2:b.mv?1.5:1)*(foe.mv?(foe.run?1.9:1.25):1)*(b.pose===2?.6:b.pose===1?.7:1)*(b.jump>0?2:1);
-  if(m.t<b.blindT)sp*=4;else if(m.t<(b.dazeT||0))sp*=1.8;if(m.smokes&&m.smokes.length&&smokeBlock(m,b,foe))sp*=3.4;
+  if(m.t<b.blindT)sp*=4;else if(m.t<(b.dazeT||0))sp*=1.8;if(m.smokes&&m.smokes.length&&smokeBlock(m,b,foe))sp*=5.5;
   let tr=R*(foe.pose===2?.55:foe.pose===1?1.08:1);if(foe.inCov&&Math.cos(Math.atan2(b.y-foe.y,b.x-foe.x)-foe.covA)>.5)tr*=.55;
   if(b.style==='ambush'&&!b.mv)sp*=.6;if(m.t<b.blindT)sp*=7;if(m.t<(b.focT||0))sp*=.6;sp*=attF(cw,'sp')*((b.ads||0)<.7?attF(cw,'hip'):1)*(b.mv?attF(cw,'mv'):1);if(b.tab==='tf_deck'&&m.trio&&mates(m,b).some(o=>o.act==='revive'&&d2(o,b)<300))sp*=.85;
   if(b.perks.has('p_first')&&m.t-b.lastShotT>2)sp*=.15;sp*=1-.38*(b.ads||0);if(b.hold)sp*=.62;if(m.trio){if(b.perks.has('p_focus')&&mates(m,b).some(o=>o.fire===foe))sp*=.85;if(b.perks.has('p_triad'))sp*=1-.05*mates(m,b).filter(o=>o.alive&&!o.down&&d2(o,b)<300).length}if(m.t<(b.comboT||0)&&foe===b.comboF)sp*=.6;
@@ -3294,8 +3294,8 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
           {let cv=0;gNear(m.og,x,y,60,o=>{const dd=Math.hypot(o.x-x,o.y-y)-(o.r||Math.max(o.hw,o.hh));if(dd<45)cv=Math.max(cv,(45-dd)/45)});v+=cv*(foe.fire===b?10:5)}if(Math.hypot(x-s.x,y-s.y)>s.r-30)v-=40;if(v>bs){bs=v;best={x,y,sg}}}
         if(best){cx=best.x;cy=best.y;if(best.sg&&best.sg!==b.strafe){b.strafe=best.sg;b.strafeUntil=m.t+1.2}}}
       go(cx,cy)}}
-  else if(!foe&&equipped&&b.lastFoe&&b.lastFoe.alive&&!b.lastFoe.down&&b.lastSeen&&m.t-b.lastSeen.t<6&&m.smokes&&m.smokes.length&&smokeBlock(m,b,b.lastFoe)&&d2(b,b.lastFoe)<Math.min(520,maxR+80)){const lf=b.lastFoe,ls=b.lastSeen,sp=b.smkP&&m.t<b.smkP.until&&b.smkP.f===lf?b.smkP:(b.smkP={f:lf,until:m.t+rr(2.2,3.4),k:b.hp+b.sh<(b.max+100)*.45?'hold':b.mags[b.cur]>4&&rnd()<.4?'supp':rnd()<.6?'flank':'hold',sg:rnd()<.5?1:-1});b.priority='Kampf';b.ta=Math.atan2(ls.y-b.y,ls.x-b.x);
-    if(sp.k==='supp'&&m.t-ls.t<3){b.fire=lf;b.pose=1;b.state='Schießt in den Rauch'}
+  else if(!foe&&equipped&&b.lastFoe&&b.lastFoe.alive&&!b.lastFoe.down&&b.lastSeen&&m.t-b.lastSeen.t<6&&m.smokes&&m.smokes.length&&smokeBlock(m,b,b.lastFoe)&&d2(b,b.lastFoe)<Math.min(520,maxR+80)){const lf=b.lastFoe,ls=b.lastSeen,sp=b.smkP&&m.t<b.smkP.until&&b.smkP.f===lf?b.smkP:(b.smkP={f:lf,until:m.t+rr(2.2,3.4),k:b.mags[b.cur]>2&&rnd()<.8?'supp':b.hp+b.sh<(b.max+100)*.45?'hold':rnd()<.6?'flank':'hold',sg:rnd()<.5?1:-1});b.priority='Kampf';b.ta=Math.atan2(ls.y-b.y,ls.x-b.x);
+    if(sp.k==='supp'&&m.t-ls.t<5){b.fire=lf;b.ta+=rr(-.45,.45);b.pose=rnd()<.5?1:0;b.state='Schießt blind in den Rauch'}
     else if(sp.k==='flank'){const dx=ls.x-b.x,dy=ls.y-b.y,d=Math.hypot(dx,dy)||1,x=b.x+(dx/d*.45-dy/d*sp.sg)*120,y=b.y+(dy/d*.45+dx/d*sp.sg)*120;if(walkClear(m,b.x,b.y,x,y))go(x,y);else sp.sg=-sp.sg;b.sprint=true;b.state='Umgeht den Rauch'}
     else{if(b.cover&&d2(b,b.cover)>14)go(b.cover.x,b.cover.y);else b.pose=1;b.state='Wartet, bis der Rauch sich lichtet'}}
   else if(!foe&&m.t<b.engT&&b.lastFoe&&b.lastFoe.alive&&(b.style==='rusher'||b.style==='hunter'||((b.lastFoe.hp+b.lastFoe.sh<55||b.lastFoe.act==='heal'&&b.lastFoe.hp+b.lastFoe.sh<95)&&b.hp+b.sh>b.lastFoe.hp+b.lastFoe.sh+20&&hpF>.35))){const lf=b.lastFoe,wk=lf.hp+lf.sh<95&&!smokeBlock(m,b,lf);if(wk&&b.lastSeen&&m.t-b.lastSeen.t<4&&d2(b,lf)>20){go(lf.x,lf.y);b.sprint=true;b.ta=Math.atan2(lf.y-b.y,lf.x-b.x);b.state='Stürmt hinter die Deckung'}else if(b.lastSeen&&m.t-b.lastSeen.t<3&&d2(b,b.lastSeen)>24){go(b.lastSeen.x,b.lastSeen.y);b.sprint=true;b.state='Sucht letzte Sichtposition'}else{b.engT=-9;b.state='Sucht Gegner'}}
@@ -4301,16 +4301,24 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
           const idl=1-Math.min(1,wb),tx=Math.sin(gp)*.03*wb+Math.sin(ts/2300+b.i)*.03*idl,ty=-Math.sin(gp)*.1*wb,tz=-(.04+(b.run?.07:0))*wb+rk*.06-(b.ads||0)*.03+(b.flash>0?Math.min(1,b.flash*6)*.18:0);v.torso.rotation.set(tx,ty,tz);_T.set(0,14,0).applyEuler(v.torso.rotation);v.torso.position.set(-_T.x,14-_T.y+Math.cos(gp*2)*.3*wb,-_T.z);v.torso.scale.set(1+br*.008,1+br*.007,1+br*.008)}
         {/* Mimik und Gesten: je nach Lage große Augen, böse Brauen, Grinsen, Schreien, Blinzeln; dazu Jubelfaust und Kopfkratzen */
           const fd2=Math.hypot(X-cx,Y-cy),near=fd2<(touchDev?520:760);v.face.visible=near;const tS=ts/1000,t=m.t;
-          if(b.kills>v.pkl){v.gT=t;v.gK='pump'}v.pkl=b.kills;
+          if(b.kills>v.pkl){v.gT=t;const r=Math.random();v.gK=r<.5?'pump':r<.78?'bye':'wink'}v.pkl=b.kills;
           const sees=!!b.see;
+          /* Gegner entwischt mit fast vollem Leben: Hand vors Gesicht. Kiste offen: Schulterzucken oder Freudensprung */
+          if(v.psee&&!sees&&b.lastFoe&&b.lastFoe.alive&&b.lastFoe.hp+b.lastFoe.sh>110&&t-(b.lastShotT||-9)<2&&t-v.gT>6&&Math.random()<.4){v.gT=t;v.gK='palm'}v.psee=sees;
+          if(v.popen&&b.act!=='open'&&t-v.gT>3){v.gT=t;v.gK=Math.random()<.5?'shrug':'yay'}v.popen=b.act==='open';
           const idle=!walk&&!sees&&!b.act&&!b.fire&&!b.down;v.idleT=idle?v.idleT+dt:0;if(v.idleT>7&&t-v.gT>9){v.gT=t;v.gK=(b.i+Math.floor(t))%2?'scratch':'yawn'}
-          if(m.over&&b===m.winner&&t-v.gT>1.3){v.gT=t;v.gK='pump'}
+          if(m.over&&b===m.winner&&t-v.gT>1.3){v.gT=t;v.gK=['pump','bye','yay','wink'][(Math.floor(t/1.4))%4]}
           if(near){const F=v.fx,gp=t-v.gT,sh=t-(b.lastShotT||-9),ht=t-(b.lastHitT||-9),hpF=b.hp/b.max,wid=b.wp[b.cur].id;let ey=1,ew=1,ba=0,by=0,mw=1,mh=1,mg=FACEG.mouth,gz=0,gy=0;
             const blink=((tS+b.i*.37)%(2.6+(b.i%5)*.55))<.11;
             if(b.down){ey=.55;ba=-.5;by=.4;mg=FACEG.oh;mh=.8+Math.sin(tS*9)*.25;gy=Math.sin(tS*2)*.3}
             else if(t<(b.blindT||-9)){ey=.1;ba=-.35;by=.5;mg=FACEG.grin;mw=1.1;mh=.9}
             else if(ht<.45){ey=1.25;ew=1.5;by=1.1;ba=-.3;mg=FACEG.oh;mh=1.5;mw=1.4}
             else if(gp>=0&&gp<1.4&&v.gK==='pump'){ey=.3;by=.9;mg=FACEG.grin;mw=1.25;mh=1.2+Math.sin(tS*20)*.15}
+            else if(gp>=0&&gp<1.6&&(v.gK==='wink'||v.gK==='bye')){ey=1.05;by=.7;ba=.15;mg=FACEG.grin;mw=1.35;mh=1.1;gz=Math.sin(gp*9)*.3}
+            else if(gp>=0&&gp<1.8&&v.gK==='palm'){ey=.08;ba=-.4;by=.3;mg=FACEG.mouth;mw=1.1;mh=.35;gy=-.4}
+            else if(gp>=0&&gp<1.3&&v.gK==='shrug'){ey=.75;ba=-.35;by=1.2;mg=FACEG.mouth;mw=.75;mh=.4;gz=-.35}
+            else if(gp>=0&&gp<1.2&&v.gK==='yay'){ey=1.3;ew=1.35;by=1.1;mg=FACEG.grin;mw=1.4;mh=1.4}
+            else if(/Sturm/.test(b.state||'')&&b.run){ey=1.35;ew=1.45;ba=-.5;by=1.2;mg=FACEG.oh;mh=1.2+Math.sin(tS*16)*.35;mw=1.1;gz=Math.sin(tS*13)*.4}
             else if(b.act==='heal'){ey=b.useK==='z'?.22:.5;by=.5;mg=b.useK==='z'||b.useK==='s'||b.useK==='P'||b.useK==='r'?FACEG.oh:FACEG.mouth;mh=.7+Math.abs(Math.sin(tS*7))*.6;mw=.9}
             else if(sh<.5){const big=wid==='lmg'||wid==='hmg'||wid==='vector'||wid==='mpk'||wid==='smg';ba=.55;by=-.25;ey=big?1.05:.6;ew=big?1.25:1;mg=big?FACEG.oh:FACEG.grin;mh=big?1.5+Math.sin(tS*30)*.25:.8;mw=big?1.5:1.15}
             else if(hpF<.3&&(sees||ht<4)){ey=1.2;ew=1.35;ba=-.45;by=.8;mg=FACEG.oh;mh=.9+Math.sin(tS*14)*.3;gz=Math.sin(tS*11)*.25}
@@ -4321,13 +4329,13 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
             else if(gp>=0&&gp<1.6&&v.gK==='yawn'){ey=.2;by=.6;mg=FACEG.oh;mh=1.8*Math.sin(gp/1.6*Math.PI);mw=1.2}
             else if(gp>=0&&gp<1.6&&v.gK==='scratch'){ey=.8;ba=-.2;by=.5;gz=.4;mg=FACEG.mouth;mw=.6}
             else{gz=Math.sin(tS*.7+b.i)*.35;mw=1;mh=.7}
-            if(blink&&ey>.3)ey=.08;const k=Math.min(1,dt*16);F.ey+=(ey-F.ey)*k;F.ew+=(ew-F.ew)*k;F.ba+=(ba-F.ba)*k;F.by+=(by-F.by)*k;F.mw+=(mw-F.mw)*k;F.mh+=(mh-F.mh)*k;
+            if(blink&&ey>.3)ey=.08;if(t<(b.blindT||-9)){gz=Math.sin(tS*5)*.8;gy=Math.cos(tS*4)*.5}const k=Math.min(1,dt*16);F.ey+=(ey-F.ey)*k;F.ew+=(ew-F.ew)*k;F.ba+=(ba-F.ba)*k;F.by+=(by-F.by)*k;F.mw+=(mw-F.mw)*k;F.mh+=(mh-F.mh)*k;
             for(let i=0;i<2;i++){const e=v.fe[i],sd=i?-1:1;e.scale.set(F.ew,F.ey*F.ew,F.ew);e.rotation.set(0,-gz,gy);const br=v.fb[i];br.rotation.x=-sd*F.ba;br.position.y=6.9+F.by*1.1+(F.ew-1)*2.2}
-            v.fm.visible=v.fmOk;if(v.fm.geometry!==mg)v.fm.geometry=mg;v.fm.scale.set(1,Math.max(.25,F.mh),F.mw)}}
+            {const gp2=t-v.gT;if(v.gK==='wink'&&gp2>=0&&gp2<1.6)v.fe[1].scale.y=.1}v.fm.visible=v.fmOk;if(v.fm.geometry!==mg)v.fm.geometry=mg;v.fm.scale.set(1,Math.max(.25,F.mh),F.mw)}}
         /* Arme: Schulter, Ellbogen, Handgelenk folgen Waffe und Gegenständen */
         const hp=v.hand.position,rz=v.hand.rotation.z;ikArm(v.arms[0],.5,31.5,10.4,hp.x,hp.y,hp.z,1);
         let lx,ly,lz;if(v.prop.visible){lx=v.prop.position.x;ly=v.prop.position.y;lz=v.prop.position.z}else if(v.gun.visible){lx=hp.x+Math.cos(rz)*7;ly=hp.y+Math.sin(rz)*7-.6;lz=hp.z-2.4}else{lx=hp.x;ly=hp.y;lz=hp.z-6}
-        {const gp=m.t-(v.gT??-9);if(!b.down&&gp>=0&&!b.fire&&b.rel<=0&&!v.prop.visible){if(v.gK==='pump'&&gp<1.4){lx=3;ly=47+Math.sin(gp*20)*3.5;lz=-9}else if(v.gK==='scratch'&&gp<1.6){lx=1.5+Math.sin(gp*22)*.8;ly=46.5;lz=-5.2}else if(v.gK==='yawn'&&gp<1.6){lx=7.6;ly=38.4;lz=-.6}}}
+        {const gp=m.t-(v.gT??-9);if(!b.down&&gp>=0&&!b.fire&&b.rel<=0&&!v.prop.visible){if(v.gK==='pump'&&gp<1.4){lx=3;ly=47+Math.sin(gp*20)*3.5;lz=-9}else if(v.gK==='scratch'&&gp<1.6){lx=1.5+Math.sin(gp*22)*.8;ly=46.5;lz=-5.2}else if(v.gK==='yawn'&&gp<1.6){lx=7.6;ly=38.4;lz=-.6}else if(v.gK==='bye'&&gp<1.6){lx=3;ly=50;lz=-13+Math.sin(gp*16)*4.5}else if(v.gK==='palm'&&gp<1.8){lx=7.8;ly=42.5;lz=-.4}else if(v.gK==='shrug'&&gp<1.3){lx=4;ly=33+Math.sin(gp/1.3*Math.PI)*3;lz=-15}else if(v.gK==='yay'&&gp<1.2){lx=1;ly=50+Math.abs(Math.sin(gp*10))*4;lz=-11}else if(v.gK==='wink'&&gp<1.6){lx=6;ly=36.5;lz=-6}}}
         ikArm(v.arms[1],.5,31.5,-10.4,lx,ly,lz,-1)}
       v.hp.scale.x=Math.max(.01,34*b.hp/b.max);v.shb.visible=b.sh>0;v.shb.scale.x=Math.max(.01,34*Math.min(100,b.sh)/100);
       v.heal.visible=b.healT>0&&b.act==='heal';if(v.heal.visible)v.heal.scale.setScalar(1+Math.sin(ts/110)*.14);
