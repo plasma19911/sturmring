@@ -3046,7 +3046,13 @@ function boxT(ax,ay,ux,uy,len,o,pad){let t0=0,t1=len,lo=o.x-o.hw-pad,hi=o.x+o.hw
 function walkClear(m,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,l=Math.hypot(dx,dy),n=Math.max(1,Math.ceil(l/9));
  for(let i=1;i<=n;i++){const x=ax+dx*i/n,y=ay+dy*i/n;if(x<20||y<20||x>m.W-20||y>m.W-20||(m.ig&&cellOf(m,x,y)===0))return false;
  const arr=m.og.c[gi(m.og,x,y)];for(const o of arr)if(blocked(o,x,y,R+3))return false;}return true;}
-function route(m,b){const gx=b.gx,gy=b.gy;
+/* Mall: Ziel auf anderer Ebene -> zuerst zur passenden Rolltreppe, statt am Geländer hängen zu bleiben */
+function mallVia(m,b,gx,gy){if(!m.ramps||!m.ramps.length)return null;const onR=(x,y)=>m.ramps.some(q=>Math.abs(x-q.x)<=q.hw+2&&Math.abs(y-q.y)<=q.hh+2);if(onR(b.x,b.y))return null;
+  const lb=height0(m,b.x,b.y),lg=onR(gx,gy)?null:height0(m,gx,gy);if(lg===null||Math.abs(lb-lg)<8)return null;const up=lg>lb;let best=null,bs=1e18;
+  for(const q of m.ramps){const e0=q.ax?{x:q.x,y:q.y-q.hh-14}:{x:q.x-q.hw-14,y:q.y},e1=q.ax?{x:q.x,y:q.y+q.hh+14}:{x:q.x+q.hw+14,y:q.y},a=Math.abs(q.L0-lb)<8?[e0,e1,q.L1]:Math.abs(q.L1-lb)<8?[e1,e0,q.L0]:null;if(!a||(a[2]>lb)!==up)continue;
+    const s=Math.hypot(a[0].x-b.x,a[0].y-b.y)*1.3+Math.hypot(a[1].x-gx,a[1].y-gy);if(s<bs){bs=s;best=a}}
+  if(!best)return null;return Math.hypot(best[0].x-b.x,best[0].y-b.y)>30?best[0]:best[1]}
+function route(m,b){let gx=b.gx,gy=b.gy;{const v=mallVia(m,b,gx,gy);if(v){gx=v.x;gy=v.y;if(walkClear(m,b.x,b.y,gx,gy)){b.gx=gx;b.gy=gy;b.path=null;return}}}
  if(walkClear(m,b.x,b.y,gx,gy)){b.path=null;return;}
  if(b.path&&m.t<b.pathUntil&&Math.hypot(gx-b.pathGoalX,gy-b.pathGoalY)<150){
   while(b.path.length&&d2(b,b.path[0])<14)b.path.shift();
@@ -3098,7 +3104,9 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
       if(!los(m,b,o,o.pose>0))continue;nSee++;
       const hf=Math.min(1,(o.hp+o.sh)/150),sc=d*(b.style==='hunter'?.3+.7*hf:.6+.4*hf)*(o===b.lastFoe?.58:1)*(lh?.3:1)*(o.down?12:o.act==='revive'?.45:1)*(b.callT&&o===b.callFoe&&m.t-b.callT<4?.55:1);if(sc<best){best=sc;foe=o;fd=d}}}}
   if(m.t<m.grace){foe=null;fd=1e9;nSee=0}
-  b.see=foe;if(foe)b.lastSeen={x:foe.x,y:foe.y,t:m.t};
+  /* Kurzzeitgedächtnis: wer gerade erst hinter Deckung verschwunden ist, bleibt noch gut eine Sekunde Ziel, damit der Bot nicht ständig zwischen Kampf und Suchen umschaltet (geschossen wird trotzdem nur bei freier Sicht) */
+  let ghost=false;if(!foe&&m.t>=m.grace){const lf=b.lastFoe;if(lf&&lf.alive&&!lf.down&&b.lastSeen&&m.t-b.lastSeen.t<1.2&&!(m.t<b.blindT)){const d=d2(b,lf);if(d<sight*1.1){foe=lf;fd=d;ghost=true}}}
+  b.see=ghost?null:foe;if(foe&&!ghost)b.lastSeen={x:foe.x,y:foe.y,t:m.t};if(foe)b.lastSeen={x:foe.x,y:foe.y,t:m.t};
   /* Absprachen im Team: Sichtung melden, gemeinsames Ziel, Position durchgeben */
   if(m.trio&&foe&&m.t-(b.callOut||-9)>3){b.callOut=m.t;const dir=['Osten','Südosten','Süden','Südwesten','Westen','Nordwesten','Norden','Nordosten'][((Math.round(Math.atan2(foe.y-b.y,foe.x-b.x)/(Math.PI/4))%8)+8)%8];let told=false;
     for(const o of mates(m,b)){if(!o.alive||o.down||d2(o,b)>900)continue;o.callFoe=foe;o.callT=m.t;if(!o.see){o.lastSeen={x:foe.x,y:foe.y,t:m.t};o.intel=true;o.due=true}told=true}
@@ -3157,7 +3165,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
       if(useS){b.healT=1.8;b.useK='s';b.state='Trinkt Schildtrank'}else{b.healT=2.6*b.healK*(b.perks.has('p_medic')?.6:1);b.useK='m';b.state='Heilt'}return}}
   const zone=()=>{const r=Math.max(0,s.nr-90)*.7,q=Math.min(1,dn>1?r/dn:0);go(s.nx+(b.x-s.nx)*q,s.ny+(b.y-s.ny)*q)};
   if(foe)pickWeapon(b,fd,m.t);
-  const w=b.W[b.wp[b.cur].id],ratio=foe?advOf(b,foe,fd):1,hurtNoMed=hpF<.5&&b.med===0,busy=!!foe&&!!foe.fire&&foe.fire!==b&&foe.fire.alive,weakFoe=!!foe&&foe.hp+foe.sh<45,rushWeak=!!foe&&fd<430&&b.rel<=0&&b.mags[b.cur]>0&&(b.hp+b.sh)>45&&((foe.hp+foe.sh<55||foe.act==='heal'&&foe.hp+foe.sh<95)&&b.hp+b.sh>foe.hp+foe.sh+20||m.t<foe.blindT-.5&&m.t>=b.blindT);
+  const w=b.W[b.wp[b.cur].id],ratio=foe?advOf(b,foe,fd):1,hurtNoMed=hpF<.5&&b.med===0,busy=!!foe&&!!foe.fire&&foe.fire!==b&&foe.fire.alive,weakFoe=!!foe&&foe.hp+foe.sh<45,rushRaw=!!foe&&fd<430&&b.rel<=0&&b.mags[b.cur]>0&&(b.hp+b.sh)>45&&((foe.hp+foe.sh<55||foe.act==='heal'&&foe.hp+foe.sh<95)&&b.hp+b.sh>foe.hp+foe.sh+20||m.t<foe.blindT-.5&&m.t>=b.blindT),rushWeak=(()=>{if(rushRaw){b.rushUntil=m.t+2;b.rushF=foe;return true}return !!foe&&foe===b.rushF&&m.t<(b.rushUntil||0)&&b.hp+b.sh>40&&b.mags[b.cur]>0})();
   /* Rückzug: zu wenig Leben, in Unterzahl, klar unterlegen oder unbewaffnet beschossen */
   /* Rückzug nur, wenn der Kampf verloren geht UND Wegkommen realistisch ist. Sonst lieber zu Ende kämpfen als im Laufen sterben. */
   // Never flee because of tier or a DPS comparison. Retreat only into verified nearby cover.
@@ -3239,7 +3247,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
       else{const under=foe.fire===b||attacked,RL=under?130:85;let bs=1e9;gNear(m.og,b.x,b.y,RL,o=>{if(!o.low)return;const q=cp(o),d=Math.hypot(q.x-b.x,q.y-b.y);
         /* Bewertung: kurzer Weg, nicht auf den Gegner zu, nicht zu dicht am Gegner */
         if(d>RL||q.fo<70||!freeSpot(m,q.x,q.y)||!walkClear(m,b.x,b.y,q.x,q.y))return;const toward=((q.x-b.x)*(foe.x-b.x)+(q.y-b.y)*(foe.y-b.y))/(fd*(d||1)),sc=d*(1+Math.max(0,toward)*.8)+(q.fo<fd-40?60:0);if(sc<bs){bs=sc;cov=q}})}}
-    const pinned=foe.fire===b&&ratio<1.25&&b.style!=='rusher'&&fd>90,tact=pinned||(w.range>=300||nSee>=2)&&(b.style==='careful'||b.style==='ambush'||b.style==='scharf'||b.style==='surv'||b.style==='hunter'&&w.range>=430||b.style==='balanced'&&(fd>=200||(b.hp+b.sh)<(b.max+100)*.75||nSee>=2)),wantHide=!cov&&!rushWeak&&b.style!=='rusher'&&(b.rel>0||b.mags[b.cur]<=0||(b.hp+b.sh)<(b.max+100)*.45||(tact&&fd>150&&b.peek!==false))&&fd>70;
+    const pinned=foe.fire===b&&ratio<1.25&&b.style!=='rusher'&&fd>90,tact=pinned||(w.range>=300||nSee>=2)&&(b.style==='careful'||b.style==='ambush'||b.style==='scharf'||b.style==='surv'||b.style==='hunter'&&w.range>=430||b.style==='balanced'&&(fd>=200||(b.hp+b.sh)<(b.max+100)*.75||nSee>=2)),wantHide=(()=>{const w0=!cov&&!rushWeak&&b.style!=='rusher'&&(b.rel>0||b.mags[b.cur]<=0||(b.hp+b.sh)<(b.max+100)*.45||(tact&&fd>150&&b.peek!==false))&&fd>70;if(w0){b.hideUntil=m.t+1.6;return true}return !cov&&!rushWeak&&fd>70&&m.t<(b.hideUntil||0)})();
     if(b.stk>0)b.noTall=m.t+3;
     if(wantHide&&b.tCov&&m.t<b.tCov.until&&m.t>=(b.noTall||0)&&!los(m,foe,b.tCov,false))cov=b.tCov;
     else if(wantHide&&m.t>=(b.noTall||0)){const urg=b.rel>0||b.mags[b.cur]<=0||(b.hp+b.sh)<(b.max+100)*.45,RR=urg?140:95;let bd=RR;gNear(m.og,b.x,b.y,RR,o=>{if(o.low)return;const q=coverPoint(o,foe.x,foe.y),d=Math.hypot(q.x-b.x,q.y-b.y);if(d<bd&&d>8&&freeSpot(m,q.x,q.y)&&walkClear(m,b.x,b.y,q.x,q.y)&&!los(m,foe,q,false)){bd=d;cov={...q,o,fo:Math.hypot(o.x-foe.x,o.y-foe.y),tall:true,until:m.t+4}}});b.tCov=cov}
@@ -3266,7 +3274,7 @@ function brain(m,b){const s=m.storm,P=STYLES[b.style],ph=m.ph[s.ph];
           if(!busy&&m.t>=b.dkT){b.dkUp=!b.dkUp;b.dkT=m.t+(b.dkUp?rr(1.4,2.4):rr(.5,.9))}
           if(busy||!b.dkUp||nSee>=2&&foe.fire===b&&!b.dkUp){b.pose=1;b.state=busy?'Lädt geduckt nach':'Duckt sich hinter Deckung'}else b.state='Feuert aus der Deckung'}}}
     
-    else if(fd>=120&&!rushWeak&&b.style!=='rusher'&&!outR&&b.rel<=0&&!(foe.inCov&&b.rel<=0)&&w.range>=300&&nSee<=2&&hpF>.25&&!(foe.fire===b&&ratio<.7)&&(b.crT=b.crT??0,m.t<b.crT||(m.t>=b.crT+(b.crGap||1)&&(b.crT=m.t+rr(2,3.6),b.crGap=rr(.6,1.3),true)))){
+    else if((m.t<(b.crT||0)&&fd>=90&&!rushWeak&&b.rel<=0&&hpF>.2&&!outR)||fd>=120&&!rushWeak&&b.style!=='rusher'&&!outR&&b.rel<=0&&!(foe.inCov&&b.rel<=0)&&w.range>=300&&nSee<=2&&hpF>.25&&!(foe.fire===b&&ratio<.7)&&(b.crT=b.crT??0,m.t<b.crT||(m.t>=b.crT+(b.crGap||1)&&(b.crT=m.t+rr(2,3.6),b.crGap=rr(.6,1.3),true)))){
       /* Hocken: steht still, zielt ruhiger und reicht etwas weiter; ist dafür ein leichteres Ziel. Nur auf Distanz, nie im Nahkampf. */
       b.pose=1;b.state='Schießt aus der Hocke';b.go=false;b.lgT=null}
     else{const pref=Math.min(maxR*.92,bestDist(b,foe,fd,b.style==='rusher'?-.5:P.distF>.75?.4:0));let f=fd>pref+30?1:fd<pref-40?-.7:0;
@@ -3866,8 +3874,18 @@ function makeView(cv){
   const freeAll=P=>{for(const r of P.rigs){r.it=null;r.g.visible=false}P.map.clear()};
   /* Umriss: wird nach der Umgebung und vor der Figur gezeichnet und nur dort, wo etwas davor steht. So bleibt jede Figur hinter Häusern, Bäumen und Hügeln als farbige Silhouette sichtbar. */
   const silMe=new T.MeshBasicMaterial({color:0x35e0c8,depthFunc:T.GreaterDepth,depthWrite:false,fog:false}),silFoe=new T.MeshBasicMaterial({color:0xff5a3c,depthFunc:T.GreaterDepth,depthWrite:false,fog:false});
-  const SEE={value:new T.Vector4(0,0,0,0)},SEEY={value:0};
-  const olM=new T.ShaderMaterial({side:T.BackSide,uniforms:{c:{value:new T.Color(0x0a0e12)},uSee:SEE},vertexShader:'void main(){vec4 p=vec4(position,1.0);vec3 n=normal;\n#ifdef USE_INSTANCING\np=instanceMatrix*p;n=mat3(instanceMatrix)*n;\n#endif\nvec4 mv=modelViewMatrix*p;mv.xyz+=normalize(normalMatrix*n)*clamp(-mv.z*.00045,.18,.65);gl_Position=projectionMatrix*mv;}',fragmentShader:'uniform vec3 c;uniform vec4 uSee;void main(){if(uSee.w>0.0&&gl_FragCoord.z<uSee.z&&distance(gl_FragCoord.xy,uSee.xy)<uSee.w)discard;gl_FragColor=vec4(c,1.0);}'}),olMe=olM.clone();olMe.uniforms={c:{value:new T.Color(0x0a0e12)},uSee:{value:new T.Vector4()}};
+  const SEE={value:new T.Vector4(0,0,0,0)},SEEC={value:new T.Vector3()},SEEV=`uniform vec4 uSB;uniform vec3 uSC;uniform float uTK;uniform float uRK;varying float vSee;
+float seeCalc(){if(uSB.w<0.5)return 0.0;mat4 IM=modelMatrix;
+#ifdef USE_INSTANCING
+IM=modelMatrix*instanceMatrix;
+#endif
+vec3 c=IM[3].xyz;float sx=length(IM[0].xyz),sy=length(IM[1].xyz),sz=length(IM[2].xyz);if(sx<1e-3)return 0.0;
+vec2 ux=IM[0].xz/sx,uz=IM[2].xz/sz;vec2 hb=vec2(sx,sz)*uRK+3.0;
+vec2 a=uSB.xz-c.xz,b=uSC.xz-c.xz;vec2 p0=vec2(dot(a,ux),dot(a,uz)),p1=vec2(dot(b,ux),dot(b,uz)),dr=p1-p0;dr+=vec2(dr.x>=0.0?1e-4:-1e-4,dr.y>=0.0?1e-4:-1e-4);
+vec2 t1=(-hb-p0)/dr,t2=(hb-p0)/dr,tn2=min(t1,t2),tf2=max(t1,t2);float tn=max(max(tn2.x,tn2.y),0.0),tf=min(min(tf2.x,tf2.y),1.0);if(tn>tf)return 0.0;
+float top=c.y+sy*uTK,segY=mix(uSB.y,uSC.y,tn);return top>segY-4.0?1.0:0.0;}
+`,SEEY={value:0};
+  const olM=new T.ShaderMaterial({side:T.BackSide,uniforms:{c:{value:new T.Color(0x0a0e12)},uSB:SEE,uSC:SEEC,uTK:{value:.5},uRK:{value:.5}},vertexShader:SEEV+'void main(){vSee=seeCalc();vec4 p=vec4(position,1.0);vec3 n=normal;\n#ifdef USE_INSTANCING\np=instanceMatrix*p;n=mat3(instanceMatrix)*n;\n#endif\nvec4 mv=modelViewMatrix*p;mv.xyz+=normalize(normalMatrix*n)*clamp(-mv.z*.00045,.18,.65);gl_Position=projectionMatrix*mv;}',fragmentShader:'uniform vec3 c;varying float vSee;void main(){if(vSee>0.5)discard;gl_FragColor=vec4(c,1.0);}'}),olMe=olM.clone();olMe.uniforms={c:{value:new T.Color(0x0a0e12)},uSB:{value:new T.Vector4()},uSC:{value:new T.Vector3()},uTK:{value:.5},uRK:{value:.5}};
   const olLeg=new T.Mesh(legGeo,olM);
   const _PM=new T.Matrix4(),_FR=new T.Frustum(),_BX=new T.Box3();let tileT=0;
   const pebG=new T.OctahedronGeometry(1,0),pebM=new T.MeshLambertMaterial({color:0xffffff}),leafG=new T.PlaneGeometry(1,1).rotateX(-Math.PI/2),leafM=new T.MeshLambertMaterial({color:0xffffff,side:T.DoubleSide});
@@ -3941,15 +3959,12 @@ function makeView(cv){
       return merge(p)}}
   // World-space mineral / plaster grain: no image downloads or extra draw calls.
   const _SV=new T.Vector3(),_SD=new T.Vector3(),_SB=new T.Vector2();
-  function seeThrough(mat){const pk=mat.customProgramCacheKey(),pc=mat.onBeforeCompile.bind(mat);mat.customProgramCacheKey=()=>pk+'|see';
-    mat.onBeforeCompile=sh=>{pc(sh);sh.uniforms.uSee=SEE;sh.uniforms.uSeeY=SEEY;sh.vertexShader='varying float vSeeY;\n'+sh.vertexShader.replace('#include <project_vertex>',`#include <project_vertex>
-	vec4 seeW=vec4(transformed,1.0);
-	#ifdef USE_INSTANCING
-	seeW=instanceMatrix*seeW;
-	#endif
-	vSeeY=(modelMatrix*seeW).y;`);sh.fragmentShader=sh.fragmentShader.replace('void main() {',`uniform vec4 uSee;uniform float uSeeY;varying float vSeeY;
-void main() {
-	if(uSee.w>0.0&&vSeeY>uSeeY&&gl_FragCoord.z<uSee.z){float sd=distance(gl_FragCoord.xy,uSee.xy);if(sd<uSee.w){float ign=fract(52.9829189*fract(dot(floor(gl_FragCoord.xy),vec2(0.06711056,0.00583715))));if(ign>mix(0.1,1.0,smoothstep(uSee.w*0.72,uSee.w,sd)))discard;}}`)}}
+  /* Durchsicht: ein Objekt, das zwischen Kamera und Bot steht, wird als Ganzes zu 80 % durchsichtig (gerastert) */
+  function seeThrough(mat,tk,rk){const pk=mat.customProgramCacheKey(),pc=mat.onBeforeCompile.bind(mat);mat.customProgramCacheKey=()=>pk+'|see2';
+    mat.onBeforeCompile=sh=>{pc(sh);sh.uniforms.uSB=SEE;sh.uniforms.uSC=SEEC;sh.uniforms.uTK={value:tk||.5};sh.uniforms.uRK={value:rk||.5};
+      sh.vertexShader=SEEV+sh.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n\tvSee=seeCalc();');
+      sh.fragmentShader='varying float vSee;\n'+sh.fragmentShader.replace('void main() {',`void main() {
+	if(vSee>0.5){float ign=fract(52.9829189*fract(dot(floor(gl_FragCoord.xy),vec2(0.06711056,0.00583715))));if(ign>0.2)discard;}`)}}
   function weatherMaterial(mat,strength,scale){
     const previousKey=mat.customProgramCacheKey();
     const previousCompile=mat.onBeforeCompile.bind(mat);
@@ -4028,7 +4043,7 @@ float crest=sin(vWater.x*.035+uWaterTime*1.2)*sin(vWater.y*.043-uWaterTime);diff
         #endif`)};return mt})()),boxM=keep(new T.MeshStandardMaterial({vertexColors:true,roughness:.91,metalness:0})),roofM=keep(new T.MeshStandardMaterial({roughness:.76,metalness:.08}));
     const metalM=keep(new T.MeshStandardMaterial({vertexColors:true,roughness:.42,metalness:.6})),glassM=keep(new T.MeshStandardMaterial({roughness:.16,metalness:.45,color:0x9fb5c5}));
     weatherMaterial(metalM,.14,.7);detailMaterial(metalM,'metal');
-    weatherMaterial(rockM,.36,.42);weatherMaterial(treeM,.2,.65);weatherMaterial(boxM,.26,.7);weatherMaterial(roofM,.3,.5);detailMaterial(boxM,'stone');detailMaterial(roofM,'roof');for(const mt of[metalM,rockM,treeM,boxM,roofM,glassM])seeThrough(mt);
+    weatherMaterial(rockM,.36,.42);weatherMaterial(treeM,.2,.65);weatherMaterial(boxM,.26,.7);weatherMaterial(roofM,.3,.5);detailMaterial(boxM,'stone');detailMaterial(roofM,'roof');{treeG.computeBoundingBox();const tb=treeG.boundingBox;for(const mt of[metalM,rockM,boxM,roofM,glassM])seeThrough(mt);seeThrough(treeM,tb.max.y,Math.max(tb.max.x,tb.max.z)*.8)}
     if(!Bm.crystal){const rp=rockG.attributes.position;for(let i=0;i<rp.count;i++){const x=rp.getX(i),y=rp.getY(i),z=rp.getZ(i),f=1+.12*Math.sin(x*9+z*5)*Math.cos(y*8-z*4)+.05*Math.sin(z*17+x*11);rp.setXYZ(i,x*f,y*f,z*f)}rockG.computeVertexNormals();rockM.flatShading=false}
     /* Die Welt wird in Kacheln von 2000 × 2000 aufgebaut, immer nur rund um die Kamera */
     const tk=(x,y)=>((x/TS)|0)+'_'+((y/TS)|0),bk=new Map(),bget=k=>{let q=bk.get(k);if(!q){q={o:[],rm:[],br:[],hm:[],pl:[],rp:[]};bk.set(k,q)}return q};
@@ -4392,8 +4407,7 @@ transformed.x+=sin(uWind*1.8+phase)*position.y*.16;transformed.z+=cos(uWind*1.3+
     if(motes){const A=motes.geometry.attributes.position.array,t=ts/1000;for(let i=0;i<A.length;i+=3){A[i]+=(6+Math.sin(t*.4+i)*4)*dt;A[i+1]+=Math.sin(t*.7+i*.3)*3*dt;if(A[i]>700)A[i]-=1400}motes.geometry.attributes.position.needsUpdate=true;motes.position.set(cx,vy,cy)}
     if(zoneKey!==s.ph){zoneKey=s.ph;if(zring){world.remove(zring);zring.geometry.dispose();zring.material.dispose()}zring=null;
       if(s.nr>0){zring=new T.Mesh(ringGeo(s.nx,s.ny,s.nr),B(0xffffff,{transparent:true,opacity:.9,side:T.DoubleSide}));zring.frustumCulled=false;world.add(zring)}}
-    {const on=fb&&fb.alive;if(on){const H=m.hg?homeAt(m,cx,cy):null,gy=hAt(cx,cy)+24;SEEY.value=gy-8;_SV.set(cx,gy,cy);_SD.copy(cam.position).sub(_SV);const dl=_SD.length()||1;_SV.addScaledVector(_SD,Math.min(16,dl*.3)/dl).project(cam);ren.getDrawingBufferSize(_SB);
-        const tw=(H?.46:.15)*_SB.y;SEE.value.set((_SV.x*.5+.5)*_SB.x,(_SV.y*.5+.5)*_SB.y,_SV.z*.5+.5,SEE.value.w+(tw-SEE.value.w)*Math.min(1,dt*6))}else SEE.value.w=0}
+    {const on=fb&&fb.alive;if(on){SEE.value.set(cx,hAt(cx,cy)+26,cy,1);SEEC.value.copy(cam.position)}else SEE.value.w=0}
     if(m.destroyed&&m.destroyed.length>wallSeen){for(;wallSeen<m.destroyed.length;wallSeen++){const o=m.destroyed[wallSeen],e=wallR.get(o);if(e&&e[3]){for(let i=e[0];i<e[1];i++)e[3].setMatrixAt(i,_Z);e[3].instanceMatrix.needsUpdate=true}if(Math.abs(o.x-cx)<1500&&Math.abs(o.y-cy)<1500)for(let k=0;k<8;k++)burst(o.x+rr(-o.hw,o.hw),o.y+rr(-o.hh,o.hh),hAt(o.x,o.y)+8,'death',.6)}}
     if(todB){const k=clamp(m.t/720,0,1)*.85;sun.intensity=todB.si*(1+(todB.to.k-1)*k);sun.color.copy(todB.sc).lerp(todB.to.c,k*.6);scene.fog.color.copy(todB.fc).lerp(todB.to.f,k*.5);hemi.intensity=todB.hi*(1+(todB.to.k-1)*k*.7);if(!composer)ren.setClearColor(scene.fog.color)}
     if(!mobileGraphics&&ts-shadowStamp>100){const sx=Math.round(cx/16)*16,sz=Math.round(cy/16)*16;sun.position.set(sx+900,fh+640,sz+560);sun.target.position.set(sx,fh,sz);sun.target.updateMatrixWorld();ren.shadowMap.needsUpdate=true;shadowStamp=ts;}
