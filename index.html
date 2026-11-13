@@ -2910,7 +2910,7 @@ function gen(m){const W=m.W,B=m.B,A=W*W/1e6*.5,houses=[];if(B.mall)genMall(m,hou
   m.og=mkGrid(W,200);const g=m.og;
   for(const o of m.obs){const ex=(o.k==='b'?o.hw:o.r)+R+6,ey=(o.k==='b'?o.hh:o.r)+R+6,x0=clamp(((o.x-ex)/200)|0,0,g.n-1),x1=clamp(((o.x+ex)/200)|0,0,g.n-1),y0=clamp(((o.y-ey)/200)|0,0,g.n-1),y1=clamp(((o.y+ey)/200)|0,0,g.n-1);
     for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++)g.c[cy*g.n+cx].push(o)}
-  m.cg=mkGrid(W,560);m.lg=mkGrid(W,480);m.chests=[];const C=W/2,want=Math.round(Math.max(m.N*1.6,A*6)),keep=Math.round(Math.max(m.N*.99,A*2.66)*1.15*1.15*(m.trioMode?1.25:1));
+  m.cg=mkGrid(W,560);m.lg=mkGrid(W,480);m.chests=[];const C=W/2,want=Math.round(Math.max(m.N*1.6,A*6)),keep=Math.round(Math.max(m.N*.99,A*2.66)*1.15*1.15*1.25*(m.trioMode?1.25:1));
   let grpN=0;const chest=(x,y,q,rot,pr,grp)=>{const c={x,y,q,open:false,prog:0,rot,pr:pr||0,grp};m.chests.push(c)};
   for(const h of houses){if(!m.obs.includes(h))continue;for(let k=0;k<(h.tall?3:2);k++){const s=rnd()<.5?-1:1,v=rnd()<.5,x=v?h.x+rr(-h.hw*.6,h.hw*.6):h.x+s*(h.hw+24),y=v?h.y+s*(h.hh+24):h.y+rr(-h.hh*.6,h.hh*.6),z=rnd();
       if(freeSpot(m,x,y))chest(x,y,z<.62?0:z<.92?1:2,v?0:Math.PI/2,1,'h'+houses.indexOf(h))}}
@@ -2934,7 +2934,7 @@ function gen(m){const W=m.W,B=m.B,A=W*W/1e6*.5,houses=[];if(B.mall)genMall(m,hou
   for(const c of m.chests)gAdd(m.cg,c)}
   for(let i=0,nL=Math.max(m.N*.6,A*3);i<nL;i++){const p=spotIn(m,C,C,0,W*.49),q=rnd(),l=q<.4?rollW(rnd()<.65?0:rnd()<.72?1:2):q<.51?{k:'m'}:q<.8?{k:'s'}:q<.825?{k:'n'}:q<.845?{k:rnd()<.5?'k':'f'}:{k:rnd()<.4?'a':'h',t:1};l.x=p.x;l.y=p.y;lootAdd(m,l)}}
 
-function newMatch(cfg,o){o=o||{};const tsz=(cfg&&cfg.mode==='trio')||o.trio?3:(cfg&&cfg.mode==='duo')||o.duo?2:1,trioMode=tsz>1;const W=o.W||32000,N=Math.floor((o.n||1000)/tsz)*tsz,id=BIOMES[o.biome]?o.biome:pick(Object.keys(BIOMES)),B=BIOMES[id];
+function newMatch(cfg,o){o=o||{};const tsz=(cfg&&cfg.mode==='trio')||o.trio?3:(cfg&&cfg.mode==='duo')||o.duo?2:1,trioMode=tsz>1;const W=o.W||36800,N=Math.floor((o.n||1000)/tsz)*tsz,id=BIOMES[o.biome]?o.biome:pick(Object.keys(BIOMES)),B=BIOMES[id];
   const m={tsz,trioMode,W,N,biome:id,B,t:0,tick:0,bots:[],obs:[],tracers:[],fx:[],hits:[],ev:[],dn:[],gren:[],feed:[],noise:[],graves:[],smokes:[],over:false,alive:N,winner:null,focus:null,pv:null,pvN:0,grenN:0,drops:[],nextDrop:60,bounty:null,tod:B.night?'nacht':N>100?pick(['tag','tag','abend','nacht']):'tag',fxp:B.fxp||(N>100&&!B.dark&&id!=='wueste'&&rnd()<.25?{c:0xa8c8ff,vy:-520,rain:1}:null),grace:DROP,bi:6,pfx:cfg&&cfg.shotfx||'std',coarse:false,ig:null};
   if(id==='wald'&&!m.fxp&&N>100&&rnd()<.6)m.fxp={c:0xa8c8ff,vy:-520,rain:1};
   if(id==='wueste')m.fxp={c:0xdcc08e,vy:-18,vx:210,sand:1};
@@ -2942,7 +2942,7 @@ function newMatch(cfg,o){o=o||{};const tsz=(cfg&&cfg.mode==='trio')||o.trio?3:(c
   if(m.fxp&&B.snow)m.fxp={...m.fxp,vx:40};
   m.hs=[1500,950,620,410].map((l,i)=>{const a=rr(0,TAU),k=TAU/(l*(B.wl||1));return{ax:Math.cos(a)*k,ay:Math.sin(a)*k,p:rr(0,TAU),a:[.45,.3,.15,.1][i]}});
   if(B.hm==='isl')genIsl(m);
-  const ts=clamp(W/20000,.3,1.8);m.ph=PHF.map((f,i)=>({r:f*W,wait:i===0?30+DROP:PHW[i]*ts*(i>=2?2:1),shrink:PHS[i]*ts*(i>=2?2:1),dps:PHD[i]}));
+  const ts=clamp(W/20000,.3,2.1),ZS=W>=30000?1.4:1;m.ph=PHF.map((f,i)=>({r:f*W,wait:i===0?Math.round((30+DROP)*(ZS>1?1.3:1)):PHW[i]*ts*ZS*(i>=2?2:1),shrink:PHS[i]*ts*ZS*(i>=2?2:1),dps:PHD[i]}));
   m.storm={x:W/2,y:W/2,r:W*.75,ph:0,t:0,shr:false};
   gen(m);m.bg=mkGrid(W,450);m.sgD=W/Math.sqrt(N)*(B.hm==='isl'?.42:.55);m.sg=mkGrid(W,m.sgD);
   const ord=[];for(let i=0;i<1000;i++)ord.push(i);ord.sort(()=>rnd()-.5);
@@ -4804,6 +4804,7 @@ function renderLobby(){if(bpSyncS!==S){bpSyncS=S;for(let t=1;t<=(S.bpT||0);t++){
     h+=`<section class="card" data-t="look"><h2>Grabsteine</h2><div class="opts">`+Object.entries(GRV).filter(([k,v])=>!v[1]||S.bought.includes('g_'+k)).map(([k,v])=>item('g_',k,v[0],v[1],(c.grave||'std')===k,`<i class="sw" style="background:${v[2]}"></i>`,v[3])).join('')+`</div><p class="hint">Steht dort, wo dein Bot jemanden besiegt hat, und auf seinem eigenen Grab.</p></section>`;
 
     h+=`<section class="card" data-t="look"><h2>Fallschirme</h2><div class="opts">`+Object.entries(CHU).filter(([k,v])=>!v[1]||S.bought.includes('c_'+k)).map(([k,v])=>item('c_',k,v[0],v[1],c.chute===k,`<i class="sw" style="background:${hex(v[2])};border-radius:${v[3]==='cone'?'4px 4px 50% 50%':v[3]==='ball'?'50%':'50% 50% 6px 6px'}"></i>`,v[4])).join('')+`</div><p class="hint">Damit schwebt dein Bot zu Rundenbeginn ein.</p></section>`;
+    h+=`<section class="card" data-t="opt"><h2>Lautstärke <small id="volL">${c.vol==null?80:c.vol} %</small></h2><input id="volR" type="range" min="0" max="100" step="5" value="${c.vol==null?80:c.vol}" style="width:100%;accent-color:#35e0c8" aria-label="Lautstärke im Spiel"><p class="hint">Gilt für alle Geräusche im Spiel. Der Lautsprecher-Knopf im Spiel schaltet ganz stumm.</p></section>`;
     h+=`<section class="card" data-t="opt"><h2>Rundenserie <small>${c.series>1?c.series+' Runden am Stück':'aus'}</small></h2><div class="opts">`+[[0,'Aus','Nach jeder Runde selbst starten'],[5,'5 Runden','Startet nach dem Ende automatisch die nächste'],[10,'10 Runden','Startet nach dem Ende automatisch die nächste']].map(([v,a,d])=>`<button class="opt" data-act="series" data-v="${v}" aria-pressed="${(c.series|0)===v}"><b>${a}</b><span>${d}</span></button>`).join('')+`</div><p class="hint">Zwischen den Runden siehst du 6 Sekunden lang die Auswertung. „Serie stoppen“ bricht ab.</p></section>`;
     h+=`<section class="card" data-t="opt"><h2>Anzeige <small>kostenlos</small></h2>`+pair('gfx',c.gfx!=='low',['Grafik hoch','Echte Schatten, dichtes Gras, feineres Gelände'],['Grafik sparsam','Für schwächere Handys, läuft flüssiger'])+pair('dmgNum',c.dmgNum!==false,['Schadenszahlen an','Zahlen steigen über getroffenen Gegnern auf'],['Schadenszahlen aus','Keine Zahlen im Bild'])+pair('blood',c.blood!==false,['Blut an','Blutspritzer bei Treffern, Blutlachen bei Kills'],['Blut aus','Nur Funken bei Treffern'])+`<div class="opts"><button class="opt" data-act="exp"><b>Spielstand sichern</b><span>Kopiert einen Code, mit dem du alles auf ein anderes Gerät mitnimmst</span></button><button class="opt" data-act="imp"><b>Spielstand laden</b><span>Code einfügen und Fortschritt übernehmen</span></button></div>`+pair('critFx',c.critFx!==false,['Kopfschuss-Effekt an','Große goldene Zahl mit Lichtring'],['Kopfschuss-Effekt aus','Kopfschüsse sehen aus wie normale Treffer'])+`</section>`}
   {const qs=questsToday();h+=`<section class="card" data-t="bot"><h2>Tagesaufgaben <small>${qs.l.filter(q=>q.done).length} von 3</small></h2><div style="display:grid;gap:6px">${qs.l.map(q=>{const Q=QUESTS.find(x=>x[0]===q.id)||QUESTS[0],pc=Math.round(q.p/Q[2]*100);return`<div style="display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;font-size:13px;${q.done?'opacity:.6':''}"><div>${q.done?'✓ ':''}${Q[1]}</div><div style="color:#ffd77a;font-weight:700">${Q[3]} Gold</div><div style="grid-column:1/3;height:5px;border-radius:3px;background:#ffffff14;overflow:hidden"><div style="height:100%;width:${pc}%;background:${q.done?'#74d66b':'#00ffd0'}"></div></div></div>`}).join('')}</div></section>`}
@@ -4888,7 +4889,7 @@ $('camBtn').addEventListener('click',()=>{camI=(camI+1)%CAMS.length;$('camBtn').
 /* ---------- Ton: alles erzeugt, nichts geladen. Rauschen für Knall und Wind, tiefe Töne für den Druck. ---------- */
 const AU={on:false,ctx:null};
 function auInit(){if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume();return}
-  try{const c=new (window.AudioContext||window.webkitAudioContext)();AU.ctx=c;AU.out=c.createDynamicsCompressor();AU.master=c.createGain();AU.master.gain.value=.8;AU.out.connect(AU.master);AU.master.connect(c.destination);
+  try{const c=new (window.AudioContext||window.webkitAudioContext)();AU.ctx=c;AU.out=c.createDynamicsCompressor();AU.master=c.createGain();AU.master.gain.value=AU.on===false?0:VOL();AU.out.connect(AU.master);AU.master.connect(c.destination);
     const n=c.sampleRate,wb=c.createBuffer(1,n,n),wd=wb.getChannelData(0),bb=c.createBuffer(1,n*2,n),bd=bb.getChannelData(0);let l=0;
     for(let i=0;i<n;i++)wd[i]=rnd()*2-1;for(let i=0;i<n*2;i++){l=(l+.02*(rnd()*2-1))/1.02;bd[i]=l*3.5}AU.white=wb;
     const src=c.createBufferSource(),f=c.createBiquadFilter();src.buffer=bb;src.loop=true;f.type='lowpass';f.frequency.value=380;AU.storm=c.createGain();AU.storm.gain.value=0;src.connect(f);f.connect(AU.storm);AU.storm.connect(AU.master);src.start()}
@@ -4989,7 +4990,10 @@ function sounds(m,ts){if(!AU.on||!AU.ctx){heardT=m.t;m.ev.length=0;return}
     else if(m.B.ind||m.B.city){auBand(.03,1.4,180,.6,p);if(rnd()<.3)auPing(.02,880,.25,p,0,.4,'square')}
     else if(night||m.B.snow){if(!m.B.snow)for(let i=0;i<6;i++)auPing(.012,4200*vr(.05),.04,p,i*.09,0,'sine')}}}
 function auStop(){if(AU.ctx)AU.storm.gain.setTargetAtTime(0,AU.ctx.currentTime,.2)}
-$('sndBtn').addEventListener('click',()=>{AU.on=!AU.on;$('sndBtn').textContent=AU.on?'🔊':'🔇';if(AU.on)auInit();if(AU.ctx)AU.master.gain.value=AU.on?.8:0;try{S.cfg.snd=AU.on;store()}catch(e){}});
+const VOL=()=>{try{const v=S&&S.cfg&&S.cfg.vol;return(v==null?80:v)/100}catch(e){return .8}};
+document.addEventListener('input',e=>{const t=e.target;if(!t||t.id!=='volR')return;S.cfg.vol=+t.value;const l=document.getElementById('volL');if(l)l.textContent=t.value+' %';if(AU.ctx&&AU.on)AU.master.gain.setTargetAtTime(VOL(),AU.ctx.currentTime,.05)});
+document.addEventListener('change',e=>{if(e.target&&e.target.id==='volR')try{store()}catch(x){}});
+$('sndBtn').addEventListener('click',()=>{AU.on=!AU.on;$('sndBtn').textContent=AU.on?'🔊':'🔇';if(AU.on)auInit();if(AU.ctx)AU.master.gain.value=AU.on?VOL():0;try{S.cfg.snd=AU.on;store()}catch(e){}});
 AU.on=true;{const au1=()=>{try{if(S&&S.cfg&&S.cfg.snd===false){AU.on=false}else{AU.on=true;auInit()}$('sndBtn').textContent=AU.on?'🔊':'🔇'}catch(e){}};addEventListener('pointerdown',au1,{capture:true});addEventListener('keydown',au1,{capture:true});setTimeout(()=>{try{$('sndBtn').textContent=S&&S.cfg&&S.cfg.snd===false?'🔇':'🔊'}catch(e){}},50)}
 function toEnd(){if(cur&&(!P.alive||cur.over))finish()}
 
